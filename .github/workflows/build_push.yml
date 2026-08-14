@@ -178,8 +178,11 @@ jobs:
           name: hobbiesvault-${{ env.VERSION_TAG }}
           path: hobbiesvault-${{ env.VERSION_TAG }}.apk
 
+      # Nightlies are published to the separate oribu-app/oribu-nightly repo (see "Create
+      # Nightly" below), so no tag is created here - action-gh-release creates the tag
+      # directly in the target repo, and it doesn't need to point at a real commit there.
       - name: Create and push tag
-        if: env.VERSION_TAG != ''
+        if: env.STAGE == 'release' || env.STAGE == 'beta'
         run: |
           set -e
           git config user.name "github-actions[bot]"
@@ -210,12 +213,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # Published straight to oribu-app/oribu-nightly, not this repo - keeps this repo's
+      # release list limited to stable/beta so it stays clean once the website links to it.
       - name: Create Nightly
         if: env.STAGE == 'nightly'
         uses: softprops/action-gh-release@v2
         with:
+          token: ${{ secrets.NIGHTLY_PAT }}
+          repository: oribu-app/oribu-nightly
           tag_name: ${{ env.VERSION_TAG }}
-          name: HobbiesVault Nightly (${{ env.VERSION_TAG }})
+          name: Oribu Nightly (${{ env.VERSION_TAG }})
           body: |
             > [!CAUTION]
             > _**Esta build é apenas para testes!**_
@@ -235,5 +242,3 @@ jobs:
           files: hobbiesvault-${{ env.VERSION_TAG }}.apk
           draft: false
           prerelease: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

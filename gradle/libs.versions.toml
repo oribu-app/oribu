@@ -13,6 +13,7 @@ coroutines      = "1.9.0"
 datastore       = "1.1.1"
 vico            = "2.0.0-beta.2"
 junit           = "4.13.2"
+kotlinter       = "5.7.0"
 
 [libraries]
 # Compose
@@ -76,3 +77,4 @@ kotlin-android      = { id = "org.jetbrains.kotlin.android",           version.r
 kotlin-compose      = { id = "org.jetbrains.kotlin.plugin.compose",    version.ref = "kotlin" }
 kotlin-parcelize    = { id = "org.jetbrains.kotlin.plugin.parcelize" }
 ksp                 = { id = "com.google.devtools.ksp",                version.ref = "ksp" }
+kotlinter           = { id = "org.jmailen.kotlinter",                  version.ref = "kotlinter" }
