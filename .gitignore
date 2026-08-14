@@ -43,3 +43,6 @@ backup.ab
 
 # Prints/mockups de referência de UI — só local, não versionado
 /Referencias/
+
+# APKs gerados localmente para validação — só local, não versionado
+/builds/

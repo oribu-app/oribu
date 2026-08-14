@@ -5,16 +5,21 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.StarHalf
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BrokenImage
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.*
@@ -27,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
@@ -142,36 +148,108 @@ fun StarRatingDisplay(rating: Int) {
     }
 }
 
-// ── Notas pessoais ──────────────────────────────────────────────────────────
-// Anotação livre de texto, disponível via o menu "..." em qualquer tela de detalhe,
-// independente de resenha (mangá) ou comentários de leitura (livro).
+// ── Avaliação por estrelas com meia-estrela (0 a 5, passo 0.5) ──────────────
+// Usado pela avaliação de Livros: cada metade de estrela tem uma frase curta
+// associada (ver bookRatingPhrase), então o rating precisa granularidade de 0.5.
+private val halfStarPhrases = mapOf(
+    0.5 to "Péssimo", 1.0 to "Muito ruim", 1.5 to "Ruim", 2.0 to "Fraco", 2.5 to "Mediano",
+    3.0 to "Ok", 3.5 to "Bom", 4.0 to "Muito bom", 4.5 to "Excelente", 5.0 to "Obra-prima",
+)
+
+fun bookRatingPhrase(rating: Double?): String? =
+    rating?.let { r -> halfStarPhrases[(kotlin.math.round(r * 2) / 2.0)] }
+
 @Composable
-fun NotesDialog(
-    initialText: String,
-    onDismiss: () -> Unit,
-    onSave: (String) -> Unit,
+fun HalfStarRatingPicker(rating: Double, onRatingChange: (Double) -> Unit) {
+    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        for (i in 0 until 5) {
+            val starValue = i + 1
+            val icon = when {
+                rating >= starValue        -> Icons.Default.Star
+                rating >= starValue - 0.5  -> Icons.AutoMirrored.Filled.StarHalf
+                else                        -> Icons.Default.StarBorder
+            }
+            Box(
+                Modifier
+                    .size(32.dp)
+                    .pointerInput(Unit) {
+                        detectTapGestures { offset ->
+                            val half = offset.x < size.width / 2f
+                            onRatingChange(if (half) starValue - 0.5 else starValue.toDouble())
+                        }
+                    },
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(icon, contentDescription = null, tint = Color(0xFFFFC107), modifier = Modifier.size(28.dp))
+            }
+        }
+    }
+}
+
+@Composable
+fun HalfStarRatingDisplay(rating: Double) {
+    Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+        for (i in 0 until 5) {
+            val starValue = i + 1
+            val icon = when {
+                rating >= starValue        -> Icons.Default.Star
+                rating >= starValue - 0.5  -> Icons.AutoMirrored.Filled.StarHalf
+                else                        -> Icons.Default.StarBorder
+            }
+            Icon(icon, contentDescription = null, tint = Color(0xFFFFC107), modifier = Modifier.size(18.dp))
+        }
+    }
+}
+
+// ── Filtro por gênero (tela geral de Filmes/Séries) ─────────────────────────
+@Composable
+fun GenreFilterRow(
+    genres: List<String>,
+    selected: String?,
+    color: Color,
+    onSelect: (String?) -> Unit,
 ) {
-    var text by remember { mutableStateOf(initialText) }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title   = { Text("Notas") },
-        text    = {
-            OutlinedTextField(
-                value         = text,
-                onValueChange = { text = it },
-                placeholder   = { Text("Escreva uma anotação livre sobre este item...") },
-                minLines      = 5,
-                maxLines      = 10,
-                modifier      = Modifier.fillMaxWidth(),
+    LazyRow(
+        contentPadding        = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        items(genres) { genre ->
+            val isSelected = genre == selected
+            FilterChip(
+                selected = isSelected,
+                onClick  = { onSelect(if (isSelected) null else genre) },
+                label    = { Text(genre) },
+                colors   = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = color.copy(alpha = 0.18f),
+                    selectedLabelColor     = color,
+                ),
             )
-        },
-        confirmButton = {
-            TextButton(onClick = { onSave(text); onDismiss() }) { Text("Salvar") }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar") }
-        },
-    )
+        }
+    }
+}
+
+// ── Anotações (preview na tela de detalhe) ──────────────────────────────────
+// Só aparece quando existe conteúdo salvo; tocar no lápis abre a AnotacoesScreen.
+@Composable
+fun AnotacoesSection(text: String?, onEditClick: () -> Unit) {
+    if (text.isNullOrBlank()) return
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment     = Alignment.CenterVertically,
+        ) {
+            Text("Anotações", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            IconButton(onClick = onEditClick, modifier = Modifier.size(28.dp)) {
+                Icon(Icons.Default.Edit, contentDescription = "Editar anotação", modifier = Modifier.size(16.dp))
+            }
+        }
+        Spacer(Modifier.height(4.dp))
+        Card(shape = RoundedCornerShape(12.dp), onClick = onEditClick) {
+            Text(text, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(16.dp))
+        }
+        Spacer(Modifier.height(8.dp))
+    }
 }
 
 // ── Proportional Tab Row ──────────────────────────────────────────────────────

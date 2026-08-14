@@ -39,5 +39,11 @@ enum class GameConsole(val label: String, val dbValue: String) {
     companion object {
         fun fromDb(value: String): GameConsole? =
             entries.firstOrNull { it.dbValue == value }
+
+        // Gerações mais recentes por família — usado como opção padrão de filtro em
+        // Configurações > Plataformas. Gerações antigas continuam no enum (itens já
+        // salvos com esses consoles não são afetados), só não aparecem como filtro padrão.
+        fun modern(): List<GameConsole> =
+            listOf(STEAM, PC, PS5, PS4, NS2, NS, XSX, X_ONE)
     }
 }

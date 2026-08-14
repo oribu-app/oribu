@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -34,6 +35,7 @@ import com.hobbiesvault.model.MediaItem
 import com.hobbiesvault.model.MediaStatus
 import com.hobbiesvault.model.MediaType
 import com.hobbiesvault.ui.components.EmptyState
+import com.hobbiesvault.ui.components.GenreFilterRow
 import com.hobbiesvault.ui.components.OverflowMenu
 import com.hobbiesvault.ui.components.OverflowMenuItem
 import com.hobbiesvault.ui.components.ProportionalTabRow
@@ -94,6 +96,18 @@ fun FilmsScreen(navController: NavController, vm: FilmsViewModel = viewModel()) 
     var selectedTab by remember { mutableIntStateOf(0) }
 
     val allListedIds = remember(listItems) { listItems.values.flatten().toSet() }
+
+    var selectedGenre by remember { mutableStateOf<String?>(null) }
+    var selectedPlatform by remember { mutableStateOf<String?>(null) }
+    var favoritesOnly by remember { mutableStateOf(false) }
+    val availableGenres = remember(allItems) { allItems.mapNotNull { it.genre }.distinct().sorted() }
+    val availablePlatforms = remember(allItems) { allItems.mapNotNull { it.streamingPlatform }.distinct().sorted() }
+    val genreFiltered = remember(allItems, selectedGenre, selectedPlatform, favoritesOnly) {
+        allItems
+            .filter { selectedGenre == null || it.genre == selectedGenre }
+            .filter { selectedPlatform == null || it.streamingPlatform == selectedPlatform }
+            .filter { !favoritesOnly || it.favorite }
+    }
 
     val watched = remember(allItems) {
         allItems.filter { it.status == MediaStatus.WATCHED || it.status == MediaStatus.REWATCHING }
@@ -170,7 +184,31 @@ fun FilmsScreen(navController: NavController, vm: FilmsViewModel = viewModel()) 
                         EmptyState("Nenhum filme na biblioteca", "Adicione um filme para começar",
                             "Adicionar filme", onButton = { navController.navigate(Routes.FILMS_ADD) })
                     } else {
-                        FilmGrid(allItems) { navigateToDetail(navController, it) }
+                        Column(Modifier.fillMaxSize()) {
+                            Row(
+                                Modifier.padding(start = 12.dp, top = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                FilterChip(
+                                    selected = favoritesOnly,
+                                    onClick  = { favoritesOnly = !favoritesOnly },
+                                    label    = { Text("Favoritos") },
+                                    leadingIcon = { Icon(Icons.Default.Favorite, null, modifier = Modifier.size(16.dp)) },
+                                    colors   = FilterChipDefaults.filterChipColors(selectedContainerColor = ColorFilme.copy(alpha = 0.18f), selectedLabelColor = ColorFilme),
+                                )
+                            }
+                            if (availableGenres.isNotEmpty()) {
+                                GenreFilterRow(availableGenres, selectedGenre, ColorFilme) { selectedGenre = it }
+                            }
+                            if (availablePlatforms.isNotEmpty()) {
+                                GenreFilterRow(availablePlatforms, selectedPlatform, ColorFilme) { selectedPlatform = it }
+                            }
+                            if (genreFiltered.isEmpty()) {
+                                EmptyState("Nenhum filme com esse filtro", "Tente outro filtro")
+                            } else {
+                                FilmGrid(genreFiltered) { navigateToDetail(navController, it) }
+                            }
+                        }
                     }
                 }
 

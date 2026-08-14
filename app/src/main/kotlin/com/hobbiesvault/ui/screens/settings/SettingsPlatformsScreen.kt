@@ -21,7 +21,7 @@ import com.hobbiesvault.model.GameConsole
 @Composable
 fun SettingsPlatformsScreen(navController: NavController) {
     val visibleConsoles by PlatformPreferences.visibleConsoles.collectAsStateWithLifecycle()
-    val groups = remember(GameConsole.entries) { GameConsole.entries.groupBy { it.familyLabel } }
+    val groups = remember { GameConsole.modern().groupBy { it.familyLabel } }
 
     Scaffold(
         topBar = {

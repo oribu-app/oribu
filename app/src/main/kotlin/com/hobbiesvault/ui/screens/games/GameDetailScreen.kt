@@ -46,7 +46,9 @@ import com.hobbiesvault.service.ItadDeal
 import com.hobbiesvault.service.ItadPricePoint
 import com.hobbiesvault.service.MediaCacheService
 import com.hobbiesvault.ui.components.CoverImage
-import com.hobbiesvault.ui.components.NotesDialog
+import com.hobbiesvault.ui.components.AnotacoesSection
+import com.hobbiesvault.ui.navigation.navigateToAnotacoes
+import com.hobbiesvault.ui.navigation.rememberAnotacoesResult
 import com.hobbiesvault.ui.theme.ColorJogo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -168,6 +170,9 @@ fun GameDetailScreen(
 ) {
     LaunchedEffect(Unit) { vm.init(initialItem) }
 
+    val anotacoesResult = rememberAnotacoesResult(navController)
+    LaunchedEffect(anotacoesResult) { anotacoesResult?.let { vm.setNotes(it) } }
+
     val mediaItem   = vm.mediaItem ?: initialItem
     val cache       = vm.cache
     val hltb        = vm.hltbResult
@@ -179,7 +184,6 @@ fun GameDetailScreen(
     var showStatusMenu   by remember { mutableStateOf(false) }
     var showCompletedMenu by remember { mutableStateOf(false) }
     var showConsoleMenu  by remember { mutableStateOf(false) }
-    var showNotes        by remember { mutableStateOf(false) }
     var synopsisExpanded by remember { mutableStateOf(false) }
     var showAddPlaythrough by remember { mutableStateOf(false) }
     var showAllAchievements by remember { mutableStateOf(false) }
@@ -363,19 +367,12 @@ fun GameDetailScreen(
                         Spacer(Modifier.width(8.dp))
                         // "..." button — 48x48 square with border
                         Box {
-                            Surface(
-                                shape   = RoundedCornerShape(10.dp),
-                                color   = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                                border  = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
-                                modifier = Modifier.size(48.dp).clickable { showMoreMenu = true },
-                            ) {
-                                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                    Icon(Icons.Default.MoreHoriz, null, modifier = Modifier.size(22.dp))
-                                }
+                            IconButton(onClick = { showMoreMenu = true }) {
+                                Icon(Icons.Default.MoreHoriz, null)
                             }
                             DropdownMenu(expanded = showMoreMenu, onDismissRequest = { showMoreMenu = false }) {
                                 DropdownMenuItem(text = { Text("Atualizar") }, leadingIcon = { Icon(Icons.Default.Refresh, null) }, onClick = { vm.refreshCache(); showMoreMenu = false })
-                                DropdownMenuItem(text = { Text("Notas") }, leadingIcon = { Icon(Icons.AutoMirrored.Filled.Notes, null) }, onClick = { showNotes = true; showMoreMenu = false })
+                                DropdownMenuItem(text = { Text("Anotações") }, leadingIcon = { Icon(Icons.AutoMirrored.Filled.Notes, null) }, onClick = { navController.navigateToAnotacoes(mediaItem); showMoreMenu = false })
                                 if ((platforms?.size ?: 0) > 1) {
                                     DropdownMenuItem(text = { Text("Alterar plataforma") }, leadingIcon = { Icon(Icons.Default.Devices, null) }, onClick = { showConsoleMenu = true; showMoreMenu = false })
                                 }
@@ -491,22 +488,6 @@ fun GameDetailScreen(
                     }
                 }
 
-                // ── Duração estimada (HLTB) ───────────────────────────────────
-                if (hltb != null && (hltb.mainStorySeconds != null || hltb.mainExtraSeconds != null || hltb.completionistSeconds != null)) {
-                    item {
-                        Column(contentPad) {
-                            Row(verticalAlignment = Alignment.Bottom) {
-                                GameSectionTitle("Duração estimada")
-                                Spacer(Modifier.width(6.dp))
-                                Text("HowLongToBeat", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
-                            }
-                            Spacer(Modifier.height(10.dp))
-                            HltbCard(hltb, platformColor)
-                            Spacer(Modifier.height(24.dp))
-                        }
-                    }
-                }
-
                 // ── Jogatinas ─────────────────────────────────────────────────
                 item {
                     Column(contentPad) {
@@ -544,6 +525,26 @@ fun GameDetailScreen(
                             }
                         }
                         Spacer(Modifier.height(24.dp))
+                    }
+                }
+
+                item {
+                    AnotacoesSection(mediaItem.personalNotes) { navController.navigateToAnotacoes(mediaItem) }
+                }
+
+                // ── Duração estimada (HLTB) ───────────────────────────────────
+                if (hltb != null && (hltb.mainStorySeconds != null || hltb.mainExtraSeconds != null || hltb.completionistSeconds != null)) {
+                    item {
+                        Column(contentPad) {
+                            Row(verticalAlignment = Alignment.Bottom) {
+                                GameSectionTitle("Duração estimada")
+                                Spacer(Modifier.width(6.dp))
+                                Text("HowLongToBeat", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                            }
+                            Spacer(Modifier.height(10.dp))
+                            HltbCard(hltb, platformColor)
+                            Spacer(Modifier.height(24.dp))
+                        }
                     }
                 }
 
@@ -725,14 +726,6 @@ fun GameDetailScreen(
         }
     }
 
-    if (showNotes) {
-        NotesDialog(
-            initialText = mediaItem.personalNotes ?: "",
-            onDismiss   = { showNotes = false },
-            onSave      = { vm.setNotes(it) },
-        )
-    }
-
     if (showAddPlaythrough) {
         AddPlaythroughDialog(
             initial   = editingPlaythrough,
@@ -833,40 +826,99 @@ private fun PlaythroughTile(
     onClick: () -> Unit,
     onDelete: () -> Unit,
 ) {
+    var showMenu by remember { mutableStateOf(false) }
+    val percent = playthrough.progressPercent ?: 0
+
     Surface(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth(),
         shape    = RoundedCornerShape(12.dp),
         color    = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
     ) {
-        Row(
-            Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.Top,
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text(playthrough.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                val range = listOfNotNull(
-                    playthrough.startDate?.let { dateFormatter.format(it) },
-                    playthrough.endDate?.let { dateFormatter.format(it) },
-                ).joinToString(" – ")
-                val details = listOfNotNull(
-                    range.ifEmpty { null },
-                    playthrough.hoursPlayed?.let { "${it}h" },
-                ).joinToString(" · ")
-                if (details.isNotEmpty()) {
-                    Text(details, style = MaterialTheme.typography.bodySmall, color = color)
+        Column(Modifier.padding(14.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment     = Alignment.CenterVertically,
+            ) {
+                Text(playthrough.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                Box {
+                    IconButton(onClick = { showMenu = true }, modifier = Modifier.size(28.dp)) {
+                        Icon(Icons.Default.MoreHoriz, contentDescription = null, modifier = Modifier.size(18.dp))
+                    }
+                    DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                        DropdownMenuItem(text = { Text("Editar") }, leadingIcon = { Icon(Icons.Default.Edit, null) }, onClick = { showMenu = false; onClick() })
+                        DropdownMenuItem(
+                            text = { Text("Excluir jogatina", color = MaterialTheme.colorScheme.error) },
+                            leadingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) },
+                            onClick = { showMenu = false; onDelete() },
+                        )
+                    }
                 }
-                if (!playthrough.notes.isNullOrBlank()) {
+            }
+            Spacer(Modifier.height(10.dp))
+            PlaythroughProgressBar(percent, color)
+            Spacer(Modifier.height(8.dp))
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment     = Alignment.CenterVertically,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.CalendarMonth, null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.size(14.dp))
+                    Spacer(Modifier.width(4.dp))
+                    val range = listOfNotNull(
+                        playthrough.startDate?.let { dateFormatter.format(it) },
+                        playthrough.endDate?.let { dateFormatter.format(it) },
+                    ).joinToString(" → ")
                     Text(
-                        playthrough.notes,
+                        range.ifEmpty { "Não iniciada" },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     )
                 }
+                playthrough.hoursPlayed?.let {
+                    Text("${it}h", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = color)
+                }
             }
-            IconButton(onClick = onDelete, modifier = Modifier.size(24.dp)) {
-                Icon(Icons.Default.Close, contentDescription = "Remover", modifier = Modifier.size(16.dp))
+            if (!playthrough.notes.isNullOrBlank()) {
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    playthrough.notes,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun PlaythroughProgressBar(percent: Int, color: Color) {
+    val clamped = percent.coerceIn(0, 100)
+    BoxWithConstraints(
+        Modifier
+            .fillMaxWidth()
+            .height(26.dp)
+            .clip(RoundedCornerShape(13.dp))
+            .background(color.copy(alpha = 0.2f)),
+    ) {
+        val fillWidth = maxWidth * (clamped / 100f)
+        Box(
+            Modifier
+                .width(fillWidth)
+                .fillMaxHeight()
+                .clip(RoundedCornerShape(13.dp))
+                .background(color),
+        )
+        Text(
+            "$clamped%",
+            style      = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+            color      = if (fillWidth > 36.dp) Color.White else MaterialTheme.colorScheme.onSurface,
+            modifier   = Modifier
+                .align(Alignment.CenterStart)
+                .padding(start = if (fillWidth > 36.dp) 10.dp else fillWidth + 8.dp),
+        )
     }
 }
 
@@ -883,6 +935,7 @@ private fun AddPlaythroughDialog(
     var endStr   by remember { mutableStateOf(initial?.endDate?.let { fmt.format(it) } ?: "") }
     var hoursStr by remember { mutableStateOf(initial?.hoursPlayed?.toString() ?: "") }
     var notes    by remember { mutableStateOf(initial?.notes ?: "") }
+    var progress by remember { mutableStateOf((initial?.progressPercent ?: 0).toFloat()) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -894,6 +947,16 @@ private fun AddPlaythroughDialog(
                     placeholder = { Text("Ex.: Primeira zerada, Speedrun...") },
                     singleLine = true, modifier = Modifier.fillMaxWidth(),
                 )
+                Column {
+                    Text("Progresso: ${progress.toInt()}%", style = MaterialTheme.typography.bodySmall)
+                    Slider(
+                        value       = progress,
+                        onValueChange = { progress = it },
+                        valueRange  = 0f..100f,
+                        steps       = 19,
+                        colors      = SliderDefaults.colors(thumbColor = color, activeTrackColor = color),
+                    )
+                }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
                         value = startStr, onValueChange = { startStr = it },
@@ -924,12 +987,13 @@ private fun AddPlaythroughDialog(
                 onClick = {
                     onSave(
                         GamePlaythrough(
-                            id          = initial?.id ?: 0,
-                            title       = title.trim(),
-                            startDate   = runCatching { startStr.takeIf { it.isNotBlank() }?.let { fmt.parse(it) } }.getOrNull(),
-                            endDate     = runCatching { endStr.takeIf { it.isNotBlank() }?.let { fmt.parse(it) } }.getOrNull(),
-                            hoursPlayed = hoursStr.toIntOrNull(),
-                            notes       = notes.trim().ifBlank { null },
+                            id              = initial?.id ?: 0,
+                            title           = title.trim(),
+                            startDate       = runCatching { startStr.takeIf { it.isNotBlank() }?.let { fmt.parse(it) } }.getOrNull(),
+                            endDate         = runCatching { endStr.takeIf { it.isNotBlank() }?.let { fmt.parse(it) } }.getOrNull(),
+                            hoursPlayed     = hoursStr.toIntOrNull(),
+                            notes           = notes.trim().ifBlank { null },
+                            progressPercent = progress.toInt(),
                         )
                     )
                 },
@@ -997,42 +1061,41 @@ private fun PriceDealTile(deal: ItadDeal, color: Color) {
 
 @Composable
 private fun HltbCard(hltb: HltbResult, color: Color) {
-    fun fmtSec(s: Int?): String {
+    fun fmtHrs(s: Int?): String {
         if (s == null || s <= 0) return "—"
-        val h = s / 3600; val m = (s % 3600) / 60
-        return when { h == 0 -> "${m}min"; m == 0 -> "${h}h"; else -> "${h}h ${m}min" }
+        return "%.1f h".format(s / 3600.0).replace(".", ",")
     }
-    Surface(
-        color  = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)),
-        shape  = RoundedCornerShape(12.dp),
-    ) {
-        IntrinsicRow {
-            HltbItem(Icons.Default.MenuBook, "História",    fmtSec(hltb.mainStorySeconds),     color)
-            VerticalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
-            HltbItem(Icons.Default.Explore, "Hist.+Extras", fmtSec(hltb.mainExtraSeconds),    color)
-            VerticalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
-            HltbItem(Icons.Default.CheckCircle, "100%",    fmtSec(hltb.completionistSeconds), color)
+    val storyColor     = color
+    val extraColor     = color.copy(alpha = 0.65f)
+    val completeColor  = color.copy(alpha = 0.35f)
+
+    Column {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .height(10.dp)
+                .clip(RoundedCornerShape(5.dp)),
+        ) {
+            Box(Modifier.weight(1f).fillMaxHeight().background(storyColor))
+            Box(Modifier.weight(1f).fillMaxHeight().background(extraColor))
+            Box(Modifier.weight(1f).fillMaxHeight().background(completeColor))
+        }
+        Spacer(Modifier.height(14.dp))
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            HltbRow(storyColor, "Story", fmtHrs(hltb.mainStorySeconds))
+            HltbRow(extraColor, "Extra", fmtHrs(hltb.mainExtraSeconds))
+            HltbRow(completeColor, "Complete", fmtHrs(hltb.completionistSeconds))
         }
     }
 }
 
 @Composable
-private fun IntrinsicRow(content: @Composable RowScope.() -> Unit) {
-    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), content = content)
-}
-
-@Composable
-private fun RowScope.HltbItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String, color: Color) {
-    Column(
-        Modifier.weight(1f).padding(vertical = 14.dp, horizontal = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Icon(icon, null, tint = color.copy(alpha = 0.7f), modifier = Modifier.size(16.dp))
-        Spacer(Modifier.height(6.dp))
-        Text(value, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-        Spacer(Modifier.height(3.dp))
-        Text(label, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f), textAlign = TextAlign.Center)
+private fun HltbRow(dotColor: Color, label: String, value: String) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(10.dp).clip(CircleShape).background(dotColor))
+        Spacer(Modifier.width(10.dp))
+        Text(label, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
     }
 }
 

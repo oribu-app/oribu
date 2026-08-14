@@ -39,10 +39,15 @@ import com.hobbiesvault.data.db.DB
 import com.hobbiesvault.model.MediaItem
 import com.hobbiesvault.model.MediaStatus
 import com.hobbiesvault.service.MediaCacheService
-import com.hobbiesvault.ui.components.NotesDialog
-import com.hobbiesvault.ui.components.StarRatingDisplay
-import com.hobbiesvault.ui.components.StarRatingPicker
+import com.hobbiesvault.ui.components.AnotacoesSection
+import com.hobbiesvault.ui.navigation.Routes
+import com.hobbiesvault.ui.navigation.navigateToAnotacoes
+import com.hobbiesvault.ui.navigation.rememberAnotacoesResult
+import com.hobbiesvault.ui.components.HalfStarRatingDisplay
+import com.hobbiesvault.ui.components.HalfStarRatingPicker
+import com.hobbiesvault.ui.components.bookRatingPhrase
 import com.hobbiesvault.ui.theme.ColorLivro
+import com.hobbiesvault.util.htmlToPlainText
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -151,20 +156,18 @@ class BookDetailViewModel : ViewModel() {
         viewModelScope.launch { DB.repo.update(updated) }
     }
 
-    fun saveRatingAndReview(rating: Double?, reviewText: String?) {
+    fun saveRating(rating: Double?) {
         val current = mediaItem ?: return
-        val updated = current.copy(
-            rating         = rating,
-            bookReviewText = reviewText?.takeIf { it.isNotBlank() },
-        )
+        val updated = current.copy(rating = rating)
         mediaItem = updated
         viewModelScope.launch { DB.repo.update(updated) }
     }
 
-    fun addQuote(quote: String, comment: String?) {
-        val id = mediaItem?.id ?: return
-        if (quote.isBlank()) return
-        viewModelScope.launch { DB.repo.addBookQuote(id, quote.trim(), comment?.trim()?.takeIf { it.isNotBlank() }) }
+    fun saveReview(reviewText: String?) {
+        val current = mediaItem ?: return
+        val updated = current.copy(bookReviewText = reviewText?.takeIf { it.isNotBlank() })
+        mediaItem = updated
+        viewModelScope.launch { DB.repo.update(updated) }
     }
 
     fun deleteQuote(id: Int) {
@@ -197,6 +200,9 @@ fun BookDetailScreen(
 ) {
     LaunchedEffect(Unit) { vm.init(initialItem) }
 
+    val anotacoesResult = rememberAnotacoesResult(navController)
+    LaunchedEffect(anotacoesResult) { anotacoesResult?.let { vm.setPersonalNotes(it) } }
+
     val mediaItem = vm.mediaItem ?: initialItem
     val cache = vm.cache
     val quotes by remember(mediaItem.id) {
@@ -205,11 +211,10 @@ fun BookDetailScreen(
 
     var showDelete by remember { mutableStateOf(false) }
     var showMoreMenu by remember { mutableStateOf(false) }
-    var showPersonalNotes by remember { mutableStateOf(false) }
+    var editingRating by remember { mutableStateOf(false) }
+    var pendingRating by remember { mutableStateOf(0.0) }
     var editingReview by remember { mutableStateOf(false) }
-    var pendingRating by remember { mutableStateOf(0) }
     var pendingReviewText by remember { mutableStateOf("") }
-    var showAddQuote by remember { mutableStateOf(false) }
     var showStatusMenu by remember { mutableStateOf(false) }
     var synopsisExpanded by remember { mutableStateOf(false) }
     var showPageDialog by remember { mutableStateOf(false) }
@@ -228,8 +233,8 @@ fun BookDetailScreen(
             runCatching { java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).parse(it)?.time }.getOrNull()
                 ?: runCatching { java.text.SimpleDateFormat("yyyy", java.util.Locale.US).parse(it)?.time }.getOrNull()
         }
-    val synopsis  = cache?.get("synopsis") as? String
-        ?: volumeInfo?.get("description") as? String
+    val synopsis  = ((cache?.get("synopsis") as? String)
+        ?: volumeInfo?.get("description") as? String)?.let(::htmlToPlainText)?.takeIf { it.isNotBlank() }
     val authors   = (cache?.get("author") as? String)?.let { listOf(it) }
         ?: (volumeInfo?.get("authors") as? List<*>)?.filterIsInstance<String>()
     val publisher = cache?.get("publisher") as? String
@@ -351,13 +356,7 @@ fun BookDetailScreen(
                     }
                     Spacer(Modifier.width(12.dp))
                     Box {
-                        Box(
-                            Modifier
-                                .size(44.dp)
-                                .border(1.5.dp, Color(0xFF444444), RoundedCornerShape(4.dp))
-                                .clickable { showMoreMenu = true },
-                            contentAlignment = Alignment.Center,
-                        ) {
+                        IconButton(onClick = { showMoreMenu = true }) {
                             Icon(Icons.Default.MoreHoriz, null)
                         }
                         DropdownMenu(expanded = showMoreMenu, onDismissRequest = { showMoreMenu = false }) {
@@ -365,7 +364,7 @@ fun BookDetailScreen(
                             DropdownMenuItem(text = { Text("Editar progresso") }, leadingIcon = { Icon(Icons.Default.Bookmark, null) }, onClick = { pageInput = (mediaItem.currentProgress ?: 0).toString(); commentInput = ""; showPageDialog = true; showMoreMenu = false })
                             DropdownMenuItem(text = { Text("Editar data de início") }, leadingIcon = { Icon(Icons.Default.CalendarMonth, null) }, onClick = { showStartDatePicker = true; showMoreMenu = false })
                             DropdownMenuItem(text = { Text("Editar data de conclusão") }, leadingIcon = { Icon(Icons.Default.EventAvailable, null) }, onClick = { showEndDatePicker = true; showMoreMenu = false })
-                            DropdownMenuItem(text = { Text("Notas") }, leadingIcon = { Icon(Icons.AutoMirrored.Filled.Notes, null) }, onClick = { showPersonalNotes = true; showMoreMenu = false })
+                            DropdownMenuItem(text = { Text("Anotações") }, leadingIcon = { Icon(Icons.AutoMirrored.Filled.Notes, null) }, onClick = { navController.navigateToAnotacoes(mediaItem); showMoreMenu = false })
                             DropdownMenuItem(text = { Text(if (mediaItem.favorite) "Remover dos favoritos" else "Favoritar") }, leadingIcon = { Icon(if (mediaItem.favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder, null) }, onClick = { vm.toggleFavorite(); showMoreMenu = false })
                             HorizontalDivider()
                             DropdownMenuItem(text = { Text("Remover livro", color = MaterialTheme.colorScheme.error) }, leadingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) }, onClick = { showDelete = true; showMoreMenu = false })
@@ -472,7 +471,7 @@ fun BookDetailScreen(
                 Spacer(Modifier.height(16.dp))
             }
 
-            // ── Avaliação ────────────────────────────────────────────────────
+            // ── Nota ─────────────────────────────────────────────────────────
             item {
                 Column(Modifier.padding(horizontal = 16.dp)) {
                     Row(
@@ -480,14 +479,10 @@ fun BookDetailScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment     = Alignment.CenterVertically,
                     ) {
-                        Text("Avaliação", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                        if (!editingReview) {
+                        Text("Nota", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                        if (!editingRating) {
                             IconButton(
-                                onClick = {
-                                    pendingRating     = (mediaItem.rating ?: 0.0).toInt()
-                                    pendingReviewText = mediaItem.bookReviewText ?: ""
-                                    editingReview     = true
-                                },
+                                onClick  = { pendingRating = mediaItem.rating ?: 0.0; editingRating = true },
                                 modifier = Modifier.size(32.dp),
                             ) {
                                 Icon(Icons.Default.Edit, contentDescription = "Editar", tint = ColorLivro, modifier = Modifier.size(18.dp))
@@ -496,11 +491,39 @@ fun BookDetailScreen(
                     }
                     Spacer(Modifier.height(10.dp))
                     Card(shape = RoundedCornerShape(12.dp)) {
-                        Column(Modifier.padding(16.dp)) {
-                            if (editingReview) {
-                                StarRatingPicker(rating = pendingRating, onRatingChange = { pendingRating = it })
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            if (editingRating) {
+                                HalfStarRatingPicker(rating = pendingRating, onRatingChange = { pendingRating = it })
+                                if (pendingRating > 0) {
+                                    Text(
+                                        bookRatingPhrase(pendingRating) ?: "",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = ColorLivro,
+                                    )
+                                }
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    OutlinedButton(
+                                        onClick  = { editingRating = false },
+                                        modifier = Modifier.weight(1f),
+                                        shape    = RoundedCornerShape(12.dp),
+                                    ) { Text("Cancelar") }
+                                    Button(
+                                        onClick  = {
+                                            vm.saveRating(if (pendingRating > 0) pendingRating else null)
+                                            editingRating = false
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                        shape    = RoundedCornerShape(12.dp),
+                                        colors   = ButtonDefaults.buttonColors(containerColor = ColorLivro),
+                                    ) { Text("Salvar") }
+                                }
                             } else if (mediaItem.rating != null) {
-                                StarRatingDisplay(rating = mediaItem.rating.toInt())
+                                HalfStarRatingDisplay(rating = mediaItem.rating)
+                                Text(
+                                    bookRatingPhrase(mediaItem.rating) ?: "",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                )
                             } else {
                                 Text(
                                     "Nenhuma avaliação ainda",
@@ -517,7 +540,21 @@ fun BookDetailScreen(
             // ── Resenha ──────────────────────────────────────────────────────
             item {
                 Column(Modifier.padding(horizontal = 16.dp)) {
-                    Text("Resenha", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment     = Alignment.CenterVertically,
+                    ) {
+                        Text("Resenha", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                        if (!editingReview) {
+                            IconButton(
+                                onClick  = { pendingReviewText = mediaItem.bookReviewText ?: ""; editingReview = true },
+                                modifier = Modifier.size(32.dp),
+                            ) {
+                                Icon(Icons.Default.Edit, contentDescription = "Editar", tint = ColorLivro, modifier = Modifier.size(18.dp))
+                            }
+                        }
+                    }
                     Spacer(Modifier.height(10.dp))
                     Card(shape = RoundedCornerShape(12.dp)) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -538,10 +575,7 @@ fun BookDetailScreen(
                                     ) { Text("Cancelar") }
                                     Button(
                                         onClick = {
-                                            vm.saveRatingAndReview(
-                                                rating     = if (pendingRating > 0) pendingRating.toDouble() else null,
-                                                reviewText = pendingReviewText,
-                                            )
+                                            vm.saveReview(pendingReviewText)
                                             editingReview = false
                                         },
                                         modifier = Modifier.weight(1f),
@@ -604,7 +638,13 @@ fun BookDetailScreen(
                         verticalAlignment     = Alignment.CenterVertically,
                     ) {
                         Text("Citações", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                        IconButton(onClick = { showAddQuote = true }, modifier = Modifier.size(32.dp)) {
+                        IconButton(
+                            onClick = {
+                                navController.currentBackStackEntry?.savedStateHandle?.set("quoteBook", mediaItem)
+                                navController.navigate(Routes.BOOKS_ADD_QUOTE)
+                            },
+                            modifier = Modifier.size(32.dp),
+                        ) {
                             Icon(Icons.Default.Add, contentDescription = "Adicionar citação", tint = ColorLivro, modifier = Modifier.size(20.dp))
                         }
                     }
@@ -651,6 +691,10 @@ fun BookDetailScreen(
                     }
                 }
                 Spacer(Modifier.height(16.dp))
+            }
+
+            item {
+                AnotacoesSection(mediaItem.personalNotes) { navController.navigateToAnotacoes(mediaItem) }
             }
 
             item { Spacer(Modifier.height(80.dp)) }
@@ -742,47 +786,6 @@ fun BookDetailScreen(
         )
     }
 
-    if (showPersonalNotes) {
-        NotesDialog(
-            initialText = mediaItem.personalNotes ?: "",
-            onDismiss   = { showPersonalNotes = false },
-            onSave      = { vm.setPersonalNotes(it) },
-        )
-    }
-
-    if (showAddQuote) {
-        var quoteInput by remember { mutableStateOf("") }
-        var commentInput2 by remember { mutableStateOf("") }
-        AlertDialog(
-            onDismissRequest = { showAddQuote = false },
-            title   = { Text("Nova citação") },
-            text    = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(
-                        value         = quoteInput,
-                        onValueChange = { quoteInput = it },
-                        placeholder   = { Text("Citação") },
-                        minLines      = 3,
-                        maxLines      = 6,
-                        modifier      = Modifier.fillMaxWidth(),
-                    )
-                    OutlinedTextField(
-                        value         = commentInput2,
-                        onValueChange = { commentInput2 = it },
-                        placeholder   = { Text("Comentário (opcional)") },
-                        modifier      = Modifier.fillMaxWidth(),
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    enabled = quoteInput.isNotBlank(),
-                    onClick = { vm.addQuote(quoteInput, commentInput2); showAddQuote = false },
-                ) { Text("Salvar") }
-            },
-            dismissButton = { TextButton(onClick = { showAddQuote = false }) { Text("Cancelar") } },
-        )
-    }
 
     if (showDelete) {
         AlertDialog(

@@ -364,8 +364,18 @@ object MediaCacheService {
         if (result["chapters"] == null) {
             val cachedMangaDexId = item.id?.let { runCatching { DB.cache.load(it) }.getOrNull()?.get("mangaDexId") as? String }
             val mangaDexId = cachedMangaDexId ?: withContext(Dispatchers.IO) {
-                val searchTitle = (result["title"] as? String) ?: item.title
-                runCatching { ApiServices.mangadex.search(searchTitle).firstOrNull()?.externalId }.getOrNull()
+                // O título em inglês/romaji do AniList nem sempre bate com o título
+                // cadastrado no MangaDex (que costuma preferir o romaji ou um sinônimo).
+                // Tenta cada candidato até achar uma correspondência.
+                val candidates = listOfNotNull(
+                    result["title"] as? String,
+                    result["titleRomaji"] as? String,
+                    item.title,
+                ).plus((result["synonyms"] as? List<*>)?.filterIsInstance<String>() ?: emptyList())
+                    .distinct()
+                candidates.firstNotNullOfOrNull { candidate ->
+                    runCatching { ApiServices.mangadex.search(candidate).firstOrNull()?.externalId }.getOrNull()
+                }
             }
             if (mangaDexId != null) {
                 result["mangaDexId"] = mangaDexId

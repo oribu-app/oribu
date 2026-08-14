@@ -19,7 +19,7 @@ import com.hobbiesvault.data.db.entity.*
         BookQuoteEntity::class,
         GamePlaythroughEntity::class,
     ],
-    version = 14,
+    version = 15,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -33,6 +33,13 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun gamePlaythroughDao(): GamePlaythroughDao
 
     companion object {
+        val MIGRATION_14_15 = object : Migration(14, 15) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Progresso (%) da jogatina — permite exibir a barra de conclusão no
+                // padrão de referência (GameTrack) sem depender de horas jogadas.
+                db.execSQL("ALTER TABLE game_playthroughs ADD COLUMN progresso INTEGER")
+            }
+        }
         val MIGRATION_13_14 = object : Migration(13, 14) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("""

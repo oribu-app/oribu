@@ -8,11 +8,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.hobbiesvault.ui.components.EmptyState
 import com.hobbiesvault.ui.navigation.Routes
 
 // ── Hub de Configurações ────────────────────────────────────────────────────
@@ -37,6 +38,14 @@ private val categories = listOf(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(navController: NavController) {
+    var query by remember { mutableStateOf("") }
+    val filtered = remember(query) {
+        if (query.isBlank()) categories
+        else categories.filter {
+            it.label.contains(query, ignoreCase = true) || it.subtitle.contains(query, ignoreCase = true)
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -49,9 +58,28 @@ fun SettingsScreen(navController: NavController) {
             )
         },
     ) { padding ->
-        LazyColumn(Modifier.padding(padding).fillMaxSize()) {
-            items(categories) { category ->
-                SettingsCategoryRow(category, onClick = { navController.navigate(category.route) })
+        Column(Modifier.padding(padding).fillMaxSize()) {
+            OutlinedTextField(
+                value         = query,
+                onValueChange = { query = it },
+                placeholder   = { Text("Buscar em Configurações…") },
+                leadingIcon   = { Icon(Icons.Default.Search, null) },
+                trailingIcon  = {
+                    if (query.isNotEmpty()) {
+                        IconButton(onClick = { query = "" }) { Icon(Icons.Default.Clear, null) }
+                    }
+                },
+                singleLine    = true,
+                modifier      = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+            if (filtered.isEmpty()) {
+                EmptyState("Nenhum resultado", "Tente buscar por outro termo")
+            } else {
+                LazyColumn(Modifier.fillMaxSize()) {
+                    items(filtered) { category ->
+                        SettingsCategoryRow(category, onClick = { navController.navigate(category.route) })
+                    }
+                }
             }
         }
     }

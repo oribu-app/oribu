@@ -174,13 +174,14 @@ class MediaRepository(
 
     suspend fun savePlaythrough(mediaItemId: Int, playthrough: GamePlaythrough) {
         val entity = GamePlaythroughEntity(
-            id           = playthrough.id,
-            mediaItemId  = mediaItemId,
-            title        = playthrough.title,
-            startDateMs  = playthrough.startDate?.time,
-            endDateMs    = playthrough.endDate?.time,
-            hoursPlayed  = playthrough.hoursPlayed,
-            notes        = playthrough.notes,
+            id              = playthrough.id,
+            mediaItemId     = mediaItemId,
+            title           = playthrough.title,
+            startDateMs     = playthrough.startDate?.time,
+            endDateMs       = playthrough.endDate?.time,
+            hoursPlayed     = playthrough.hoursPlayed,
+            notes           = playthrough.notes,
+            progressPercent = playthrough.progressPercent,
         )
         if (playthrough.id == 0) gamePlaythroughDao.insert(entity) else gamePlaythroughDao.update(entity)
     }

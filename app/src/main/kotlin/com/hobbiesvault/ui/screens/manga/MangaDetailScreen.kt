@@ -41,7 +41,9 @@ import com.hobbiesvault.model.MangaReview
 import com.hobbiesvault.model.MediaItem
 import com.hobbiesvault.model.MediaStatus
 import com.hobbiesvault.service.MediaCacheService
-import com.hobbiesvault.ui.components.NotesDialog
+import com.hobbiesvault.ui.components.AnotacoesSection
+import com.hobbiesvault.ui.navigation.navigateToAnotacoes
+import com.hobbiesvault.ui.navigation.rememberAnotacoesResult
 import com.hobbiesvault.ui.components.StarRatingDisplay
 import com.hobbiesvault.ui.components.StarRatingPicker
 import com.hobbiesvault.ui.theme.ColorManga
@@ -94,6 +96,7 @@ class MangaDetailViewModel : ViewModel() {
             val updated = current.copy(
                 status = newStatus,
                 completionDate = if (newStatus == MediaStatus.READ) current.completionDate ?: java.util.Date() else current.completionDate,
+                readingStartDate = if (newStatus == MediaStatus.READING) current.readingStartDate ?: java.util.Date() else current.readingStartDate,
                 rating      = if (clearingForReread) null else current.rating,
                 reviewTitle = if (clearingForReread) null else current.reviewTitle,
                 notes       = if (clearingForReread) null else current.notes,
@@ -108,6 +111,13 @@ class MangaDetailViewModel : ViewModel() {
         val current = mediaItem ?: return
         val clamped = totalChapters?.let { chapter.coerceIn(0, it) } ?: chapter.coerceAtLeast(0)
         val updated = current.copy(currentProgress = clamped)
+        mediaItem = updated
+        viewModelScope.launch { DB.repo.update(updated) }
+    }
+
+    fun setReadingStartDate(date: java.util.Date) {
+        val current = mediaItem ?: return
+        val updated = current.copy(readingStartDate = date)
         mediaItem = updated
         viewModelScope.launch { DB.repo.update(updated) }
     }
@@ -163,15 +173,18 @@ fun MangaDetailScreen(
 ) {
     LaunchedEffect(Unit) { vm.init(initialItem) }
 
+    val anotacoesResult = rememberAnotacoesResult(navController)
+    LaunchedEffect(anotacoesResult) { anotacoesResult?.let { vm.setPersonalNotes(it) } }
+
     val mediaItem = vm.mediaItem ?: initialItem
     val cache     = vm.cache
 
     var showDelete       by remember { mutableStateOf(false) }
     var showStatusMenu   by remember { mutableStateOf(false) }
     var showMoreMenu     by remember { mutableStateOf(false) }
-    var showPersonalNotes by remember { mutableStateOf(false) }
     var synopsisExpanded by remember { mutableStateOf(false) }
     var showChapterDialog by remember { mutableStateOf(false) }
+    var showStartDatePicker by remember { mutableStateOf(false) }
     var chapterInput     by remember { mutableStateOf("") }
     var editingPersonal  by remember { mutableStateOf(false) }
     var pendingRating    by remember { mutableStateOf(0) }
@@ -302,13 +315,7 @@ fun MangaDetailScreen(
                         }
                         Spacer(Modifier.width(12.dp))
                         Box {
-                            Box(
-                                Modifier
-                                    .size(44.dp)
-                                    .border(1.5.dp, Color(0xFF444444), RoundedCornerShape(4.dp))
-                                    .clickable { showMoreMenu = true },
-                                contentAlignment = Alignment.Center,
-                            ) {
+                            IconButton(onClick = { showMoreMenu = true }) {
                                 Icon(Icons.Default.MoreHoriz, null)
                             }
                             DropdownMenu(expanded = showMoreMenu, onDismissRequest = { showMoreMenu = false }) {
@@ -323,9 +330,14 @@ fun MangaDetailScreen(
                                     onClick       = { chapterInput = (mediaItem.currentProgress ?: 0).toString(); showChapterDialog = true; showMoreMenu = false },
                                 )
                                 DropdownMenuItem(
-                                    text          = { Text("Notas") },
+                                    text          = { Text("Editar data de início") },
+                                    leadingIcon   = { Icon(Icons.Default.CalendarMonth, null) },
+                                    onClick       = { showStartDatePicker = true; showMoreMenu = false },
+                                )
+                                DropdownMenuItem(
+                                    text          = { Text("Anotações") },
                                     leadingIcon   = { Icon(Icons.AutoMirrored.Filled.Notes, null) },
-                                    onClick       = { showPersonalNotes = true; showMoreMenu = false },
+                                    onClick       = { navController.navigateToAnotacoes(mediaItem); showMoreMenu = false },
                                 )
                                 DropdownMenuItem(
                                     text          = { Text(if (mediaItem.favorite) "Remover dos favoritos" else "Favoritar") },
@@ -416,7 +428,7 @@ fun MangaDetailScreen(
                             if (format != null)            MangaInfoCard("Formato", format)
                             if (!genres.isNullOrEmpty())   MangaInfoCard("Gênero", genres.take(3).joinToString(", "))
                             if (volumes != null)           MangaInfoCard("Volumes", "$volumes")
-                            MangaInfoCard("Capítulos", chapters?.toString() ?: "Em andamento")
+                            if (chapters != null) MangaInfoCard("Capítulos", "$chapters")
                             if (serializationStatus != null) MangaInfoCard("Status", serializationStatus)
                         }
                     }
@@ -695,6 +707,10 @@ fun MangaDetailScreen(
                     }
                 }
 
+                item {
+                    AnotacoesSection(mediaItem.personalNotes) { navController.navigateToAnotacoes(mediaItem) }
+                }
+
                 item { Spacer(Modifier.height(80.dp)) }
             }
 
@@ -751,11 +767,12 @@ fun MangaDetailScreen(
         )
     }
 
-    if (showPersonalNotes) {
-        NotesDialog(
-            initialText = mediaItem.personalNotes ?: "",
-            onDismiss   = { showPersonalNotes = false },
-            onSave      = { vm.setPersonalNotes(it) },
+
+    if (showStartDatePicker) {
+        MangaDatePickerDialog(
+            initial   = mediaItem.readingStartDate?.time,
+            onConfirm = { vm.setReadingStartDate(java.util.Date(it)); showStartDatePicker = false },
+            onDismiss = { showStartDatePicker = false },
         )
     }
 
@@ -807,6 +824,21 @@ private fun MangaInfoCard(label: String, value: String) {
         Box(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
             MangaInfoRow(label, value)
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MangaDatePickerDialog(initial: Long?, onConfirm: (Long) -> Unit, onDismiss: () -> Unit) {
+    val state = rememberDatePickerState(initialSelectedDateMillis = initial)
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = { state.selectedDateMillis?.let { onConfirm(it) } ?: onDismiss() }) { Text("Confirmar") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
+    ) {
+        DatePicker(state = state)
     }
 }
 

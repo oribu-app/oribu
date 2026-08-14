@@ -9,4 +9,5 @@ data class GamePlaythrough(
     val endDate: Date? = null,
     val hoursPlayed: Int? = null,
     val notes: String? = null,
+    val progressPercent: Int? = null,
 )

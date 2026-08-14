@@ -41,7 +41,10 @@ import com.hobbiesvault.data.db.entity.MovieListEntity
 import com.hobbiesvault.model.MediaItem
 import com.hobbiesvault.model.MediaStatus
 import com.hobbiesvault.service.MediaCacheService
-import com.hobbiesvault.ui.components.NotesDialog
+import com.hobbiesvault.ui.components.AnotacoesSection
+import com.hobbiesvault.ui.navigation.Routes
+import com.hobbiesvault.ui.navigation.navigateToAnotacoes
+import com.hobbiesvault.ui.navigation.rememberAnotacoesResult
 import com.hobbiesvault.ui.theme.ColorFilme
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -120,13 +123,15 @@ fun FilmDetailScreen(
 ) {
     LaunchedEffect(Unit) { vm.init(initialItem) }
 
+    val anotacoesResult = rememberAnotacoesResult(navController)
+    LaunchedEffect(anotacoesResult) { anotacoesResult?.let { vm.setNotes(it) } }
+
     val mediaItem = vm.mediaItem ?: initialItem
     val cache = vm.cache
 
     var showDelete        by remember { mutableStateOf(false) }
     var showStatusMenu    by remember { mutableStateOf(false) }
     var showMoreMenu      by remember { mutableStateOf(false) }
-    var showNotes         by remember { mutableStateOf(false) }
     var synopsisExpanded  by remember { mutableStateOf(false) }
     var showRelated       by remember { mutableStateOf(false) }
     var showAddToList     by remember { mutableStateOf(false) }
@@ -284,25 +289,17 @@ fun FilmDetailScreen(
                                 FilmStatusMenuItem(Icons.Default.CheckCircle, "Assistido", mediaItem.status == MediaStatus.WATCHED, ColorFilme) { vm.setStatus(MediaStatus.WATCHED); showStatusMenu = false }
                                 FilmStatusMenuItem(Icons.Default.Replay, "Reassistindo", mediaItem.status == MediaStatus.REWATCHING, ColorFilme) { vm.setStatus(MediaStatus.REWATCHING); showStatusMenu = false }
                                 FilmStatusMenuItem(Icons.Default.Queue, "Quero Assistir", mediaItem.status == MediaStatus.QUEUED, ColorFilme) { vm.setStatus(MediaStatus.QUEUED); showStatusMenu = false }
-                                FilmStatusMenuItem(Icons.Default.Schedule, "Aguardando Lançamento", mediaItem.status == MediaStatus.WAITING_RELEASE, ColorFilme) { vm.setStatus(MediaStatus.WAITING_RELEASE); showStatusMenu = false }
                             }
                         }
                         Spacer(Modifier.width(8.dp))
                         // "..." button
                         Box {
-                            Surface(
-                                shape   = RoundedCornerShape(10.dp),
-                                color   = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                                border  = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
-                                modifier = Modifier.size(48.dp).clickable { showMoreMenu = true },
-                            ) {
-                                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                    Icon(Icons.Default.MoreHoriz, null, modifier = Modifier.size(22.dp))
-                                }
+                            IconButton(onClick = { showMoreMenu = true }) {
+                                Icon(Icons.Default.MoreHoriz, null)
                             }
                             DropdownMenu(expanded = showMoreMenu, onDismissRequest = { showMoreMenu = false }) {
                                 DropdownMenuItem(text = { Text("Atualizar") }, leadingIcon = { Icon(Icons.Default.Refresh, null) }, onClick = { vm.refreshCache(); showMoreMenu = false })
-                                DropdownMenuItem(text = { Text("Notas") }, leadingIcon = { Icon(Icons.AutoMirrored.Filled.Notes, null) }, onClick = { showNotes = true; showMoreMenu = false })
+                                DropdownMenuItem(text = { Text("Anotações") }, leadingIcon = { Icon(Icons.AutoMirrored.Filled.Notes, null) }, onClick = { navController.navigateToAnotacoes(mediaItem); showMoreMenu = false })
                                 DropdownMenuItem(text = { Text("Filmes Relacionados") }, leadingIcon = { Icon(Icons.Default.MovieCreation, null) }, onClick = { showRelated = !showRelated; showMoreMenu = false })
                                 DropdownMenuItem(text = { Text("Adicionar à lista") }, leadingIcon = { Icon(Icons.Default.PlaylistAdd, null) }, onClick = { showAddToList = true; showMoreMenu = false })
                                 DropdownMenuItem(text = { Text(if (mediaItem.favorite) "Remover dos favoritos" else "Favoritar") }, leadingIcon = { Icon(if (mediaItem.favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder, null) }, onClick = { vm.toggleFavorite(); showMoreMenu = false })
@@ -454,6 +451,10 @@ fun FilmDetailScreen(
 
                 }
 
+                item {
+                    AnotacoesSection(mediaItem.personalNotes) { navController.navigateToAnotacoes(mediaItem) }
+                }
+
                 // ── Filmes Relacionados (toggle) ──────────────────────────────
                 if (showRelated && !related.isNullOrEmpty()) {
                     item {
@@ -468,7 +469,15 @@ fun FilmDetailScreen(
                                     val title     = rel["title"] as? String ?: rel["titulo"] as? String ?: ""
                                     val relPoster = rel["posterUrl"] as? String
                                     val year      = (rel["year"] as? Double)?.toInt() ?: (rel["ano"] as? Double)?.toInt()
-                                    Column(Modifier.width(90.dp)) {
+                                    val relId     = (rel["id"] as? Double)?.toInt()
+                                    Column(
+                                        Modifier
+                                            .width(90.dp)
+                                            .clickable(enabled = relId != null) {
+                                                navController.currentBackStackEntry?.savedStateHandle?.set("tmdbId", relId)
+                                                navController.navigate(Routes.FILMS_PREVIEW)
+                                            },
+                                    ) {
                                         AsyncImage(
                                             model              = relPoster,
                                             contentDescription = title,
@@ -509,13 +518,6 @@ fun FilmDetailScreen(
         }
     }
 
-    if (showNotes) {
-        NotesDialog(
-            initialText = mediaItem.personalNotes ?: "",
-            onDismiss   = { showNotes = false },
-            onSave      = { vm.setNotes(it) },
-        )
-    }
 
     if (showAddToList) {
         AddToListSheet(mediaItemId = mediaItem.id, onDismiss = { showAddToList = false })

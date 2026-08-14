@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items as lazyItems
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -34,6 +35,7 @@ import com.hobbiesvault.model.MediaItem
 import com.hobbiesvault.model.MediaStatus
 import com.hobbiesvault.model.MediaType
 import com.hobbiesvault.ui.components.EmptyState
+import com.hobbiesvault.ui.components.GenreFilterRow
 import com.hobbiesvault.ui.components.OverflowMenu
 import com.hobbiesvault.ui.components.OverflowMenuItem
 import com.hobbiesvault.ui.components.ProportionalTabRow
@@ -79,6 +81,12 @@ fun SeriesScreen(navController: NavController, vm: SeriesViewModel = viewModel()
         }.sortedByDescending { it.completionDate ?: it.addedDate }
     }
 
+    var selectedGenre by remember { mutableStateOf<String?>(null) }
+    var selectedPlatform by remember { mutableStateOf<String?>(null) }
+    var favoritesOnly by remember { mutableStateOf(false) }
+    val availableGenres = remember(allItems) { allItems.mapNotNull { it.genre }.distinct().sorted() }
+    val availablePlatforms = remember(allItems) { allItems.mapNotNull { it.streamingPlatform }.distinct().sorted() }
+
     val filtered = remember(allItems, selectedTab) {
         when (selectedTab) {
             0 -> allItems
@@ -90,9 +98,12 @@ fun SeriesScreen(navController: NavController, vm: SeriesViewModel = viewModel()
         }
     }
 
-    // Episodes grouped by series id, for Histórico view
-    val episodesBySeriesId = remember(allEpisodes) {
-        allEpisodes.groupBy { it.mediaItemId }
+    // Histórico = lista plana de episódios assistidos (estilo SeriesGuide), mais
+    // recentes primeiro, independente do status atual da série.
+    val watchedEpisodesFlat = remember(allEpisodes, allItems) {
+        val itemsById = allItems.associateBy { it.id }
+        allEpisodes.mapNotNull { ep -> itemsById[ep.mediaItemId]?.let { series -> ep to series } }
+            .sortedByDescending { it.first.watchedAtMs }
     }
 
     Scaffold(
@@ -142,84 +153,28 @@ fun SeriesScreen(navController: NavController, vm: SeriesViewModel = viewModel()
         }
     ) { padding ->
         Box(Modifier.padding(padding).fillMaxSize()) {
-            // ── Histórico — mostra episódios assistidos agrupados por série ──
+            // ── Histórico — lista plana de episódios assistidos (estilo SeriesGuide) ──
             if (selectedTab == 3) {
-                if (history.isEmpty()) {
-                    EmptyState("Histórico vazio", "Séries concluídas aparecerão aqui",
+                if (watchedEpisodesFlat.isEmpty()) {
+                    EmptyState("Histórico vazio", "Episódios que você marcar como assistidos aparecerão aqui",
                         "Adicionar série", onButton = { navController.navigate(Routes.SERIES_ADD) })
                 } else {
-                    val seriesById = remember(history) { history.associateBy { it.id } }
                     val dateFmt = remember { SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")) }
 
                     LazyColumn(
                         Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(bottom = 88.dp),
                     ) {
-                        history.forEach { series ->
-                            val episodes = episodesBySeriesId[series.id] ?: emptyList()
-
-                            item(key = "series_header_${series.id}") {
-                                Row(
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .clickable { navigateToDetail(navController, series) }
-                                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                ) {
-                                    if (series.coverUrl != null) {
-                                        AsyncImage(
-                                            model              = series.coverUrl,
-                                            contentDescription = null,
-                                            contentScale       = ContentScale.Crop,
-                                            modifier           = Modifier
-                                                .width(44.dp)
-                                                .height(64.dp)
-                                                .clip(RoundedCornerShape(4.dp)),
-                                        )
-                                    } else {
-                                        Box(
-                                            Modifier.width(44.dp).height(64.dp)
-                                                .background(ColorSerie.copy(alpha = 0.15f), RoundedCornerShape(4.dp)),
-                                            contentAlignment = Alignment.Center,
-                                        ) {
-                                            Icon(Icons.Outlined.Tv, null, tint = ColorSerie.copy(alpha = 0.4f), modifier = Modifier.size(20.dp))
-                                        }
-                                    }
-                                    Column(Modifier.weight(1f)) {
-                                        Text(series.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                        Text(
-                                            "${episodes.size} episódio${if (episodes.size != 1) "s" else ""} assistido${if (episodes.size != 1) "s" else ""}",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                                        )
-                                    }
-                                    Icon(Icons.Outlined.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f), modifier = Modifier.size(18.dp))
-                                }
-                            }
-
-                            if (episodes.isNotEmpty()) {
-                                lazyItems(
-                                    items    = episodes.take(5),
-                                    key      = { "ep_${series.id}_${it.season}_${it.episode}" },
-                                ) { ep ->
-                                    EpisodeHistoryRow(ep = ep, dateFmt = dateFmt)
-                                }
-                                if (episodes.size > 5) {
-                                    item(key = "ep_more_${series.id}") {
-                                        Text(
-                                            "… e mais ${episodes.size - 5} episódio${if (episodes.size - 5 != 1) "s" else ""}",
-                                            style    = MaterialTheme.typography.bodySmall,
-                                            color    = ColorSerie,
-                                            modifier = Modifier.padding(start = 72.dp, bottom = 8.dp),
-                                        )
-                                    }
-                                }
-                            }
-
-                            item(key = "divider_${series.id}") {
-                                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                            }
+                        lazyItems(
+                            items = watchedEpisodesFlat,
+                            key   = { (ep, series) -> "ep_${series.id}_${ep.season}_${ep.episode}" },
+                        ) { (ep, series) ->
+                            EpisodeHistoryFlatRow(
+                                ep       = ep,
+                                series   = series,
+                                dateFmt  = dateFmt,
+                                onClick  = { navigateToDetail(navController, series) },
+                            )
                         }
                     }
                 }
@@ -232,14 +187,47 @@ fun SeriesScreen(navController: NavController, vm: SeriesViewModel = viewModel()
                 }
                 EmptyState(title, subtitle, "Adicionar série", onButton = { navController.navigate(Routes.SERIES_ADD) })
             } else {
-                LazyVerticalGrid(
-                    columns               = GridCells.Fixed(3),
-                    contentPadding        = PaddingValues(12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement   = Arrangement.spacedBy(8.dp),
-                ) {
-                    items(filtered) { item ->
-                        SeriesCard(item = item, onTap = { navigateToDetail(navController, item) })
+                val genreFiltered = if (selectedTab == 0) {
+                    filtered
+                        .filter { selectedGenre == null || it.genre == selectedGenre }
+                        .filter { selectedPlatform == null || it.streamingPlatform == selectedPlatform }
+                        .filter { !favoritesOnly || it.favorite }
+                } else filtered
+
+                Column(Modifier.fillMaxSize()) {
+                    if (selectedTab == 0) {
+                        Row(
+                            Modifier.padding(start = 12.dp, top = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            FilterChip(
+                                selected = favoritesOnly,
+                                onClick  = { favoritesOnly = !favoritesOnly },
+                                label    = { Text("Favoritos") },
+                                leadingIcon = { Icon(Icons.Default.Favorite, null, modifier = Modifier.size(16.dp)) },
+                                colors   = FilterChipDefaults.filterChipColors(selectedContainerColor = ColorSerie.copy(alpha = 0.18f), selectedLabelColor = ColorSerie),
+                            )
+                        }
+                        if (availableGenres.isNotEmpty()) {
+                            GenreFilterRow(availableGenres, selectedGenre, ColorSerie) { selectedGenre = it }
+                        }
+                        if (availablePlatforms.isNotEmpty()) {
+                            GenreFilterRow(availablePlatforms, selectedPlatform, ColorSerie) { selectedPlatform = it }
+                        }
+                    }
+                    if (genreFiltered.isEmpty()) {
+                        EmptyState("Nenhuma série com esse filtro", "Tente outro filtro")
+                    } else {
+                        LazyVerticalGrid(
+                            columns               = GridCells.Fixed(3),
+                            contentPadding        = PaddingValues(12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement   = Arrangement.spacedBy(8.dp),
+                        ) {
+                            items(genreFiltered) { item ->
+                                SeriesCard(item = item, onTap = { navigateToDetail(navController, item) })
+                            }
+                        }
                     }
                 }
             }
@@ -248,28 +236,51 @@ fun SeriesScreen(navController: NavController, vm: SeriesViewModel = viewModel()
 }
 
 @Composable
-private fun EpisodeHistoryRow(ep: SeriesEpisodeEntity, dateFmt: SimpleDateFormat) {
+private fun EpisodeHistoryFlatRow(
+    ep: SeriesEpisodeEntity,
+    series: MediaItem,
+    dateFmt: SimpleDateFormat,
+    onClick: () -> Unit,
+) {
     Row(
         Modifier
             .fillMaxWidth()
-            .padding(start = 72.dp, end = 16.dp, top = 3.dp, bottom = 3.dp),
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment     = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(
-            "T${ep.season} E${ep.episode}${if (!ep.episodeName.isNullOrBlank()) " · ${ep.episodeName}" else ""}",
-            style    = MaterialTheme.typography.bodySmall,
-            color    = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
-        Text(
-            dateFmt.format(Date(ep.watchedAtMs)),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f),
-            fontSize = 10.sp,
-        )
+        if (series.coverUrl != null) {
+            AsyncImage(
+                model              = series.coverUrl,
+                contentDescription = null,
+                contentScale       = ContentScale.Crop,
+                modifier           = Modifier.width(48.dp).height(68.dp).clip(RoundedCornerShape(4.dp)),
+            )
+        } else {
+            Box(
+                Modifier.width(48.dp).height(68.dp)
+                    .background(ColorSerie.copy(alpha = 0.15f), RoundedCornerShape(4.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Icons.Outlined.Tv, null, tint = ColorSerie.copy(alpha = 0.4f), modifier = Modifier.size(20.dp))
+            }
+        }
+        Column(Modifier.weight(1f)) {
+            Text(
+                dateFmt.format(Date(ep.watchedAtMs)),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+            )
+            Text(series.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                "${ep.season}x${ep.episode}${if (!ep.episodeName.isNullOrBlank()) " ${ep.episodeName}" else ""}",
+                style    = MaterialTheme.typography.bodySmall,
+                color    = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
 

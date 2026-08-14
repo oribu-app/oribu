@@ -81,7 +81,8 @@ class AniListService(private val accessToken: String? = null) {
         return (query(gql, mapOf("id" to id))["Media"] as? Map<String, Any?>)?.let { m ->
             buildMap {
                 val title = m["title"] as? Map<*, *>
-                put("title",    title?.get("english") ?: title?.get("romaji") ?: title?.get("native"))
+                put("title",       title?.get("english") ?: title?.get("romaji") ?: title?.get("native"))
+                put("titleRomaji", title?.get("romaji"))
                 put("coverUrl", (m["coverImage"] as? Map<*, *>)?.let { it["extraLarge"] ?: it["large"] })
                 put("synopsis", (m["description"] as? String)?.replace(Regex("<[^>]*>"), ""))
                 put("genres",   m["genres"])

@@ -32,12 +32,25 @@ class GoogleBooksService(private val apiKey: String? = null) {
         RegexOption.IGNORE_CASE
     )
 
-    fun searchBooks(query: String, field: String = "intitle"): List<ApiSearchResult> {
+    // field == null faz busca geral (título, autor, descrição etc., como o usuário espera
+    // ao digitar "Stephen King" ou o nome de um livro). Restringir a intitle fazia buscas por
+    // nome de autor não encontrarem quase nada em pt-BR e o Google preencher com resultados
+    // de baixa relevância em outros idiomas para completar a página.
+    fun searchBooks(query: String, field: String? = null): List<ApiSearchResult> {
         if (query.isBlank()) return emptyList()
-        val q   = URLEncoder.encode("$field:${query.trim()}", "UTF-8")
-        val key = if (!apiKey.isNullOrEmpty()) "&key=$apiKey" else ""
-        val url = "$base/volumes?q=$q&maxResults=20&langRestrict=pt&orderBy=relevance$key"
-        val raw = (get(url)["items"] as? List<*>)?.filterIsInstance<Map<String, Any?>>()
+        val rawQuery = if (field != null) "$field:${query.trim()}" else query.trim()
+        val results  = searchRaw(rawQuery, langRestrict = "pt")
+        // Sem restrição de idioma, como fallback, para não deixar a busca vazia quando não
+        // existir edição em pt-BR cadastrada.
+        return results.ifEmpty { searchRaw(rawQuery, langRestrict = null) }
+    }
+
+    private fun searchRaw(rawQuery: String, langRestrict: String?): List<ApiSearchResult> {
+        val q    = URLEncoder.encode(rawQuery, "UTF-8")
+        val key  = if (!apiKey.isNullOrEmpty()) "&key=$apiKey" else ""
+        val lang = if (langRestrict != null) "&langRestrict=$langRestrict" else ""
+        val url  = "$base/volumes?q=$q&maxResults=20&orderBy=relevance$lang$key"
+        val raw  = (get(url)["items"] as? List<*>)?.filterIsInstance<Map<String, Any?>>()
             ?.mapNotNull { mapBook(it) } ?: emptyList()
 
         // Descarta entradas de baixa qualidade do catálogo (box sets, guias de estudo, etc.

@@ -42,7 +42,9 @@ import com.hobbiesvault.model.MediaItem
 import com.hobbiesvault.model.MediaStatus
 import com.hobbiesvault.service.ApiServices
 import com.hobbiesvault.service.MediaCacheService
-import com.hobbiesvault.ui.components.NotesDialog
+import com.hobbiesvault.ui.components.AnotacoesSection
+import com.hobbiesvault.ui.navigation.navigateToAnotacoes
+import com.hobbiesvault.ui.navigation.rememberAnotacoesResult
 import com.hobbiesvault.ui.theme.ColorSerie
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -233,12 +235,14 @@ fun SeriesDetailScreen(
 ) {
     LaunchedEffect(Unit) { vm.init(initialItem) }
 
+    val anotacoesResult = rememberAnotacoesResult(navController)
+    LaunchedEffect(anotacoesResult) { anotacoesResult?.let { vm.setNotes(it) } }
+
     val mediaItem = vm.mediaItem ?: initialItem
     val cache     = vm.cache
 
     var showDelete       by remember { mutableStateOf(false) }
     var showMoreMenu     by remember { mutableStateOf(false) }
-    var showNotes        by remember { mutableStateOf(false) }
     var showStatusMenu   by remember { mutableStateOf(false) }
     var synopsisExpanded by remember { mutableStateOf(false) }
     var synopsisOverflows by remember { mutableStateOf(false) }
@@ -339,12 +343,7 @@ fun SeriesDetailScreen(
                         }
                         Spacer(Modifier.width(12.dp))
                         Box {
-                            Box(
-                                Modifier.size(44.dp)
-                                    .border(1.5.dp, Color(0xFF444444), RoundedCornerShape(4.dp))
-                                    .clickable { showMoreMenu = true },
-                                contentAlignment = Alignment.Center,
-                            ) {
+                            IconButton(onClick = { showMoreMenu = true }) {
                                 Icon(Icons.Default.MoreHoriz, null)
                             }
                             DropdownMenu(expanded = showMoreMenu, onDismissRequest = { showMoreMenu = false }) {
@@ -354,9 +353,9 @@ fun SeriesDetailScreen(
                                     onClick = { vm.refreshCache(); showMoreMenu = false },
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("Notas") },
+                                    text = { Text("Anotações") },
                                     leadingIcon = { Icon(Icons.AutoMirrored.Filled.Notes, null) },
-                                    onClick = { showNotes = true; showMoreMenu = false },
+                                    onClick = { navController.navigateToAnotacoes(mediaItem); showMoreMenu = false },
                                 )
                                 DropdownMenuItem(
                                     text = { Text(if (mediaItem.favorite) "Remover dos favoritos" else "Favoritar") },
@@ -534,6 +533,10 @@ fun SeriesDetailScreen(
                     }
                 }
 
+                item {
+                    AnotacoesSection(mediaItem.personalNotes) { navController.navigateToAnotacoes(mediaItem) }
+                }
+
                 // ── Séries relacionadas ──────────────────────────────────────────
                 if (showRelated && !related.isNullOrEmpty()) {
                     item {
@@ -582,13 +585,6 @@ fun SeriesDetailScreen(
         }
     }
 
-    if (showNotes) {
-        NotesDialog(
-            initialText = mediaItem.personalNotes ?: "",
-            onDismiss   = { showNotes = false },
-            onSave      = { vm.setNotes(it) },
-        )
-    }
 
     if (showDelete) {
         AlertDialog(

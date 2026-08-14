@@ -25,6 +25,7 @@ import com.hobbiesvault.ui.screens.games.GamesScreen
 import com.hobbiesvault.ui.screens.films.AddFilmScreen
 import com.hobbiesvault.ui.screens.films.FilmDetailScreen
 import com.hobbiesvault.ui.screens.films.FilmsScreen
+import com.hobbiesvault.ui.screens.films.MoviePreviewScreen
 import com.hobbiesvault.ui.screens.series.AddSeriesScreen
 import com.hobbiesvault.ui.screens.series.SeriesDetailScreen
 import com.hobbiesvault.ui.screens.series.SeriesScreen
@@ -32,6 +33,7 @@ import com.hobbiesvault.ui.screens.manga.AddMangaScreen
 import com.hobbiesvault.ui.screens.manga.MangaDetailScreen
 import com.hobbiesvault.ui.screens.manga.MangaScreen
 import com.hobbiesvault.ui.screens.books.AddBookScreen
+import com.hobbiesvault.ui.screens.books.AddQuoteScreen
 import com.hobbiesvault.ui.screens.books.BookDetailScreen
 import com.hobbiesvault.ui.screens.books.BooksScreen
 import com.hobbiesvault.ui.screens.HomeScreen
@@ -48,6 +50,7 @@ import com.hobbiesvault.ui.screens.stats.StatsDetailsScreen
 import com.hobbiesvault.ui.screens.stats.StatsFilteredListScreen
 import com.hobbiesvault.ui.screens.CalendarScreen
 import com.hobbiesvault.ui.screens.AboutScreen
+import com.hobbiesvault.ui.screens.AnotacoesScreen
 
 private data class BottomNavItem(
     val route: String,
@@ -134,6 +137,10 @@ fun MainNavGraph() {
                 val item = navController.previousBackStackEntry?.savedStateHandle?.get<MediaItem>("item")
                 if (item != null) FilmDetailScreen(navController, item)
             }
+            composable(Routes.FILMS_PREVIEW) {
+                val tmdbId = navController.previousBackStackEntry?.savedStateHandle?.get<Int>("tmdbId")
+                if (tmdbId != null) MoviePreviewScreen(navController, tmdbId)
+            }
 
             composable(Routes.SERIES_ADD)    { AddSeriesScreen(navController) }
             composable(Routes.SERIES_DETAIL) {
@@ -152,6 +159,10 @@ fun MainNavGraph() {
                 val item = navController.previousBackStackEntry?.savedStateHandle?.get<MediaItem>("item")
                 if (item != null) BookDetailScreen(navController, item)
             }
+            composable(Routes.BOOKS_ADD_QUOTE) {
+                val item = navController.previousBackStackEntry?.savedStateHandle?.get<MediaItem>("quoteBook")
+                if (item != null) AddQuoteScreen(navController, item)
+            }
 
             composable(Routes.SEARCH)   { SearchScreen(navController) }
             composable(Routes.SETTINGS) { SettingsScreen(navController) }
@@ -166,6 +177,7 @@ fun MainNavGraph() {
             composable(Routes.STATS_FILTERED_LIST) { StatsFilteredListScreen(navController) }
             composable(Routes.CALENDAR) { CalendarScreen(navController) }
             composable(Routes.ABOUT)    { AboutScreen(navController) }
+            composable(Routes.ANOTACOES) { AnotacoesScreen(navController) }
         }
     }
 }

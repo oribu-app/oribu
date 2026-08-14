@@ -16,8 +16,8 @@ import kotlinx.coroutines.launch
 private val Context.platformDataStore by preferencesDataStore(name = "platform_prefs")
 
 /**
- * Quais plataformas de jogo aparecem como opção de filtro na tela de Jogos. Por padrão todas as
- * plataformas do enum [GameConsole] estão habilitadas; o usuário personaliza em
+ * Quais plataformas de jogo aparecem como opção de filtro na tela de Jogos. Por padrão só as
+ * gerações mais recentes ([GameConsole.modern]) estão habilitadas; o usuário personaliza em
  * Configurações → Plataformas.
  */
 object PlatformPreferences {
@@ -25,7 +25,7 @@ object PlatformPreferences {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var appContext: Context
 
-    private val _visibleConsoles = MutableStateFlow(GameConsole.entries.toSet())
+    private val _visibleConsoles = MutableStateFlow(GameConsole.modern().toSet())
     val visibleConsoles: StateFlow<Set<GameConsole>> = _visibleConsoles
 
     fun init(context: Context) {
@@ -36,7 +36,7 @@ object PlatformPreferences {
                     prefs[VISIBLE_CONSOLES_KEY]
                         ?.mapNotNull { GameConsole.fromDb(it) }
                         ?.toSet()
-                        ?: GameConsole.entries.toSet()
+                        ?: GameConsole.modern().toSet()
                 }
                 .collect { _visibleConsoles.value = it }
         }

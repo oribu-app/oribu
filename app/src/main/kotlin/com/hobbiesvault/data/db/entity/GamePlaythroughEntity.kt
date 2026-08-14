@@ -15,13 +15,15 @@ data class GamePlaythroughEntity(
     @ColumnInfo(name = "data_fim_ms")    val endDateMs: Long?,
     @ColumnInfo(name = "horas_jogadas")  val hoursPlayed: Int?,
     @ColumnInfo(name = "notas")          val notes: String?,
+    @ColumnInfo(name = "progresso")      val progressPercent: Int? = null,
 ) {
     fun toDomain() = GamePlaythrough(
-        id          = id,
-        title       = title,
-        startDate   = startDateMs?.let { Date(it) },
-        endDate     = endDateMs?.let { Date(it) },
-        hoursPlayed = hoursPlayed,
-        notes       = notes,
+        id              = id,
+        title           = title,
+        startDate       = startDateMs?.let { Date(it) },
+        endDate         = endDateMs?.let { Date(it) },
+        hoursPlayed     = hoursPlayed,
+        notes           = notes,
+        progressPercent = progressPercent,
     )
 }

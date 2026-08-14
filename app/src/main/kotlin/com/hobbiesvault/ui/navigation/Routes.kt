@@ -8,6 +8,7 @@ object Routes {
     const val FILMS    = "films"
     const val FILMS_ADD    = "films/add"
     const val FILMS_DETAIL = "films/detail"
+    const val FILMS_PREVIEW = "films/preview"
     const val SERIES   = "series"
     const val SERIES_ADD    = "series/add"
     const val SERIES_DETAIL = "series/detail"
@@ -17,6 +18,7 @@ object Routes {
     const val BOOKS    = "books"
     const val BOOKS_ADD    = "books/add"
     const val BOOKS_DETAIL = "books/detail"
+    const val BOOKS_ADD_QUOTE = "books/quote"
     const val SEARCH   = "search"
     const val SETTINGS = "settings"
     const val SETTINGS_APPEARANCE    = "settings/appearance"
@@ -30,4 +32,5 @@ object Routes {
     const val STATS_FILTERED_LIST = "stats/filteredList"
     const val CALENDAR = "calendar"
     const val ABOUT    = "about"
+    const val ANOTACOES = "anotacoes"
 }
