@@ -64,7 +64,9 @@ class TmdbService(
 
     fun searchMoviesByStreaming(name: String): List<ApiSearchResult> {
         val networkId = streamingProviderId(name) ?: return emptyList()
-        val url = "$base/discover/movie?language=$lang&region=$region&with_watch_providers=$networkId&watch_region=$region&sort_by=release_date.desc"
+        val url =
+            "$base/discover/movie?language=$lang&region=$region&with_watch_providers=$networkId" +
+                "&watch_region=$region&sort_by=release_date.desc"
         return (get(url)["results"] as? List<*>)
             ?.filterIsInstance<Map<String, Any?>>()
             ?.map { mapMovie(it) } ?: emptyList()

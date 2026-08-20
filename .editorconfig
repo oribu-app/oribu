@@ -2,3 +2,7 @@ root = true
 
 [*.{kt,kts}]
 ktlint_function_naming_ignore_when_annotated_with = Composable
+# Compose's own "kitchen sink" packages (layout, material3, runtime, ...) are
+# conventionally wildcard-imported throughout the codebase already — disabling
+# rather than manually expanding ~150 imports across every screen.
+ktlint_standard_no-wildcard-imports = disabled

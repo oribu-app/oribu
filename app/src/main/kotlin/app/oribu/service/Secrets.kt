@@ -22,10 +22,10 @@ data class Secrets(
     val itadConfigurado get() = !itadApiKey.isNullOrEmpty()
 
     companion object {
-        private var _instance: Secrets? = null
+        private var instance: Secrets? = null
 
         fun load(context: Context): Secrets {
-            _instance?.let { return it }
+            instance?.let { return it }
             return try {
                 val raw =
                     context.assets
@@ -44,9 +44,9 @@ data class Secrets(
                     steamApiKey = map["steam_api_key"],
                     steamId = map["steam_id"],
                     itadApiKey = map["itad_api_key"],
-                ).also { _instance = it }
+                ).also { instance = it }
             } catch (_: Exception) {
-                Secrets().also { _instance = it }
+                Secrets().also { instance = it }
             }
         }
     }

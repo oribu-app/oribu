@@ -58,7 +58,9 @@ object DebugSeeder {
                 addedDate = offsetDays(200),
                 completionDate = offsetDays(120),
                 releaseDate = offsetDays(1400),
-                personalNotes = "Terceira run terminada. Malenia continua sendo o boss mais difícil que já enfrentei — vale revisitar com build de sangramento na próxima vez.",
+                personalNotes =
+                    "Terceira run terminada. Malenia continua sendo o boss mais difícil " +
+                        "que já enfrentei — vale revisitar com build de sangramento na próxima vez.",
             ),
             MediaItem(
                 type = MediaType.GAME,
@@ -147,7 +149,9 @@ object DebugSeeder {
                 developer = "Larian Studios",
                 coverUrl = cover("bg3"),
                 addedDate = offsetDays(90),
-                personalNotes = "Rodando Tactician com um Gloomstalker/Assassin multiclasse. Ainda no Ato 2, precisa decidir o que fazer com a Nightsong.",
+                personalNotes =
+                    "Rodando Tactician com um Gloomstalker/Assassin multiclasse. Ainda " +
+                        "no Ato 2, precisa decidir o que fazer com a Nightsong.",
             ),
             MediaItem(
                 type = MediaType.GAME,
@@ -566,7 +570,10 @@ object DebugSeeder {
                 addedDate = offsetDays(500),
                 readingStartDate = offsetDays(470),
                 completionDate = offsetDays(460),
-                bookReviewText = "Reler depois do filme foi uma experiência completamente diferente — Herbert constrói a política de Arrakis com uma paciência que o cinema não tem espaço pra replicar.",
+                bookReviewText =
+                    "Reler depois do filme foi uma experiência completamente diferente — " +
+                        "Herbert constrói a política de Arrakis com uma paciência que o cinema não " +
+                        "tem espaço pra replicar.",
                 personalNotes = "Comprar a edição especial com os apêndices completos quando sair reimpressão em pt-BR.",
             ),
             MediaItem(
@@ -593,7 +600,9 @@ object DebugSeeder {
                 addedDate = offsetDays(700),
                 readingStartDate = offsetDays(660),
                 completionDate = offsetDays(650),
-                bookReviewText = "Ótimo panorama, mas alguns capítulos finais generalizam demais. Ainda assim, mudou como eu penso sobre mitos coletivos.",
+                bookReviewText =
+                    "Ótimo panorama, mas alguns capítulos finais generalizam demais. " +
+                        "Ainda assim, mudou como eu penso sobre mitos coletivos.",
             ),
             MediaItem(
                 type = MediaType.BOOK,

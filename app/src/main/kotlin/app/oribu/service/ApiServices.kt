@@ -18,16 +18,16 @@ object ApiServices {
     private var _psn: PsnService? = null
     private var _hltb: HltbService? = null
     private var _itad: ItadService? = null
-    private var _igdbToken: IgdbToken? = null
+    private var igdbToken: IgdbToken? = null
     private var _gameSearch: GameSearchService? = null
     private var _gameCache: GameCacheService? = null
     private var _aniListUsername: String? = null
-    private var _initialized = false
+    private var initialized = false
 
     // ── Initialization ────────────────────────────────────────────────────────
 
     suspend fun init(context: Context) {
-        if (_initialized) return
+        if (initialized) return
         val secrets = Secrets.load(context)
 
         withContext(Dispatchers.IO) {
@@ -41,9 +41,9 @@ object ApiServices {
             // IGDB
             if (secrets.igdbConfigurado) {
                 runCatching {
-                    _igdbToken = IgdbAuthService.loadCachedToken(context, secrets.igdbClientId)
+                    igdbToken = IgdbAuthService.loadCachedToken(context, secrets.igdbClientId)
                         ?: IgdbAuthService.getAccessToken(context, secrets.igdbClientId!!, secrets.igdbClientSecret!!)
-                    _igdb = IgdbService(clientId = secrets.igdbClientId!!, accessToken = _igdbToken!!.accessToken)
+                    _igdb = IgdbService(clientId = secrets.igdbClientId!!, accessToken = igdbToken!!.accessToken)
                 }
             }
 
@@ -93,7 +93,7 @@ object ApiServices {
             }
         }
 
-        _initialized = true
+        initialized = true
     }
 
     // ── Runtime OAuth2 token updates ──────────────────────────────────────────
@@ -112,15 +112,15 @@ object ApiServices {
     }
 
     suspend fun renewIgdbIfNeeded(context: Context) {
-        if (_igdbToken == null || !_igdbToken!!.isExpired) return
+        if (igdbToken == null || !igdbToken!!.isExpired) return
         val secrets = Secrets.load(context)
         if (!secrets.igdbConfigurado) return
         runCatching {
-            _igdbToken =
+            igdbToken =
                 withContext(Dispatchers.IO) {
                     IgdbAuthService.getAccessToken(context, secrets.igdbClientId!!, secrets.igdbClientSecret!!)
                 }
-            _igdb = IgdbService(clientId = secrets.igdbClientId!!, accessToken = _igdbToken!!.accessToken)
+            _igdb = IgdbService(clientId = secrets.igdbClientId!!, accessToken = igdbToken!!.accessToken)
         }
     }
 
@@ -159,7 +159,12 @@ object ApiServices {
             }
 
             MediaType.GAME -> {
-                if (!igdbAvailable) "IGDB não configurado — adicionando igdb_client_id e igdb_client_secret ao secrets.json habilita busca online (cache local ainda funciona)" else null
+                if (!igdbAvailable) {
+                    "IGDB não configurado — adicionando igdb_client_id e igdb_client_secret ao " +
+                        "secrets.json habilita busca online (cache local ainda funciona)"
+                } else {
+                    null
+                }
             }
 
             MediaType.MANGA, MediaType.WEBTOON, MediaType.BOOK -> {

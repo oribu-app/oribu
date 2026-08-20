@@ -131,8 +131,13 @@ class IgdbService(
         val filter = "(rating_count > 5 | aggregated_rating_count > 0 | hypes > 5)"
         val plats = "(6,3,14,48,167,9,8,38,46,49,169,12,11,5,130,390,41,18,19,20,21,22,23,24,25,26,33,36,37,45,47,56,58,67,68,78,92)"
 
-        val wildcardReleased = "fields $baseFields; where name ~ *\"$q\"* & cover != null & first_release_date != null & first_release_date <= $now & $filter & platforms = $plats & version_parent = null; sort first_release_date desc; limit 500;"
-        val wildcardUpcoming = "fields $baseFields; where name ~ *\"$q\"* & cover != null & hypes > 5 & (first_release_date > $now | first_release_date = null); sort hypes desc; limit 100;"
+        val wildcardReleased =
+            "fields $baseFields; where name ~ *\"$q\"* & cover != null & " +
+                "first_release_date != null & first_release_date <= $now & $filter & platforms = $plats & " +
+                "version_parent = null; sort first_release_date desc; limit 500;"
+        val wildcardUpcoming =
+            "fields $baseFields; where name ~ *\"$q\"* & cover != null & hypes > 5 & " +
+                "(first_release_date > $now | first_release_date = null); sort hypes desc; limit 100;"
         val ftsBody = "fields $baseFields; search \"$q\"; where cover != null & $filter; limit 500;"
 
         val released = post("games", wildcardReleased)
@@ -152,10 +157,10 @@ class IgdbService(
                 .toList()
         if (cleaned.isEmpty()) return emptyList()
         val where = cleaned.joinToString(" | ") { "name ~ \"$it\"" }
-        val body = "fields $baseFields, summary; where ($where) & version_parent = null & category = (0,2,4,8,9,10,11) & cover != null; limit ${(cleaned.size * 2).coerceIn(
-            1,
-            100,
-        )};"
+        val limit = (cleaned.size * 2).coerceIn(1, 100)
+        val body =
+            "fields $baseFields, summary; where ($where) & version_parent = null & " +
+                "category = (0,2,4,8,9,10,11) & cover != null; limit $limit;"
         return filterAndRank(post("games", body))
     }
 
@@ -168,7 +173,11 @@ class IgdbService(
             "name ~ \"$q\" & (aggregated_rating_count > 0 | parent_game != null | hypes > 0 | follows > 0)",
             "name ~ *\"$q\"* & (aggregated_rating_count > 0 | parent_game != null | hypes > 0 | follows > 0)",
         )) {
-            val body = "fields name, cover.url, first_release_date, genres.name, summary, involved_companies.company.name, involved_companies.developer, involved_companies.publisher, platforms.name, platforms.id; where $where; sort first_release_date desc; limit 1;"
+            val body =
+                "fields name, cover.url, first_release_date, genres.name, summary, " +
+                    "involved_companies.company.name, involved_companies.developer, " +
+                    "involved_companies.publisher, platforms.name, platforms.id; where $where; " +
+                    "sort first_release_date desc; limit 1;"
             val results = post("games", body)
             if (results.isNotEmpty()) return mapGame(results.first())
         }
@@ -176,7 +185,10 @@ class IgdbService(
     }
 
     fun getGameDetails(igdbId: Int): ApiSearchResult {
-        val body = "where id = $igdbId; fields name, cover.url, first_release_date, genres.name, summary, involved_companies.company.name, involved_companies.developer, involved_companies.publisher, platforms.name, platforms.id, artworks.url; limit 1;"
+        val body =
+            "where id = $igdbId; fields name, cover.url, first_release_date, genres.name, " +
+                "summary, involved_companies.company.name, involved_companies.developer, " +
+                "involved_companies.publisher, platforms.name, platforms.id, artworks.url; limit 1;"
         val results = post("games", body)
         if (results.isEmpty()) throw Exception("Game not found: $igdbId")
         return mapGame(results.first()) ?: ApiSearchResult(externalId = igdbId.toString(), title = "")
@@ -224,7 +236,9 @@ class IgdbService(
 
     fun getDetails(name: String): Map<String, Any?>? {
         val q = name.replace("\"", "")
-        val body = "fields name, cover.url, first_release_date, summary, storyline, genres.name, platforms.name; where name = \"$q\" & cover != null; limit 5;"
+        val body =
+            "fields name, cover.url, first_release_date, summary, storyline, genres.name, " +
+                "platforms.name; where name = \"$q\" & cover != null; limit 5;"
         val results = post("games", body)
         if (results.isEmpty()) return null
         val r = results.first()
@@ -392,7 +406,7 @@ data class IgdbTimeToBeat(
 }
 
 object IgdbAuthService {
-    private const val tokenUrl = "https://id.twitch.tv/oauth2/token"
+    private const val TOKEN_URL = "https://id.twitch.tv/oauth2/token"
     private val client = OkHttpClient()
 
     private fun tokenFile(context: Context) = File(context.filesDir, "igdb_token.json")
@@ -436,7 +450,7 @@ object IgdbAuthService {
         val req =
             Request
                 .Builder()
-                .url(tokenUrl)
+                .url(TOKEN_URL)
                 .post(body.toRequestBody("application/x-www-form-urlencoded".toMediaType()))
                 .build()
         val resp = client.newCall(req).execute()

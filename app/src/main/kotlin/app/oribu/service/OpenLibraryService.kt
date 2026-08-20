@@ -24,7 +24,9 @@ class OpenLibraryService {
     fun searchBooks(query: String): List<ApiSearchResult> {
         if (query.isBlank()) return emptyList()
         val q = URLEncoder.encode(query.trim(), "UTF-8")
-        val url = "$base/search.json?q=$q&limit=10&fields=key,title,author_name,cover_i,first_publish_year,subject,number_of_pages_median,isbn"
+        val url =
+            "$base/search.json?q=$q&limit=10&fields=key,title,author_name,cover_i," +
+                "first_publish_year,subject,number_of_pages_median,isbn"
         return (get(url)["docs"] as? List<*>)
             ?.filterIsInstance<Map<String, Any?>>()
             ?.mapNotNull { mapBook(it) } ?: emptyList()

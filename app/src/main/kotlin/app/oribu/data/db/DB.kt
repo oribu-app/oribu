@@ -6,10 +6,10 @@ import app.oribu.data.repository.MediaCacheRepository
 import app.oribu.data.repository.MediaRepository
 
 object DB {
-    private lateinit var _db: AppDatabase
+    private lateinit var db: AppDatabase
 
     fun init(context: Context) {
-        _db =
+        db =
             Room
                 .databaseBuilder(context, AppDatabase::class.java, "media_tracker.db")
                 .addMigrations(
@@ -30,16 +30,16 @@ object DB {
                 ).build()
     }
 
-    val database get() = _db
+    val database get() = db
     val repo get() =
         MediaRepository(
-            _db.mediaItemDao(),
-            _db.movieListDao(),
-            _db.seriesEpisodeDao(),
-            _db.mangaReviewDao(),
-            _db.bookQuoteDao(),
-            _db.gamePlaythroughDao(),
+            db.mediaItemDao(),
+            db.movieListDao(),
+            db.seriesEpisodeDao(),
+            db.mangaReviewDao(),
+            db.bookQuoteDao(),
+            db.gamePlaythroughDao(),
         )
-    val cache get() = MediaCacheRepository(_db.mediaDetailsCacheDao())
-    val games get() = _db.gameCacheDao()
+    val cache get() = MediaCacheRepository(db.mediaDetailsCacheDao())
+    val games get() = db.gameCacheDao()
 }
