@@ -1,6 +1,7 @@
 ﻿package app.oribu.ui.navigation
 
 object Routes {
+    const val ONBOARDING = "onboarding"
     const val HOME = "home"
     const val GAMES = "games"
     const val GAMES_ADD = "games/add"

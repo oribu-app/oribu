@@ -4,4 +4,12 @@
     <style name="Theme.Oribu" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowBackground">@android:color/black</item>
     </style>
+
+    <!-- Tema exibido só durante a splash nativa (Android SplashScreen API); postSplashScreenTheme
+         faz a lib trocar para Theme.Oribu sozinha assim que installSplashScreen() roda. -->
+    <style name="Theme.Oribu.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@android:color/black</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
+        <item name="postSplashScreenTheme">@style/Theme.Oribu</item>
+    </style>
 </resources>

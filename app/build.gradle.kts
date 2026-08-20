@@ -151,6 +151,9 @@ dependencies {
     // DataStore
     implementation(libs.datastore)
 
+    // Splash screen
+    implementation(libs.core.splashscreen)
+
     // Charts
     implementation(libs.vico.compose)
 

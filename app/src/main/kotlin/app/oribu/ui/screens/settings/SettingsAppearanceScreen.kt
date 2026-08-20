@@ -34,10 +34,6 @@ import app.oribu.ui.theme.appThemes
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsAppearanceScreen(navController: NavController) {
-    val themeMode = AppThemeController.themeMode
-    val lightThemeId = AppThemeController.lightThemeId
-    val darkThemeId = AppThemeController.darkThemeId
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -51,83 +47,97 @@ fun SettingsAppearanceScreen(navController: NavController) {
         },
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
-            // ── Modo de cor ────────────────────────────────────────────────
-            PreferenceGroupHeader("Modo de cor")
-            Row(
-                Modifier.padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                ThemeModeEntry.entries.forEach { entry ->
-                    val selected = themeMode == entry.mode
-                    OutlinedButton(
-                        onClick = { AppThemeController.themeMode = entry.mode },
-                        colors =
-                            ButtonDefaults.outlinedButtonColors(
-                                containerColor =
-                                    if (selected) {
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-                                    } else {
-                                        Color.Transparent
-                                    },
-                                contentColor =
-                                    if (selected) {
-                                        MaterialTheme.colorScheme.primary
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurface
-                                    },
-                            ),
-                        border =
-                            BorderStroke(
-                                1.dp,
-                                if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-                            ),
-                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
-                        shape = RoundedCornerShape(4.dp),
-                    ) {
-                        Icon(entry.icon, null, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text(entry.label, fontSize = 13.sp)
-                    }
-                }
-            }
-
-            // ── Tema claro ─────────────────────────────────────────────────
-            PreferenceGroupHeader("Tema claro")
-            Row(
-                Modifier
-                    .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                appThemes.forEach { theme ->
-                    ThemePreviewSwatch(
-                        theme = theme,
-                        isDark = false,
-                        selected = theme.id == lightThemeId,
-                        onClick = { AppThemeController.setLightTheme(theme.id) },
-                    )
-                }
-            }
-
-            // ── Tema escuro ────────────────────────────────────────────────
-            PreferenceGroupHeader("Tema escuro")
-            Row(
-                Modifier
-                    .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                appThemes.forEach { theme ->
-                    ThemePreviewSwatch(
-                        theme = theme,
-                        isDark = true,
-                        selected = theme.id == darkThemeId,
-                        onClick = { AppThemeController.setDarkTheme(theme.id) },
-                    )
-                }
-            }
-
+            ThemePickerContent()
             Spacer(Modifier.height(24.dp))
+        }
+    }
+}
+
+/**
+ * Seletor de modo de cor + paletas claro/escuro. Extraído para ser reaproveitado tanto aqui
+ * quanto no passo de boas-vindas do onboarding (`WelcomeThemeStep`).
+ */
+@Composable
+fun ThemePickerContent() {
+    val themeMode = AppThemeController.themeMode
+    val lightThemeId = AppThemeController.lightThemeId
+    val darkThemeId = AppThemeController.darkThemeId
+
+    Column {
+        // ── Modo de cor ────────────────────────────────────────────────
+        PreferenceGroupHeader("Modo de cor")
+        Row(
+            Modifier.padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            ThemeModeEntry.entries.forEach { entry ->
+                val selected = themeMode == entry.mode
+                OutlinedButton(
+                    onClick = { AppThemeController.themeMode = entry.mode },
+                    colors =
+                        ButtonDefaults.outlinedButtonColors(
+                            containerColor =
+                                if (selected) {
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                                } else {
+                                    Color.Transparent
+                                },
+                            contentColor =
+                                if (selected) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface
+                                },
+                        ),
+                    border =
+                        BorderStroke(
+                            1.dp,
+                            if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                        ),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+                    shape = RoundedCornerShape(4.dp),
+                ) {
+                    Icon(entry.icon, null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(entry.label, fontSize = 13.sp)
+                }
+            }
+        }
+
+        // ── Tema claro ─────────────────────────────────────────────────
+        PreferenceGroupHeader("Tema claro")
+        Row(
+            Modifier
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            appThemes.forEach { theme ->
+                ThemePreviewSwatch(
+                    theme = theme,
+                    isDark = false,
+                    selected = theme.id == lightThemeId,
+                    onClick = { AppThemeController.setLightTheme(theme.id) },
+                )
+            }
+        }
+
+        // ── Tema escuro ────────────────────────────────────────────────
+        PreferenceGroupHeader("Tema escuro")
+        Row(
+            Modifier
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            appThemes.forEach { theme ->
+                ThemePreviewSwatch(
+                    theme = theme,
+                    isDark = true,
+                    selected = theme.id == darkThemeId,
+                    onClick = { AppThemeController.setDarkTheme(theme.id) },
+                )
+            }
         }
     }
 }

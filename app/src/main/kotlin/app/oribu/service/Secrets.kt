@@ -1,6 +1,7 @@
 ﻿package app.oribu.service
 
 import android.content.Context
+import app.oribu.data.ApiKeyOverrides
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
@@ -20,6 +21,24 @@ data class Secrets(
     val googleBooksConfigurado get() = !googleBooksApiKey.isNullOrEmpty()
     val steamConfigurado get() = !steamApiKey.isNullOrEmpty() && !steamId.isNullOrEmpty()
     val itadConfigurado get() = !itadApiKey.isNullOrEmpty()
+
+    /**
+     * Sobrepõe, campo a campo, as chaves cadastradas pelo usuário (Configurações →
+     * Integrações / onboarding) sobre as do `secrets.json` embutido — o usuário sempre
+     * tem prioridade quando preenche um valor.
+     */
+    fun merge(overrides: ApiKeyOverrides): Secrets =
+        Secrets(
+            tmdbBearerToken = overrides.tmdbApiKey?.takeIf { it.isNotBlank() } ?: tmdbBearerToken,
+            igdbClientId = overrides.igdbClientId?.takeIf { it.isNotBlank() } ?: igdbClientId,
+            igdbClientSecret = overrides.igdbClientSecret?.takeIf { it.isNotBlank() } ?: igdbClientSecret,
+            googleBooksApiKey = overrides.googleBooksApiKey?.takeIf { it.isNotBlank() } ?: googleBooksApiKey,
+            anilistClientId = anilistClientId,
+            anilistUsername = anilistUsername,
+            steamApiKey = overrides.steamApiKey?.takeIf { it.isNotBlank() } ?: steamApiKey,
+            steamId = overrides.steamId?.takeIf { it.isNotBlank() } ?: steamId,
+            itadApiKey = overrides.itadApiKey?.takeIf { it.isNotBlank() } ?: itadApiKey,
+        )
 
     companion object {
         private var instance: Secrets? = null

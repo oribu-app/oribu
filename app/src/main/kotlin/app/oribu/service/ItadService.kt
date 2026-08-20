@@ -60,6 +60,19 @@ class ItadService(
         }
     }
 
+    /**
+     * Reaproveita o endpoint de lookup (`lookupGameUuid`) com um app id fixo (Portal 2) só para
+     * validar a chave — `get()` não lança em respostas não-2xx, então uma chave inválida é
+     * detectada pela ausência do campo "found" ou por um "error" explícito no corpo.
+     */
+    fun testConnection() {
+        val url = "$base/games/lookup/v1?key=$apiKey&appid=620"
+        val res = get(url)
+        if (res.containsKey("error") || !res.containsKey("found")) {
+            throw Exception(res["error"] as? String ?: "Chave ITAD inválida")
+        }
+    }
+
     /** Resolve o UUID interno do ITAD a partir do app id da Steam — necessário pro endpoint de histórico. */
     fun lookupGameUuid(steamAppId: Int): String? {
         val url = "$base/games/lookup/v1?key=$apiKey&appid=$steamAppId"

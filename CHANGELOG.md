@@ -23,6 +23,11 @@ The format is a simplified version of [Keep a Changelog](https://keepachangelog.
 - Series: toggle to show/hide "Séries relacionadas" from the "..." menu.
 - Real launcher icon (dark background, gold kanji), with distinct debug (gray) and nightly (orange)
   variants so side-installed builds are easy to tell apart on the home screen.
+- First-launch onboarding flow: native splash screen with the Oribu logo, a welcome step to pick
+  the theme, a storage folder picker (saved for future use), optional notification/battery
+  optimization permission prompts, and a step to configure API keys for TMDB, IGDB, Google Books,
+  Steam and ITAD with a "test connection" check per service — also available afterwards from
+  Settings > Integrações, which is now editable instead of read-only.
 
 ### Changes
 - Bottom bar reordered to Jogos, Filmes, Séries, Mangás, Livros.

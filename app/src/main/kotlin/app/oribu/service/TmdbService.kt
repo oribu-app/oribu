@@ -36,6 +36,11 @@ class TmdbService(
         return gson.fromJson(body, type) ?: emptyMap()
     }
 
+    /** Chamada mínima que só é bem-sucedida com um bearer token válido (usada em "Testar conexão"). */
+    fun testConnection() {
+        get("$base/authentication")
+    }
+
     // ── Movies ────────────────────────────────────────────────────────────────
 
     fun searchMovies(query: String): List<ApiSearchResult> {

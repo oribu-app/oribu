@@ -74,6 +74,19 @@ class GoogleBooksService(
             .sortedBy { if (it.coverUrl != null) 0 else 1 }
     }
 
+    /**
+     * `get()` não lança exceção em respostas HTTP não-2xx, então uma chave inválida precisa ser
+     * detectada pelo corpo (Google Books devolve `{"error": {...}}` nesse caso).
+     */
+    fun testConnection() {
+        val key = if (!apiKey.isNullOrEmpty()) "&key=$apiKey" else ""
+        val url = "$base/volumes?q=teste$key"
+        val error = get(url)["error"] as? Map<*, *>
+        if (error != null) {
+            throw Exception(error["message"] as? String ?: "Chave Google Books inválida")
+        }
+    }
+
     fun searchByAuthor(author: String) = searchBooks(author, "inauthor")
 
     fun searchByPublisher(publisher: String) = searchBooks(publisher, "inpublisher")

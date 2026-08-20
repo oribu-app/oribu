@@ -38,6 +38,7 @@ import app.oribu.ui.screens.games.GamesScreen
 import app.oribu.ui.screens.manga.AddMangaScreen
 import app.oribu.ui.screens.manga.MangaDetailScreen
 import app.oribu.ui.screens.manga.MangaScreen
+import app.oribu.ui.screens.onboarding.OnboardingScreen
 import app.oribu.ui.screens.series.AddSeriesScreen
 import app.oribu.ui.screens.series.SeriesDetailScreen
 import app.oribu.ui.screens.series.SeriesScreen
@@ -69,7 +70,7 @@ private val bottomNavItems =
     )
 
 @Composable
-fun MainNavGraph() {
+fun MainNavGraph(startDestination: String = Routes.HOME) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -105,7 +106,7 @@ fun MainNavGraph() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Routes.HOME,
+            startDestination = startDestination,
             modifier =
                 Modifier
                     .padding(bottom = innerPadding.calculateBottomPadding())
@@ -121,6 +122,7 @@ fun MainNavGraph() {
                         },
                     ),
         ) {
+            composable(Routes.ONBOARDING) { OnboardingScreen(navController) }
             composable(Routes.HOME) { HomeScreen(navController) }
             composable(Routes.GAMES) { GamesScreen(navController) }
             composable(Routes.FILMS) { FilmsScreen(navController) }

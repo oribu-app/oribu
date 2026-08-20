@@ -1,6 +1,7 @@
 ﻿package app.oribu.service
 
 import android.content.Context
+import app.oribu.data.ApiKeyPreferences
 import app.oribu.model.MediaType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -28,15 +29,33 @@ object ApiServices {
 
     suspend fun init(context: Context) {
         if (initialized) return
-        val secrets = Secrets.load(context)
+        refresh(context, effectiveSecrets(context))
+        initialized = true
+    }
 
+    /**
+     * Recarrega todos os serviços a partir das chaves atuais (secrets.json + overrides do
+     * usuário). Chamado depois que uma chave é salva em Configurações → Integrações ou no
+     * passo de onboarding, para a integração passar a valer sem precisar reiniciar o app.
+     */
+    suspend fun reload(context: Context) {
+        refresh(context, effectiveSecrets(context))
+    }
+
+    private suspend fun effectiveSecrets(context: Context): Secrets = Secrets.load(context).merge(ApiKeyPreferences.awaitOverrides())
+
+    private suspend fun refresh(
+        context: Context,
+        secrets: Secrets,
+    ) {
         withContext(Dispatchers.IO) {
             // TMDB
-            runCatching {
+            _tmdb =
                 if (secrets.tmdbConfigurado) {
-                    _tmdb = TmdbService(secrets.tmdbBearerToken!!)
+                    runCatching { TmdbService(secrets.tmdbBearerToken!!) }.getOrNull()
+                } else {
+                    null
                 }
-            }
 
             // IGDB
             if (secrets.igdbConfigurado) {
@@ -44,7 +63,10 @@ object ApiServices {
                     igdbToken = IgdbAuthService.loadCachedToken(context, secrets.igdbClientId)
                         ?: IgdbAuthService.getAccessToken(context, secrets.igdbClientId!!, secrets.igdbClientSecret!!)
                     _igdb = IgdbService(clientId = secrets.igdbClientId!!, accessToken = igdbToken!!.accessToken)
-                }
+                }.onFailure { _igdb = null }
+            } else {
+                igdbToken = null
+                _igdb = null
             }
 
             // Manga
@@ -63,11 +85,12 @@ object ApiServices {
             }
 
             // Steam
-            if (secrets.steamConfigurado) {
-                runCatching {
-                    _steam = SteamService(apiKey = secrets.steamApiKey!!, steamId = secrets.steamId!!)
+            _steam =
+                if (secrets.steamConfigurado) {
+                    runCatching { SteamService(apiKey = secrets.steamApiKey!!, steamId = secrets.steamId!!) }.getOrNull()
+                } else {
+                    null
                 }
-            }
 
             // HLTB
             runCatching { _hltb = HltbService() }
@@ -88,12 +111,13 @@ object ApiServices {
             }
 
             // ITAD
-            if (secrets.itadConfigurado) {
-                runCatching { _itad = ItadService(apiKey = secrets.itadApiKey!!) }
-            }
+            _itad =
+                if (secrets.itadConfigurado) {
+                    runCatching { ItadService(apiKey = secrets.itadApiKey!!) }.getOrNull()
+                } else {
+                    null
+                }
         }
-
-        initialized = true
     }
 
     // ── Runtime OAuth2 token updates ──────────────────────────────────────────
