@@ -16,5 +16,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "HobbiesVault"
+rootProject.name = "Oribu"
 include(":app")

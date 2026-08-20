@@ -8,11 +8,11 @@
 -keep class * implements com.google.gson.JsonDeserializer
 
 # Keep Room entities
--keep class com.mediatracker.data.db.entity.** { *; }
+-keep class app.oribu.data.db.entity.** { *; }
 
 # Keep model classes for Gson
--keep class com.mediatracker.model.** { *; }
--keep class com.mediatracker.service.** { *; }
+-keep class app.oribu.model.** { *; }
+-keep class app.oribu.service.** { *; }
 
 # Keep WorkManager
 -keep class * extends androidx.work.Worker

@@ -1,27 +1,27 @@
 # HobbiesVault — CLAUDE.md
 
-App Android nativo (Kotlin + Jetpack Compose) para rastreamento pessoal de jogos, mangás, webtoons, séries, filmes e livros. Sem servidor próprio, sem cadastro. Todos os dados ficam localmente no dispositivo.
+Native Android app (Kotlin + Jetpack Compose) for personal tracking of games, manga, webtoons, series, movies and books. No server of its own, no account. All data stays locally on the device.
 
-> O projeto foi migrado de Flutter para Kotlin/Compose nativo. A versão antiga em Flutter está arquivada em `../Hobbies-Backup` (fora deste repositório) e serve apenas como referência histórica — não editar nem tratar como fonte de verdade.
+> The project was migrated from Flutter to native Kotlin/Compose. The old Flutter version is archived at `../Hobbies-Backup` (outside this repository) and serves only as historical reference — don't edit it or treat it as a source of truth.
 
 ---
 
-## Stack e dependências principais
+## Stack and main dependencies
 
-| Componente | Tecnologia |
+| Component | Technology |
 |---|---|
-| Linguagem | Kotlin |
+| Language | Kotlin |
 | UI | Jetpack Compose |
-| Banco local | Room (`androidx.room`) |
-| Build | Gradle Kotlin DSL (`build.gradle.kts`), plugins via `libs.versions.toml`, KSP para codegen |
-| Navegação | Compose Navigation (`MainNavGraph.kt`, `Routes.kt`) |
-| Serialização | Gson |
+| Local database | Room (`androidx.room`) |
+| Build | Gradle Kotlin DSL (`build.gradle.kts`), plugins via `libs.versions.toml`, KSP for codegen |
+| Navigation | Compose Navigation (`MainNavGraph.kt`, `Routes.kt`) |
+| Serialization | Gson |
 | Background tasks | WorkManager (`CacheUpdateWorker.kt`) |
-| HTTP | (verificar client usado nos `*Service.kt`, ex. OkHttp/Retrofit) |
+| HTTP | (check the client used in `*Service.kt`, e.g. OkHttp/Retrofit) |
 
 ---
 
-## Estrutura de pastas
+## Folder structure
 
 ```
 app/src/main/kotlin/com/hobbiesvault/
@@ -31,7 +31,7 @@ app/src/main/kotlin/com/hobbiesvault/
   data/
     db/
       AppDatabase.kt              # @Database Room, migrations, schemaVersion
-      DB.kt                       # Acesso singleton/DI ao banco
+      DB.kt                       # Singleton/DI access to the database
       dao/
         MediaItemDao.kt
         MediaDetailsCacheDao.kt
@@ -45,8 +45,8 @@ app/src/main/kotlin/com/hobbiesvault/
         GameCacheEntity.kt
         SerieEpisodioEntity.kt
     repository/
-      MediaRepository.kt          # CRUD de MediaItem
-      MediaCacheRepository.kt     # Leitura/escrita de cache JSON no banco
+      MediaRepository.kt          # MediaItem CRUD
+      MediaCacheRepository.kt     # Read/write of the JSON cache in the database
 
   model/
     MediaItem.kt
@@ -56,32 +56,32 @@ app/src/main/kotlin/com/hobbiesvault/
     ApiSearchResult.kt
 
   service/
-    ApiServices.kt          # Registro central de todos os serviços de API
-    Secrets.kt              # Carrega secrets.json de app/src/main/assets em runtime
-    TmdbService.kt          # TMDB — filmes e séries
-    IgdbService.kt          # IGDB — jogos
-    HltbService.kt          # HowLongToBeat — tempo de jogo
-    ItadService.kt          # IsThereAnyDeal — preços de jogos
+    ApiServices.kt          # Central registry of all API services
+    Secrets.kt              # Loads secrets.json from app/src/main/assets at runtime
+    TmdbService.kt          # TMDB — movies and series
+    IgdbService.kt          # IGDB — games
+    HltbService.kt          # HowLongToBeat — game playtime
+    ItadService.kt          # IsThereAnyDeal — game prices
     GameSearchService.kt
     GameCacheService.kt
     GameDatasetImporter.kt
-    AniListService.kt       # AniList (GraphQL) — fonte principal de mangás/webtoons + sync de progresso
-    MangaDexService.kt      # MangaDex — fallback de busca/detalhes e contagem de capítulos em andamento
-    MangaSearchService.kt   # Orquestra AniList + MangaDex
-    GoogleBooksService.kt   # Google Books — livros
-    OpenLibraryService.kt   # Open Library — livros (fallback)
-    BookSearchService.kt    # Orquestra Google Books + Open Library
-    SteamService.kt         # Steam Web API — biblioteca e achievements
-    PsnService.kt           # PSN — troféus (público, sem auth)
-    MediaCacheService.kt    # Orquestra cache: fetch + comparação + persistência
+    AniListService.kt       # AniList (GraphQL) — main source for manga/webtoons + progress sync
+    MangaDexService.kt      # MangaDex — search/detail fallback and latest chapter count for ongoing series
+    MangaSearchService.kt   # Orchestrates AniList + MangaDex
+    GoogleBooksService.kt   # Google Books — books
+    OpenLibraryService.kt   # Open Library — books (fallback)
+    BookSearchService.kt    # Orchestrates Google Books + Open Library
+    SteamService.kt         # Steam Web API — library and achievements
+    PsnService.kt           # PSN — trophies (public, no auth)
+    MediaCacheService.kt    # Orchestrates the cache: fetch + comparison + persistence
 
   worker/
-    CacheUpdateWorker.kt    # Tarefa diária de atualização de cache (WorkManager)
+    CacheUpdateWorker.kt    # Daily cache-refresh task (WorkManager)
 
   ui/
     theme/
       AppTheme.kt
-      Color.kt              # Cores por tipo de mídia, plataformas e temas do app
+      Color.kt              # Colors by media type, platforms and app themes
     navigation/
       Routes.kt
       MainNavGraph.kt
@@ -117,64 +117,74 @@ app/src/main/kotlin/com/hobbiesvault/
         BookDetailScreen.kt
 
 assets/
-  data/                      # datasets estáticos (ex. importação de jogos)
-  trofeus/                   # ícones/dados de troféus PSN
+  data/                      # static datasets (e.g. game import)
+  trofeus/                   # PSN trophy icons/data
 ```
 
 ---
 
-## Banco de dados (Room)
+## Database (Room)
 
-**Schema atual: v10** (ver `AppDatabase.kt` para o histórico completo de migrations)
+**Current schema: v10** (see `AppDatabase.kt` for the full migration history)
 
-Entidades principais:
+Main entities:
 
-### `MediaItemEntity` (tabela `media_items`)
-Campos principais: `id`, `tipo`, `titulo`, `status`, `nota`, `comentario`, `capaUrl`, `dataAdicaoMs`, `dataConclusaoMs`, `favorito`, `idExterno`, `fonteApi`.
+### `MediaItemEntity` (table `media_items`)
+Main fields: `id`, `tipo`, `titulo`, `status`, `nota`, `comentario`, `capaUrl`, `dataAdicaoMs`, `dataConclusaoMs`, `favorito`, `idExterno`, `fonteApi`.
 
-Campos específicos por tipo:
-- **Jogo:** `console`, `horasJogadasMinutos`, `conquistasDesbloqueadas`, `conquistasTotal`, `trofeusOuro`, `trofeusPrata`, `trofeusBronze`, `trofeuPlatina`, `desenvolvedor`
-- **Mangá/Livro/Série:** `progressoAtual`, `progressoTotal`
-- **Filme/Série:** `streamingPlataforma`
-- **Todos:** `dataLancamentoMs`, `genero`
-- Campos adicionados nas migrations mais recentes (v7-v10): `dataInicioLeituraMs`, `dataReleituraMs`, `dataConclusaoHistoriaMs`, `dataConclusaoExtrasMs`, `dataConclusaoPlatinaMs`
+Type-specific fields:
+- **Game:** `console`, `horasJogadasMinutos`, `conquistasDesbloqueadas`, `conquistasTotal`, `trofeusOuro`, `trofeusPrata`, `trofeusBronze`, `trofeuPlatina`, `desenvolvedor`
+- **Manga/Book/Series:** `progressoAtual`, `progressoTotal`
+- **Movie/Series:** `streamingPlataforma`
+- **All:** `dataLancamentoMs`, `genero`
+- Fields added in the most recent migrations (v7-v10): `dataInicioLeituraMs`, `dataReleituraMs`, `dataConclusaoHistoriaMs`, `dataConclusaoExtrasMs`, `dataConclusaoPlatinaMs`
 
-### `MediaDetailsCacheEntity` (tabela `media_details_cache`)
-Cache de detalhes completos da API por item. Campos: `mediaItemId`, `dadosJson` (JSON completo), `ultimaVerificacaoMs`.
+### `MediaDetailsCacheEntity` (table `media_details_cache`)
+Cache of the full API details per item. Fields: `mediaItemId`, `dadosJson` (full JSON), `ultimaVerificacaoMs`.
 
-### `FilmeListaEntity` / tabela de itens de lista (`filme_listas`, `filme_lista_itens`)
-Listas customizadas de filmes.
+### `FilmeListaEntity` / list-item table (`filme_listas`, `filme_lista_itens`)
+Custom movie lists.
 
-### `GameCacheEntity` (tabela `game_cache`)
-Cache de metadados de jogos (nome, ids GB/IGDB, capa, gêneros, plataformas etc.).
+### `GameCacheEntity` (table `game_cache`)
+Cache of game metadata (name, GB/IGDB ids, cover, genres, platforms etc.).
 
-### `SerieEpisodioEntity` (tabela `serie_episodios_assistidos`)
-Controle de episódios assistidos por série (temporada, episódio, data).
+### `SerieEpisodioEntity` (table `serie_episodios_assistidos`)
+Tracks watched episodes per series (season, episode, date).
 
-### Acesso via DB singleton
+### Access via the DB singleton
 
 ```kotlin
 import com.hobbiesvault.data.db.DB
 
-// Leitura/escrita de itens — via MediaRepository / DAOs
+// Reading/writing items — via MediaRepository / DAOs
 mediaRepository.salvar(item)
 mediaRepository.atualizar(item)
 mediaRepository.deletar(id)
 mediaRepository.porTipo(MediaType.MOVIE)
 
-// Cache de detalhes — via MediaCacheRepository
+// Details cache — via MediaCacheRepository
 mediaCacheRepository.carregar(mediaItemId)
 mediaCacheRepository.salvar(mediaItemId, dadosJson)
 mediaCacheRepository.deletar(mediaItemId)
 ```
 
-### Após qualquer alteração em entidades/DAOs
+### ⚠️ Cardinal rule: existing migrations are IMMUTABLE
 
-Incrementar a `version` em `@Database` (`AppDatabase.kt`) e adicionar uma nova `Migration` no companion object seguindo o padrão existente (`MIGRATION_N_N+1`), registrando-a na criação do `Room.databaseBuilder`. Não há build_runner/codegen manual — o Room usa KSP automaticamente no build do Gradle.
+**Never edit an already-existing migration — only add a new one.** Each
+`Migration` is a historical fact: on upgrade, Room only runs the migrations
+between the installed `version` and the new one — it never re-applies the old
+ones. Editing an already-published migration only changes the result for a
+fresh install, and diverges from anyone who already has the app with that
+schema applied. Any schema change is always a **new** `Migration`, never an
+edit to an existing one.
+
+### After any change to entities/DAOs
+
+Increment `version` in `@Database` (`AppDatabase.kt`) and add a new `Migration` in the companion object following the existing pattern (`MIGRATION_N_N+1`), registering it when `Room.databaseBuilder` is created. There's no manual build_runner/codegen — Room uses KSP automatically during the Gradle build.
 
 ---
 
-## Modelos principais
+## Main models
 
 ### MediaType
 ```kotlin
@@ -182,26 +192,26 @@ enum class MediaType(val label: String, val dbValue: String) {
     GAME, MANGA, WEBTOON, SERIES, MOVIE, BOOK
 }
 ```
-`dbValue` mantém os nomes originais em português (`jogo`, `manga`, `webtoon`, `serie`, `filme`, `livro`) para compatibilidade com o schema migrado do Flutter/Drift.
+`dbValue` keeps the original Portuguese names (`jogo`, `manga`, `webtoon`, `serie`, `filme`, `livro`) for compatibility with the schema migrated from Flutter/Drift.
 
 ### MediaStatus
 ```kotlin
 enum class MediaStatus(val label: String, val dbValue: String) {
-    // Jogos
+    // Games
     COMPLETED, FINISHED, PLAYING, REPLAYING, PLATINUM,
-    // Filmes
+    // Movies
     WATCHED, WATCHING, REWATCHING,
-    // Séries
+    // Series
     CONCLUDED, HISTORY, WAITING_EPISODES,
-    // Mangás/Livros
+    // Manga/Books
     READ, READING, REREADING, ON_HOLD,
-    // Todos
+    // All
     QUEUED, DROPPED, WAITING_RELEASE
 }
 ```
 
-Métodos de lista por tipo/plataforma (companion object de `MediaStatus`):
-- `forSteam()`, `forPlayStation()`, `forNintendo()`, `forOtherGames()` — variações por plataforma de jogo
+Per type/platform list methods (`MediaStatus` companion object):
+- `forSteam()`, `forPlayStation()`, `forNintendo()`, `forOtherGames()` — variations per game platform
 - `forMovie()` → [WATCHED, REWATCHING, QUEUED, WAITING_RELEASE]
 - `forSeries()` / `forSeriesAdd()` → [WATCHING, REWATCHING, QUEUED, HISTORY]
 - `forManga()` → [READING, REREADING, ON_HOLD, READ, QUEUED, WAITING_RELEASE]
@@ -210,54 +220,54 @@ Métodos de lista por tipo/plataforma (companion object de `MediaStatus`):
 - `forBookAdd()` → [READING, REREADING, QUEUED]
 
 ### MediaItem
-Data class Kotlin — usar `.copy()` para atualizações imutáveis (equivalente ao `copyWith()` do Flutter). Campos `idExterno` e `fonteApi` identificam a origem na API.
+Kotlin data class — use `.copy()` for immutable updates (equivalent to Flutter's `copyWith()`). The `idExterno` and `fonteApi` fields identify the origin in the API.
 
 ---
 
-## Cache e atualização de dados
+## Cache and data refresh
 
-### Padrão obrigatório em todas as telas de detalhe
+### Mandatory pattern on every detail screen
 
-Carregar o cache do banco imediatamente (síncrono/local) e disparar verificação em background via `MediaCacheService`, sem bloquear a UI — equivalente ao padrão `_carregarCache()` + `doubleCheck()` da versão Flutter.
+Load the cache from the database immediately (sync/local) and trigger a background check via `MediaCacheService`, without blocking the UI — equivalent to the `_carregarCache()` + `doubleCheck()` pattern from the Flutter version.
 
-### Ao adicionar um item à biblioteca
-Chamar `MediaCacheService` para popular o cache imediatamente após salvar o item no banco (`MediaRepository`), usando o id gerado pelo Room.
+### When adding an item to the library
+Call `MediaCacheService` to populate the cache immediately after saving the item to the database (`MediaRepository`), using the id generated by Room.
 
-### Rotina diária (WorkManager)
-`CacheUpdateWorker` roda periodicamente e chama a atualização de todos os itens via `MediaCacheService`:
-1. Percorre todos os itens com `idExterno`
-2. Faz fetch da API correspondente por tipo
-3. Compara com o cache atual (hash/comparação de JSON)
-4. Só persiste se houve mudança
-5. Verifica mudanças de status em séries (Ended/Cancelled → move para Histórico)
+### Daily routine (WorkManager)
+`CacheUpdateWorker` runs periodically and triggers the refresh of every item via `MediaCacheService`:
+1. Iterates over every item with `idExterno`
+2. Fetches the matching API by type
+3. Compares against the current cache (hash/JSON comparison)
+4. Only persists if something changed
+5. Checks for status changes in series (Ended/Cancelled → moves to History)
 
-**Ao alterar qualquer tela de detalhe:** verificar se o JSON gerado em `MediaCacheService` reflete os novos campos exibidos.
+**When changing any detail screen:** verify that the JSON generated in `MediaCacheService` reflects the newly displayed fields.
 
-### Sincronização de progresso de mangá via AniList
-Se `anilist_username` estiver configurado em `secrets.json`, toda atualização de cache de um mangá/webtoon adicionado via AniList (`apiSource == "anilist"`) consulta a lista pública do usuário no AniList (`AniListService.getUserProgress`) e só avança `currentProgress` quando o valor de lá for maior que o local — nunca regride uma edição manual mais recente. Não requer OAuth (mesma lógica de credencial estática já usada por Steam/PSN); só funciona se o perfil AniList do usuário não for privado.
+### Manga progress sync via AniList
+If `anilist_username` is set in `secrets.json`, every cache update for a manga/webtoon added via AniList (`apiSource == "anilist"`) queries the user's public AniList list (`AniListService.getUserProgress`) and only advances `currentProgress` when the remote value is greater than the local one — it never regresses a more recent manual edit. No OAuth required (same static-credential logic already used by Steam/PSN); only works if the user's AniList profile isn't private.
 
 ---
 
-## APIs por tipo de mídia
+## APIs per media type
 
-| Tipo | Serviço principal | Fallback |
+| Type | Main service | Fallback |
 |---|---|---|
-| Filmes | TMDB (`TmdbService`) | — |
-| Séries | TMDB (`TmdbService`) | — |
-| Jogos | IGDB (`IgdbService`, requer token Twitch); HLTB (`HltbService`) e ITAD (`ItadService`) como dados complementares | Busca por prefixo / dataset local (`GameDatasetImporter`) |
-| Mangás/Webtoons | AniList (`AniListService`, GraphQL) | MangaDex (`MangaDexService`) — só é acionado quando AniList não retorna resultados (ver `MangaSearchService.kt`); também fornece a contagem de capítulos mais recente para séries em andamento via endpoint `/aggregate` |
-| Livros | Google Books (`GoogleBooksService`) | Open Library (`OpenLibraryService`) |
+| Movies | TMDB (`TmdbService`) | — |
+| Series | TMDB (`TmdbService`) | — |
+| Games | IGDB (`IgdbService`, requires a Twitch token); HLTB (`HltbService`) and ITAD (`ItadService`) for supplementary data | Prefix search / local dataset (`GameDatasetImporter`) |
+| Manga/Webtoons | AniList (`AniListService`, GraphQL) | MangaDex (`MangaDexService`) — only triggered when AniList returns no results (see `MangaSearchService.kt`); also provides the latest chapter count for ongoing series via the `/aggregate` endpoint |
+| Books | Google Books (`GoogleBooksService`) | Open Library (`OpenLibraryService`) |
 
-### Disponibilidade verificada antes de usar
+### Availability checked before use
 ```kotlin
-if (!secrets.tmdbConfigurado) { /* mostrar erro */ }
-if (!secrets.igdbConfigurado) { /* mostrar erro */ }
-if (!secrets.steamConfigurado) { /* mostrar erro */ }
-if (!secrets.itadConfigurado) { /* mostrar erro */ }
+if (!secrets.tmdbConfigurado) { /* show error */ }
+if (!secrets.igdbConfigurado) { /* show error */ }
+if (!secrets.steamConfigurado) { /* show error */ }
+if (!secrets.itadConfigurado) { /* show error */ }
 ```
-Flags de disponibilidade ficam em `Secrets` (`app/src/main/kotlin/com/hobbiesvault/service/Secrets.kt`), carregado uma vez (singleton) a partir de `secrets.json`.
+Availability flags live in `Secrets` (`app/src/main/kotlin/com/hobbiesvault/service/Secrets.kt`), loaded once (singleton) from `secrets.json`.
 
-### secrets.json (`app/src/main/assets/secrets.json`, nunca commitar)
+### secrets.json (`app/src/main/assets/secrets.json`, never commit)
 ```json
 {
   "tmdb_bearer_token": "eyJhbGci...",
@@ -265,7 +275,7 @@ Flags de disponibilidade ficam em `Secrets` (`app/src/main/kotlin/com/hobbiesvau
   "igdb_client_secret": "xyz789",
   "google_books_api_key": "AIza...",
   "anilist_client_id": "12345",
-  "anilist_username": "seu_usuario_anilist",
+  "anilist_username": "your_anilist_username",
   "steam_api_key": "ABCD1234",
   "steam_id": "76561198XXXXXXXXX",
   "itad_api_key": "..."
@@ -274,11 +284,11 @@ Flags de disponibilidade ficam em `Secrets` (`app/src/main/kotlin/com/hobbiesvau
 
 ---
 
-## Rotas (Compose Navigation)
+## Routes (Compose Navigation)
 
-Definidas em `Routes.kt` e ligadas em `MainNavGraph.kt`.
+Defined in `Routes.kt` and wired in `MainNavGraph.kt`.
 
-| Rota | Tela |
+| Route | Screen |
 |---|---|
 | `home` | HomeScreen |
 | `games` | GamesScreen |
@@ -302,81 +312,129 @@ Definidas em `Routes.kt` e ligadas em `MainNavGraph.kt`.
 | `stats` | StatsScreen |
 | `calendar` | CalendarScreen |
 
-Passagem de objeto entre telas: seguir o padrão do NavGraph existente (savedStateHandle / argumentos de rota), verificar `MainNavGraph.kt` para o mecanismo em uso antes de adicionar novas rotas com parâmetros complexos.
+Passing an object between screens: follow the existing NavGraph pattern (savedStateHandle / route arguments), check `MainNavGraph.kt` for the mechanism in use before adding new routes with complex parameters.
 
 ---
 
-## Cores por tipo de mídia (Color.kt)
+## Colors per media type (Color.kt)
 
 ```kotlin
-ColorJogo        // #7B1FA2 (roxo)
-ColorManga       // #E91E63 (rosa)
-ColorWebtoon     // #00BCD4 (ciano)
-ColorSerie       // #1976D2 (azul)
-ColorFilme       // #FF6F00 (laranja)
-ColorLivro       // #388E3C (verde)
+ColorJogo        // #7B1FA2 (purple)
+ColorManga       // #E91E63 (pink)
+ColorWebtoon     // #00BCD4 (cyan)
+ColorSerie       // #1976D2 (blue)
+ColorFilme       // #FF6F00 (orange)
+ColorLivro       // #388E3C (green)
 ColorSteam       // #1B2838
 ColorPlayStation // #00439C
 ColorNintendo    // #E4000F
 ColorXbox        // #107C10
 ```
 
-Além disso, `Color.kt` define `appThemes`: uma lista de `AppThemeDefinition` (temas nomeados como Neko, Tako, Yin, Doki, Oceano, Meia-noite) com seeds e cores de fundo/superfície para dark/light.
+`Color.kt` also defines `appThemes`: a list of `AppThemeDefinition` (themes named Neko, Tako, Yin, Doki, Oceano, Meia-noite) with seeds and background/surface colors for dark/light.
 
 ---
 
-## Convenções de código
+## Code conventions
 
-### Listas e grids
-Seguir o padrão visual da versão Flutter: `LazyVerticalGrid` com 3 colunas e proporção de capa portrait (~0.56), a menos que a implementação Compose atual já divirja — conferir as `*Screen.kt` de lista antes de assumir.
+### Naming and null-safety (Kotlin)
 
-### Cards do grid
-Capa portrait + título abaixo. Sem status, nota ou qualquer outra informação no card. Status e detalhes ficam na tela de detalhe.
+- `UpperCamelCase` for classes, enums and objects; `lowerCamelCase` for
+  variables, functions and parameters. `_privateMember` isn't a Kotlin
+  convention — just use `private`.
+- Prefer explicit types and `val` (immutable) over `var`. Avoid `!!` (the
+  not-null assertion); handle nulls via `?.`, `?:` or an explicit `if`/`when`
+  — only use `!!` when there's no real alternative.
+- Prefer `data class` for models and `.copy()` for immutable updates (never
+  mutate a `var` field on an already-persisted model).
+- Prefer coroutines/`Flow` over callbacks; avoid global mutable state.
 
-### Persistência nas telas de detalhe
-Sempre persistir via `MediaRepository`/`MediaCacheRepository` (nunca só estado local em memória). Ao remover um item, deletar também o cache correspondente (`MediaCacheRepository.deletar(id)`).
+### Comments
 
-### Detecção de duplicatas na busca
-A busca deve identificar itens cujo `idExterno` já exista na biblioteca (mesmo padrão do `existingIds` da versão Flutter) e sinalizar duplicatas na UI de resultados.
+- A comment exists to explain the **why**, never the **what** — names and
+  types already say what the code does. The `commitCount` comment in
+  `app/build.gradle.kts` (explaining the fallback outside a git repo) is a
+  good example; a `// saves the item to the database` above
+  `repository.salvar(item)` would not be.
+- No file header ("what this file is") and no section banners
+  (`// ==== Foo ====`) — the file path and the first declaration already say
+  that.
+- No comment beats a bad comment — if there's nothing non-obvious to explain,
+  don't write one.
+
+### Lists and grids
+Follow the visual pattern from the Flutter version: `LazyVerticalGrid` with 3 columns and a portrait cover ratio (~0.56), unless the current Compose implementation already diverges — check the list `*Screen.kt` files before assuming.
+
+### Grid cards
+Portrait cover + title below. No status, rating or any other info on the card. Status and details live on the detail screen.
+
+### Persistence on detail screens
+Always persist via `MediaRepository`/`MediaCacheRepository` (never just local in-memory state). When removing an item, also delete the matching cache (`MediaCacheRepository.deletar(id)`).
+
+### Duplicate detection in search
+Search must identify items whose `idExterno` already exists in the library (same pattern as the Flutter version's `existingIds`) and flag duplicates in the results UI.
 
 ---
 
-## Lógica específica de séries
+## Series-specific logic
 
-Séries têm movimentação automática de status baseada no TMDB:
+Series get automatic status transitions based on TMDB:
 
-- **Status TMDB `Ended`/`Cancelled`** → move para `MediaStatus.HISTORY`
-- **Status TMDB `Returning Series`** sem próxima temporada confirmada → move para `WAITING_RELEASE`
+- **TMDB status `Ended`/`Cancelled`** → moves to `MediaStatus.HISTORY`
+- **TMDB status `Returning Series`** with no confirmed next season → moves to `WAITING_RELEASE`
 
-Verificações acontecem em:
-1. Inicialização da `SeriesScreen` — valida séries em `WAITING_RELEASE`
-2. Ao marcar o último episódio assistido na tela de detalhe
-3. Rotina diária do `CacheUpdateWorker` — verifica todas as séries
+Checks happen at:
+1. `SeriesScreen` initialization — validates series in `WAITING_RELEASE`
+2. When marking the last watched episode on the detail screen
+3. `CacheUpdateWorker`'s daily routine — checks every series
 
 ---
 
-## Comandos úteis
+## Useful commands
 
 ```bash
-# Build de debug
+# Debug build
 ./gradlew assembleDebug
 
-# Instalar no dispositivo/emulador
+# Install on device/emulator
 ./gradlew installDebug
 
-# Build de release
+# Release build
 ./gradlew assembleRelease
 
-# Rodar testes
+# Run tests
 ./gradlew test
 ```
 
 ---
 
-## O que NÃO fazer
+## Definition of done
 
-- Não commitar `secrets.json` (`app/src/main/assets/secrets.json`)
-- Não fazer fetch de API diretamente nas telas de detalhe (Composables) — usar `MediaCacheService`
-- Não alterar os serializers em `MediaCacheService` sem refletir os novos campos nas telas
-- Não esquecer de chamar `mediaCacheRepository.deletar(id)` ao remover um item da biblioteca
-- Não tratar o projeto Flutter em `../Hobbies-Backup` como código ativo — é apenas referência histórica da versão anterior
+Before reporting a task as complete, follow this order:
+
+1. **Lint** — `./gradlew lintKotlin` (the same check CI runs in
+   `.github/workflows/lint.yml`).
+2. **Tests** — `./gradlew test`.
+3. **Schema migration, if the change touched an entity/DAO** — check the
+   migration cardinal rule above (new `Migration`, never edit an existing
+   one) and that the `@Database` `version` was incremented.
+4. **Manual verification** — install (`./gradlew installDebug`) and exercise
+   the changed flow on a device/emulator before reporting it done, especially
+   for detail screens (the cache-first + `doubleCheck()` pattern described
+   above).
+5. **CHANGELOG**, if the change is user-visible — use the project's
+   simplified format (`Additions`/`Changes`/`Fixes`/`Other`) in the
+   `[Unreleased]` section of `CHANGELOG.md`.
+
+If lint or tests fail, fix and repeat from step 1 — don't skip steps or
+report the task done with a red gate.
+
+---
+
+## What NOT to do
+
+- Don't commit `secrets.json` (`app/src/main/assets/secrets.json`)
+- Don't fetch from an API directly in detail screens (Composables) — use `MediaCacheService`
+- Don't change the serializers in `MediaCacheService` without reflecting the new fields on the screens
+- Don't forget to call `mediaCacheRepository.deletar(id)` when removing an item from the library
+- Don't treat the Flutter project at `../Hobbies-Backup` as active code — it's only historical reference for the previous version
