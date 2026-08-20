@@ -24,7 +24,7 @@ compose-ui-tooling           = { group = "androidx.compose.ui",      name = "ui-
 compose-ui-tooling-preview   = { group = "androidx.compose.ui",      name = "ui-tooling-preview" }
 compose-material3            = { group = "androidx.compose.material3", name = "material3" }
 compose-material-icons       = { group = "androidx.compose.material", name = "material-icons-extended" }
-compose-activity             = { group = "androidx.activity",         name = "activity-compose",              version = "1.9.3" }
+compose-activity             = { group = "androidx.activity",         name = "activity-compose",              version = "1.13.0" }
 
 # Navigation
 navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation" }
