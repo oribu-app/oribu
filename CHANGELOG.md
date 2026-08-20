@@ -21,6 +21,8 @@ The format is a simplified version of [Keep a Changelog](https://keepachangelog.
   auto-synced here since neither API exposes per-session data, only aggregate totals.
 - Films: "Adicionar à lista" from the "..." menu (existing list or new).
 - Series: toggle to show/hide "Séries relacionadas" from the "..." menu.
+- Real launcher icon (dark background, gold kanji), with distinct debug (gray) and nightly (orange)
+  variants so side-installed builds are easy to tell apart on the home screen.
 
 ### Changes
 - Bottom bar reordered to Jogos, Filmes, Séries, Mangás, Livros.
