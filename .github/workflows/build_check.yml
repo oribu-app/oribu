@@ -47,7 +47,7 @@ jobs:
         run: ./gradlew assembleRelease
 
       - name: Run unit tests
-        run: ./gradlew testReleaseUnitTest
+        run: ./gradlew testDebugUnitTest
 
       - name: Publish test report
         uses: mikepenz/action-junit-report@3585e9575db828022551b4231f165eb59a0e74e3 # v5
@@ -57,11 +57,17 @@ jobs:
           detailed_summary: true
           report_paths: "**/build/test-results/test*/TEST-*.xml"
 
-      - name: Upload unsigned APK to artifact
+      - name: Upload R8 APK to artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: app-release-unsigned-${{ github.sha }}
-          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          name: arm64-v8a-${{ github.sha }}
+          path: app/build/outputs/apk/release/app-arm64-v8a-release-unsigned.apk
+
+      - name: Upload x86_64 APK to artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: x86_64-${{ github.sha }}
+          path: app/build/outputs/apk/release/app-x86_64-release-unsigned.apk
 
       - name: Upload R8 mapping
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

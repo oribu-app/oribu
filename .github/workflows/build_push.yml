@@ -115,8 +115,11 @@ jobs:
       - name: Build the app
         run: ./gradlew assemble${{ env.BUILD_TYPE }}
 
+      # AGP 9's variant task generation only creates a unit test task for the
+      # "debug" build type by default now — testReleaseUnitTest and friends
+      # no longer exist, so this is the only unit test task available.
       - name: Run unit tests
-        run: ./gradlew testReleaseUnitTest test${{ env.BUILD_TYPE }}UnitTest
+        run: ./gradlew testDebugUnitTest
 
       - name: Publish test report
         uses: mikepenz/action-junit-report@3585e9575db828022551b4231f165eb59a0e74e3 # v5
@@ -128,7 +131,8 @@ jobs:
 
       # A nightly já sai assinada com a keystore de debug (signingConfig definido no
       # build.gradle.kts) — não precisa de secrets. Beta/Release saem unsigned do Gradle
-      # de propósito e são assinadas aqui com a keystore de release real.
+      # de propósito e são assinadas aqui com a keystore de release real, uma vez por
+      # variante de ABI (universal + arm64-v8a + armeabi-v7a + x86 + x86_64).
       - name: Sign APK (beta/release)
         if: env.STAGE == 'beta' || env.STAGE == 'release'
         env:
@@ -145,38 +149,66 @@ jobs:
 
           BUILD_TOOLS="${ANDROID_SDK_ROOT}/build-tools/35.0.0"
           APK_DIR="app/build/outputs/apk/${{ env.STAGE }}"
-          UNSIGNED_APK="$APK_DIR/app-${{ env.STAGE }}-unsigned.apk"
 
           echo "$SIGNING_KEY" | base64 -d > release.keystore
 
-          "$BUILD_TOOLS/zipalign" -p -f 4 "$UNSIGNED_APK" "$APK_DIR/app-${{ env.STAGE }}-aligned.apk"
-          "$BUILD_TOOLS/apksigner" sign \
-            --ks release.keystore \
-            --ks-key-alias "$ALIAS" \
-            --ks-pass "pass:$KEY_STORE_PASSWORD" \
-            --key-pass "pass:$KEY_PASSWORD" \
-            --out "$APK_DIR/app-${{ env.STAGE }}-signed.apk" \
-            "$APK_DIR/app-${{ env.STAGE }}-aligned.apk"
+          for variant in universal arm64-v8a armeabi-v7a x86 x86_64; do
+            UNSIGNED_APK="$APK_DIR/app-${variant}-${{ env.STAGE }}-unsigned.apk"
+            "$BUILD_TOOLS/zipalign" -p -f 4 "$UNSIGNED_APK" "$APK_DIR/app-${variant}-${{ env.STAGE }}-aligned.apk"
+            "$BUILD_TOOLS/apksigner" sign \
+              --ks release.keystore \
+              --ks-key-alias "$ALIAS" \
+              --ks-pass "pass:$KEY_STORE_PASSWORD" \
+              --key-pass "pass:$KEY_PASSWORD" \
+              --out "$APK_DIR/app-${variant}-${{ env.STAGE }}-signed.apk" \
+              "$APK_DIR/app-${variant}-${{ env.STAGE }}-aligned.apk"
+          done
 
           rm release.keystore
 
-      - name: Prepare release artifact
+      - name: Clean up build artifacts
         if: env.VERSION_TAG != ''
         run: |
           set -e
-          case "${{ env.STAGE }}" in
-            nightly) SRC="app/build/outputs/apk/nightly/app-nightly.apk" ;;
-            *)       SRC="app/build/outputs/apk/${{ env.STAGE }}/app-${{ env.STAGE }}-signed.apk" ;;
-          esac
-          cp "$SRC" "hobbiesvault-${{ env.VERSION_TAG }}.apk"
-          echo "APK_SHA=$(sha256sum hobbiesvault-${{ env.VERSION_TAG }}.apk | awk '{ print $1 }')" >> $GITHUB_ENV
 
-      - name: Upload APK to artifact
+          case "${{ env.STAGE }}" in
+            nightly) dir="app/build/outputs/apk/nightly"; suffix="nightly" ;;
+            *)       dir="app/build/outputs/apk/${{ env.STAGE }}"; suffix="${{ env.STAGE }}-signed" ;;
+          esac
+
+          mv "$dir/app-universal-${suffix}.apk" "oribu-${{ env.VERSION_TAG }}.apk"
+          sha=`sha256sum oribu-${{ env.VERSION_TAG }}.apk | awk '{ print $1 }'`
+          echo "APK_UNIVERSAL_SHA=$sha" >> $GITHUB_ENV
+
+          cp "$dir/app-arm64-v8a-${suffix}.apk" "oribu-arm64-v8a-${{ env.VERSION_TAG }}.apk"
+          sha=`sha256sum oribu-arm64-v8a-${{ env.VERSION_TAG }}.apk | awk '{ print $1 }'`
+          echo "APK_ARM64_V8A_SHA=$sha" >> $GITHUB_ENV
+
+          cp "$dir/app-armeabi-v7a-${suffix}.apk" "oribu-armeabi-v7a-${{ env.VERSION_TAG }}.apk"
+          sha=`sha256sum oribu-armeabi-v7a-${{ env.VERSION_TAG }}.apk | awk '{ print $1 }'`
+          echo "APK_ARMEABI_V7A_SHA=$sha" >> $GITHUB_ENV
+
+          cp "$dir/app-x86-${suffix}.apk" "oribu-x86-${{ env.VERSION_TAG }}.apk"
+          sha=`sha256sum oribu-x86-${{ env.VERSION_TAG }}.apk | awk '{ print $1 }'`
+          echo "APK_X86_SHA=$sha" >> $GITHUB_ENV
+
+          cp "$dir/app-x86_64-${suffix}.apk" "oribu-x86_64-${{ env.VERSION_TAG }}.apk"
+          sha=`sha256sum oribu-x86_64-${{ env.VERSION_TAG }}.apk | awk '{ print $1 }'`
+          echo "APK_X86_64_SHA=$sha" >> $GITHUB_ENV
+
+      - name: Upload R8 APK to artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: env.VERSION_TAG != ''
         with:
-          name: hobbiesvault-${{ env.VERSION_TAG }}
-          path: hobbiesvault-${{ env.VERSION_TAG }}.apk
+          name: arm64-v8a-${{ github.sha }}
+          path: app/build/outputs/apk/*/app*-arm64-v8a-*.apk
+
+      - name: Upload R8 mapping
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: env.VERSION_TAG != ''
+        with:
+          name: mapping-${{ github.sha }}
+          path: app/build/outputs/mapping/*
 
       # Nightlies are published to the separate oribu-app/oribu-nightly repo (see "Create
       # Nightly" below), so no tag is created here - action-gh-release creates the tag
@@ -195,19 +227,32 @@ jobs:
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           tag_name: ${{ env.VERSION_TAG }}
-          name: HobbiesVault ${{ env.VERSION_TAG }}
+          name: Oribu ${{ env.VERSION_TAG }}
           body: |
             ${{ github.event.inputs.message }}
 
             ${{ steps.changelog.outputs.CHANGELOG }}
             ---
 
-            ### Checksum
+            ### Checksums
 
-            | Arquivo | SHA-256 |
+            | Variant | SHA-256 |
             | ------- | ------- |
-            | hobbiesvault-${{ env.VERSION_TAG }}.apk | ${{ env.APK_SHA }} |
-          files: hobbiesvault-${{ env.VERSION_TAG }}.apk
+            | Universal | ${{ env.APK_UNIVERSAL_SHA }} |
+            | arm64-v8a | ${{ env.APK_ARM64_V8A_SHA }} |
+            | armeabi-v7a | ${{ env.APK_ARMEABI_V7A_SHA }} |
+            | x86 | ${{ env.APK_X86_SHA }} |
+            | x86_64 | ${{ env.APK_X86_64_SHA }} |
+
+            > [!TIP]
+            >
+            > If you are unsure which version to download then go with **oribu-${{ env.VERSION_TAG }}.apk**
+          files: |
+            oribu-${{ env.VERSION_TAG }}.apk
+            oribu-arm64-v8a-${{ env.VERSION_TAG }}.apk
+            oribu-armeabi-v7a-${{ env.VERSION_TAG }}.apk
+            oribu-x86-${{ env.VERSION_TAG }}.apk
+            oribu-x86_64-${{ env.VERSION_TAG }}.apk
           draft: true
           prerelease: ${{ github.event.inputs.beta }}
         env:
@@ -225,20 +270,45 @@ jobs:
           name: Oribu Nightly (${{ env.VERSION_TAG }})
           body: |
             > [!CAUTION]
-            > _**Esta build é apenas para testes!**_
+            > _**This build is for testing only!**_
             >
-            > Gerada a partir do commit [`${{ env.COMMIT_SHORT_HASH }}`](${{ github.server_url }}/${{ github.repository }}/commit/${{ env.COMMIT_HASH }})
+            > This build is triggered by commit [`${{ env.COMMIT_SHORT_HASH }}`](${{ github.server_url }}/${{ github.repository }}/commit/${{ env.COMMIT_HASH }})
 
-            Não é recomendada para uso diário. Prefira a última release estável (${{ github.server_url }}/${{ github.repository }}/releases/latest).
+            It is not recommended for daily use. Please download the latest stable release instead (${{ github.server_url }}/${{ github.repository }}/releases/latest).
 
             ${{ steps.changelog.outputs.CHANGELOG }}
             ---
 
-            ### Checksum
+            ### Checksums
 
-            | Arquivo | SHA-256 |
+            | Variant | SHA-256 |
             | ------- | ------- |
-            | hobbiesvault-${{ env.VERSION_TAG }}.apk | ${{ env.APK_SHA }} |
-          files: hobbiesvault-${{ env.VERSION_TAG }}.apk
+            | Universal | ${{ env.APK_UNIVERSAL_SHA }} |
+            | arm64-v8a | ${{ env.APK_ARM64_V8A_SHA }} |
+            | armeabi-v7a | ${{ env.APK_ARMEABI_V7A_SHA }} |
+            | x86 | ${{ env.APK_X86_SHA }} |
+            | x86_64 | ${{ env.APK_X86_64_SHA }} |
+
+            > [!TIP]
+            >
+            > If you are unsure which version to download then go with **oribu-${{ env.VERSION_TAG }}.apk**
+          files: |
+            oribu-${{ env.VERSION_TAG }}.apk
+            oribu-arm64-v8a-${{ env.VERSION_TAG }}.apk
+            oribu-armeabi-v7a-${{ env.VERSION_TAG }}.apk
+            oribu-x86-${{ env.VERSION_TAG }}.apk
+            oribu-x86_64-${{ env.VERSION_TAG }}.apk
           draft: false
           prerelease: true
+
+      # Nightly releases are published immediately (not drafts), so the site can be
+      # rebuilt right away. Stable/beta releases are drafts and are dispatched
+      # separately from release_published.yml when a maintainer actually publishes them.
+      - name: Notify website of new nightly
+        if: env.STAGE == 'nightly'
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.WEBSITE_DISPATCH_TOKEN }}
+          repository: oribu-app/oribu-app.github.io
+          event-type: app_release
+          client-payload: '{"tag": "${{ env.VERSION_TAG }}", "stage": "nightly"}'

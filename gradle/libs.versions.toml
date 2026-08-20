@@ -1,7 +1,7 @@
 [versions]
 agp             = "9.3.1"
 kotlin          = "2.4.10"
-ksp             = "2.1.0-1.0.29"
+ksp             = "2.3.11"
 compose-bom     = "2024.12.01"
 room            = "2.8.4"
 workmanager     = "2.10.0"

@@ -15,16 +15,35 @@ fun runCommandOrDefault(command: String, default: String): String =
 
 val commitCount by lazy { runCommandOrDefault("git rev-list --count HEAD", "0") }
 
+val supportedAbis = setOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+
 android {
-    namespace   = "com.hobbiesvault"
+    namespace   = "app.oribu"
     compileSdk  = 35
 
     defaultConfig {
-        applicationId = "com.hobbiesvault"
+        applicationId = "app.oribu"
         minSdk        = 34
         targetSdk     = 35
         versionCode   = 1
         versionName   = "1.0.0"
+
+        ndk {
+            // False positive, we have x86 abi support
+            //noinspection ChromeOsAbiSupport
+            abiFilters += supportedAbis
+        }
+    }
+
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            // False positive, we have x86 abi support
+            //noinspection ChromeOsAbiSupport
+            include(*supportedAbis.toTypedArray())
+            isUniversalApk = true
+        }
     }
 
     buildTypes {
@@ -75,10 +94,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-
     buildFeatures {
         compose     = true
         buildConfig = true
@@ -91,6 +106,12 @@ android {
     androidResources {
         // Prevent aapt from re-compressing already-gzipped assets (stored as .bin)
         noCompress += "bin"
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 }
 
