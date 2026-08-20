@@ -122,6 +122,14 @@ conventions, branch strategy and everything else you need to get set up.
 
 </div>
 
+### Credits
+
+Thank you to all the people who have contributed!
+
+<a href="https://github.com/oribu-app/oribu-app/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=oribu-app/oribu-app" alt="Oribu contributors" title="Oribu contributors"/>
+</a>
+
 ### Disclaimer
 
 The developer(s) of this application are not affiliated with any of the content/metadata
