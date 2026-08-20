@@ -19,7 +19,7 @@ val supportedAbis = setOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
 
 android {
     namespace   = "app.oribu"
-    compileSdk  = 35
+    compileSdk  = 37
 
     defaultConfig {
         applicationId = "app.oribu"

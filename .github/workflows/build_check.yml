@@ -36,7 +36,7 @@ jobs:
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
 
       - name: Install compileSdk build-tools
-        run: ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager "build-tools;35.0.0" "platforms;android-35"
+        run: ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager "build-tools;36.1.0" "platforms;android-37.0"
 
       - name: Copy CI gradle.properties
         run: |

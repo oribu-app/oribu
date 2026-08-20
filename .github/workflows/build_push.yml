@@ -57,7 +57,7 @@ jobs:
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
 
       - name: Install compileSdk build-tools
-        run: ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager "build-tools;35.0.0" "platforms;android-35"
+        run: ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager "build-tools;36.1.0" "platforms;android-37.0"
 
       - name: Set up CHANGELOG parser
         uses: taiki-e/install-action@ab40c1b85f10726bcda0a7d1d47c5912e6ca0d80 # parse-changelog
@@ -147,7 +147,7 @@ jobs:
             exit 1
           fi
 
-          BUILD_TOOLS="${ANDROID_SDK_ROOT}/build-tools/35.0.0"
+          BUILD_TOOLS="${ANDROID_SDK_ROOT}/build-tools/36.1.0"
           APK_DIR="app/build/outputs/apk/${{ env.STAGE }}"
 
           echo "$SIGNING_KEY" | base64 -d > release.keystore
