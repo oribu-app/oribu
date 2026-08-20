@@ -61,7 +61,7 @@ shimmer = { group = "com.valentinilk.shimmer", name = "compose-shimmer", version
 mlkit-translate = { group = "com.google.mlkit", name = "translate", version = "17.0.3" }
 
 # JSON
-gson = { group = "com.google.code.gson", name = "gson", version = "2.10.1" }
+gson = { group = "com.google.code.gson", name = "gson", version = "2.14.0" }
 
 # Coroutines
 coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
