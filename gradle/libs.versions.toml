@@ -13,7 +13,7 @@ coroutines      = "1.11.0"
 datastore       = "1.2.1"
 splashscreen    = "1.0.1"
 vico            = "3.3.0-next.2"
-aboutlibraries  = "15.0.4"
+aboutlibraries  = "15.1.0"
 junit           = "4.13.2"
 kotlinter       = "5.7.0"
 
