@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.*
 import app.oribu.model.MediaItem
+import app.oribu.ui.screens.AboutLibraryLicenseScreen
 import app.oribu.ui.screens.AboutLicenseScreen
 import app.oribu.ui.screens.AboutScreen
 import app.oribu.ui.screens.AnotacoesScreen
@@ -183,6 +184,7 @@ fun MainNavGraph(startDestination: String = Routes.HOME) {
             composable(Routes.CALENDAR) { CalendarScreen(navController) }
             composable(Routes.ABOUT) { AboutScreen(navController) }
             composable(Routes.ABOUT_LICENSES) { AboutLicenseScreen(navController) }
+            composable(Routes.ABOUT_LICENSE_DETAIL) { AboutLibraryLicenseScreen(navController) }
             composable(Routes.ANOTACOES) { AnotacoesScreen(navController) }
         }
     }

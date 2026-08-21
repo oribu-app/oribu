@@ -14,8 +14,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import app.oribu.R
+import app.oribu.ui.navigation.Routes
 import com.mikepenz.aboutlibraries.ui.compose.android.produceLibraries
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
+import com.mikepenz.aboutlibraries.ui.compose.util.htmlReadyLicenseContent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,6 +39,20 @@ fun AboutLicenseScreen(navController: NavController) {
         LibrariesContainer(
             libraries = libraries,
             modifier = Modifier.padding(padding),
+            onLibraryClick = { library ->
+                val licenseHtml =
+                    library.licenses
+                        .firstOrNull()
+                        ?.htmlReadyLicenseContent
+                        .orEmpty()
+                navController.currentBackStackEntry?.savedStateHandle?.apply {
+                    set("libraryName", library.name)
+                    set("libraryWebsite", library.website)
+                    set("licenseHtml", licenseHtml)
+                }
+                navController.navigate(Routes.ABOUT_LICENSE_DETAIL)
+                true
+            },
         )
     }
 }

@@ -3,23 +3,19 @@ package app.oribu.ui.screens
 import android.os.Build
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.outlined.Article
 import androidx.compose.material.icons.outlined.Code
-import androidx.compose.material.icons.outlined.Help
-import androidx.compose.material.icons.outlined.Schedule
-import androidx.compose.material.icons.outlined.SystemUpdate
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,6 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import app.oribu.BuildConfig
 import app.oribu.service.AppUpdateChecker
@@ -116,81 +113,50 @@ fun AboutScreen(navController: NavController) {
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         LazyColumn(Modifier.padding(padding).fillMaxSize()) {
+            item { AboutRow(title = "Oribu", subtitle = "Versão $versionName") }
+            item { AboutRow(title = "Desenvolvedor", subtitle = "Thiago Rocha") }
             item {
-                ListItem(
-                    headlineContent = { Text("Oribu") },
-                    supportingContent = { Text("Versão $versionName") },
-                    leadingContent = { Icon(Icons.Default.Info, null) },
-                )
-            }
-            item {
-                ListItem(
-                    headlineContent = { Text("Desenvolvedor") },
-                    supportingContent = { Text("Thiago Rocha") },
-                    leadingContent = { Icon(Icons.Default.Person, null) },
-                )
-            }
-            item {
-                ListItem(
-                    headlineContent = { Text("Novidades desta versão") },
-                    leadingContent = { Icon(Icons.Outlined.Article, null) },
-                    modifier = Modifier.clickable { uriHandler.openUri(AppUpdateChecker.releasesUrl) },
+                AboutRow(
+                    title = "Novidades desta versão",
+                    onClick = { uriHandler.openUri(AppUpdateChecker.releasesUrl) },
                 )
             }
             if (AppUpdateChecker.updateCheckEnabled) {
                 item {
-                    ListItem(
-                        headlineContent = { Text("Verificar atualizações") },
-                        supportingContent = { if (checkingUpdate) Text("Checando...") },
-                        leadingContent = {
-                            if (checkingUpdate) {
-                                CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
-                            } else {
-                                Icon(Icons.Outlined.SystemUpdate, null)
-                            }
-                        },
-                        modifier = Modifier.clickable(enabled = !checkingUpdate) { checkForUpdate() },
+                    AboutRow(
+                        title = "Verificar atualizações",
+                        subtitle = if (checkingUpdate) "Checando..." else null,
+                        onClick = if (checkingUpdate) null else ::checkForUpdate,
                     )
                 }
             }
             item {
-                ListItem(
-                    headlineContent = { Text("Versão") },
-                    supportingContent = { Text(versionName ?: "—") },
-                    leadingContent = { Icon(Icons.Default.Info, null) },
-                    modifier =
-                        Modifier.clickable {
-                            val debugInfo =
-                                "Oribu $versionName (${BuildConfig.BUILD_TYPE})\n" +
-                                    "Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})\n" +
-                                    "${Build.MANUFACTURER} ${Build.MODEL}"
-                            clipboardManager.setText(AnnotatedString(debugInfo))
-                            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-                                scope.launch { snackbarHostState.showSnackbar("Copiado para a área de transferência") }
-                            }
-                        },
+                AboutRow(
+                    title = "Versão",
+                    subtitle = versionName ?: "—",
+                    onClick = {
+                        val debugInfo =
+                            "Oribu $versionName (${BuildConfig.BUILD_TYPE})\n" +
+                                "Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})\n" +
+                                "${Build.MANUFACTURER} ${Build.MODEL}"
+                        clipboardManager.setText(AnnotatedString(debugInfo))
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                            scope.launch { snackbarHostState.showSnackbar("Copiado para a área de transferência") }
+                        }
+                    },
                 )
             }
+            item { AboutRow(title = "Data do build", subtitle = buildTimeLabel) }
             item {
-                ListItem(
-                    headlineContent = { Text("Data do build") },
-                    supportingContent = { Text(buildTimeLabel) },
-                    leadingContent = { Icon(Icons.Outlined.Schedule, null) },
-                )
-            }
-            item { HorizontalDivider() }
-            item {
-                ListItem(
-                    headlineContent = { Text("Ajuda") },
-                    leadingContent = { Icon(Icons.Outlined.Help, null) },
-                    modifier = Modifier.clickable { uriHandler.openUri("https://github.com/oribu-app/oribu-app/issues") },
-                )
+                Column(Modifier.fillMaxWidth()) {
+                    HorizontalDivider()
+                    AboutRow(title = "Ajuda", onClick = { uriHandler.openUri("https://github.com/oribu-app/oribu-app/issues") })
+                }
             }
             item {
-                ListItem(
-                    headlineContent = { Text("Licenças de código aberto") },
-                    leadingContent = { Icon(Icons.Outlined.Code, null) },
-                    modifier = Modifier.clickable { navController.navigate(Routes.ABOUT_LICENSES) },
+                AboutRow(
+                    title = "Licenças de código aberto",
+                    onClick = { navController.navigate(Routes.ABOUT_LICENSES) },
                 )
             }
             item {
@@ -205,6 +171,35 @@ fun AboutScreen(navController: NavController) {
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Linha no molde do TextPreferenceWidget do Rokku: sem ícone, título 16sp + subtítulo opcional
+ * em bodySmall meio apagado (alpha), 16dp de padding em toda volta, altura mínima de 56dp.
+ */
+@Composable
+private fun AboutRow(
+    title: String,
+    subtitle: String? = null,
+    onClick: (() -> Unit)? = null,
+) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .sizeIn(minHeight = 56.dp)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(horizontal = 16.dp, vertical = 16.dp),
+    ) {
+        Text(title, fontSize = 16.sp)
+        if (subtitle != null) {
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                modifier = Modifier.padding(top = 2.dp),
+            )
         }
     }
 }

@@ -1,7 +1,13 @@
 ﻿package app.oribu.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -36,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -83,14 +90,37 @@ fun OverflowMenu(
         ) {
             Column(Modifier.align(Alignment.TopEnd)) {
                 Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
-                Spacer(Modifier.height(56.dp))
-                Surface(
-                    modifier = Modifier.padding(end = 10.dp).widthIn(min = 230.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    tonalElevation = 3.dp,
-                    shadowElevation = 8.dp,
+                // TopAppBar (M3 "small" variant, o único usado no app) tem 64dp de altura —
+                // 56dp era a altura do AppBar do Material 2, por isso o menu abria 8dp alto
+                // demais, sobrepondo o rodapé da barra em vez de encostar nela.
+                Spacer(Modifier.height(64.dp))
+                // Molde exato do OverflowDialogTheme do Rokku (fade_in_grow_from_top): escala
+                // 0.9→1.0 crescendo a partir do canto superior direito + fade, 220ms na
+                // abertura; só fade (sem escala) nos 150ms de fechamento.
+                val visibleState = remember { MutableTransitionState(false) }
+                visibleState.targetState = true
+                AnimatedVisibility(
+                    visibleState = visibleState,
+                    enter =
+                        fadeIn(tween(220, easing = FastOutSlowInEasing)) +
+                            scaleIn(
+                                initialScale = 0.9f,
+                                transformOrigin = TransformOrigin(1f, 0f),
+                                animationSpec = tween(220, easing = FastOutSlowInEasing),
+                            ),
+                    exit = fadeOut(tween(150)),
                 ) {
-                    Column(Modifier.padding(vertical = 6.dp), content = content)
+                    // tonalElevation (mistura com a cor primária) é o equivalente Material3 do
+                    // blendARGB(background, colorSecondary, 0.075f) do card do Rokku; sem
+                    // shadowElevation pra ficar achatado como o cardElevation=0dp de lá.
+                    Surface(
+                        modifier = Modifier.padding(end = 14.dp).widthIn(min = 230.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        tonalElevation = 3.dp,
+                        shadowElevation = 0.dp,
+                    ) {
+                        Column(Modifier.padding(vertical = 6.dp), content = content)
+                    }
                 }
             }
         }
@@ -107,14 +137,15 @@ fun OverflowMenuItem(
     Row(
         Modifier
             .fillMaxWidth()
+            .heightIn(min = 48.dp)
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(icon, null, modifier = Modifier.size(22.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.width(16.dp))
+        Icon(icon, null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurface)
+        Spacer(Modifier.width(12.dp))
         Column {
-            Text(text, style = MaterialTheme.typography.bodyMedium)
+            Text(text, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
             if (subtitle != null) {
                 Text(
                     subtitle,

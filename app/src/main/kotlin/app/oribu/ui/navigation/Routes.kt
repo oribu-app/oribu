@@ -34,5 +34,6 @@ object Routes {
     const val CALENDAR = "calendar"
     const val ABOUT = "about"
     const val ABOUT_LICENSES = "about/licenses"
+    const val ABOUT_LICENSE_DETAIL = "about/licenses/detail"
     const val ANOTACOES = "anotacoes"
 }
