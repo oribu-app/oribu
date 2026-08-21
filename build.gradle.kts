@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)       apply false
     alias(libs.plugins.ksp)                  apply false
     alias(libs.plugins.kotlinter)            apply false
+    alias(libs.plugins.aboutlibraries)         apply false
+    alias(libs.plugins.aboutlibraries.android) apply false
 }
 
 // Applied per-subproject so `lintKotlin`/`formatKotlin` exist to run - the root project has no

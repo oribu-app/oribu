@@ -33,8 +33,7 @@ import app.oribu.model.GameConsole
 import app.oribu.model.MediaItem
 import app.oribu.model.MediaStatus
 import app.oribu.model.MediaType
-import app.oribu.ui.components.OverflowMenu
-import app.oribu.ui.components.OverflowMenuItem
+import app.oribu.ui.components.AppOverflowMenu
 import app.oribu.ui.navigation.Routes
 import app.oribu.ui.theme.*
 import coil.compose.AsyncImage
@@ -121,40 +120,7 @@ fun HomeScreen(
                 actions = {
                     IconButton(onClick = { navController.navigate(Routes.CALENDAR) }) { Icon(Icons.Outlined.CalendarMonth, "") }
                     IconButton(onClick = { showMenu = true }) { Icon(Icons.Default.MoreVert, "") }
-                    OverflowMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-                        OverflowMenuItem(
-                            text = "Configurações",
-                            icon = Icons.Outlined.Settings,
-                            onClick = {
-                                showMenu = false
-                                navController.navigate(Routes.SETTINGS)
-                            },
-                        )
-                        OverflowMenuItem(
-                            text = "Status",
-                            icon = Icons.Outlined.BarChart,
-                            onClick = {
-                                showMenu = false
-                                navController.navigate(Routes.STATS)
-                            },
-                        )
-                        OverflowMenuItem(
-                            text = "Histórico",
-                            icon = Icons.Outlined.History,
-                            onClick = {
-                                showMenu = false
-                                navController.navigate(Routes.HISTORY)
-                            },
-                        )
-                        OverflowMenuItem(
-                            text = "Sobre",
-                            icon = Icons.Outlined.Info,
-                            onClick = {
-                                showMenu = false
-                                navController.navigate(Routes.ABOUT)
-                            },
-                        )
-                    }
+                    AppOverflowMenu(navController = navController, expanded = showMenu, onDismissRequest = { showMenu = false })
                 },
             )
         },

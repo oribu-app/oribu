@@ -27,9 +27,8 @@ import app.oribu.data.db.DB
 import app.oribu.model.MediaItem
 import app.oribu.model.MediaStatus
 import app.oribu.model.MediaType
+import app.oribu.ui.components.AppOverflowMenu
 import app.oribu.ui.components.EmptyState
-import app.oribu.ui.components.OverflowMenu
-import app.oribu.ui.components.OverflowMenuItem
 import app.oribu.ui.components.ProportionalTabRow
 import app.oribu.ui.navigation.Routes
 import app.oribu.ui.theme.ColorManga
@@ -130,16 +129,7 @@ fun MangaScreen(
                         IconButton(onClick = { showMenu = true }) {
                             Icon(Icons.Default.MoreVert, contentDescription = null)
                         }
-                        OverflowMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-                            OverflowMenuItem(
-                                text = "Configurações",
-                                icon = Icons.Outlined.Settings,
-                                onClick = {
-                                    showMenu = false
-                                    navController.navigate(Routes.SETTINGS)
-                                },
-                            )
-                        }
+                        AppOverflowMenu(navController = navController, expanded = showMenu, onDismissRequest = { showMenu = false })
                     },
                 )
                 ProportionalTabRow(

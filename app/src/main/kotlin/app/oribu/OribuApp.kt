@@ -11,6 +11,7 @@ import app.oribu.service.ApiServices
 import app.oribu.service.GameDatasetImporter
 import app.oribu.service.NotificationHelper
 import app.oribu.ui.theme.AppThemeController
+import app.oribu.worker.AppUpdateCheckWorker
 import app.oribu.worker.CacheUpdateWorker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,5 +39,6 @@ class OribuApp : Application() {
             if (BuildConfig.DEBUG) DebugSeeder.seedIfEmpty(DB.repo)
         }
         CacheUpdateWorker.schedule(this)
+        AppUpdateCheckWorker.schedule(this)
     }
 }

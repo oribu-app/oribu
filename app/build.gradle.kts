@@ -4,6 +4,8 @@
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.aboutlibraries)
+    alias(libs.plugins.aboutlibraries.android)
 }
 
 // Conta de commits usada para nomear builds nightly (r<N>). Fora de um repo git
@@ -17,6 +19,11 @@ val commitCount by lazy { runCommandOrDefault("git rev-list --count HEAD", "0") 
 
 val supportedAbis = setOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
 
+// Epoch millis em vez de String ISO formatada aqui — o pacote java.time não resolve nesse
+// script Kotlin DSL (precompiled script classpath não expõe java.time), então a formatação
+// pra exibição acontece do lado do app (AboutScreen.kt), onde java.time funciona normalmente.
+val buildTimeMillis = System.currentTimeMillis()
+
 android {
     namespace   = "app.oribu"
     compileSdk  = 37
@@ -27,6 +34,11 @@ android {
         targetSdk     = 35
         versionCode   = 1
         versionName   = "1.0.0"
+
+        // Expostos pra tela Sobre (checagem/exibição de versão) — commitCount já existia só
+        // pro nome da build nightly, BUILD_TIME é novo.
+        buildConfigField("int", "COMMIT_COUNT", commitCount.ifBlank { "0" })
+        buildConfigField("long", "BUILD_TIME", "${buildTimeMillis}L")
 
         ndk {
             // False positive, we have x86 abi support
@@ -156,6 +168,9 @@ dependencies {
 
     // Charts
     implementation(libs.vico.compose)
+
+    // Open source licenses list (Sobre > Licenças)
+    implementation(libs.aboutlibraries)
 
     // Shimmer
     implementation(libs.shimmer)

@@ -28,6 +28,13 @@ The format is a simplified version of [Keep a Changelog](https://keepachangelog.
   optimization permission prompts, and a step to configure API keys for TMDB, IGDB, Google Books,
   Steam and ITAD with a "test connection" check per service — also available afterwards from
   Settings > Integrações, which is now editable instead of read-only.
+- Sobre screen, in Rokku's mold: in-app update checking against GitHub Releases (stable and
+  nightly channels), downloading and prompting to install the new APK, release notes link, a
+  build-time row, a "Versão" row that copies debug info to the clipboard, an Ajuda link, and an
+  open-source licenses screen (via the AboutLibraries plugin). Also checks silently once a day
+  and posts a notification when a new version is found.
+- The "..." menu (Configurações, Status, Histórico, Sobre, Ajuda) is now the same on every hobby
+  list screen (Jogos, Filmes, Séries, Mangás, Livros), not just Home.
 
 ### Changes
 - Bottom bar reordered to Jogos, Filmes, Séries, Mangás, Livros.

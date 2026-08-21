@@ -22,6 +22,11 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material.icons.outlined.BarChart
+import androidx.compose.material.icons.outlined.Help
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,7 +40,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -45,7 +52,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.navigation.NavController
 import app.oribu.model.MediaStatus
+import app.oribu.ui.navigation.Routes
 import coil.compose.AsyncImage
 
 // ── Overflow menu (estilo Rokku: escurece o fundo e abre ancorado no canto
@@ -114,6 +123,69 @@ fun OverflowMenuItem(
                 )
             }
         }
+    }
+}
+
+// ── Menu de três pontos padrão (Configurações/Status/Histórico/Sobre/Ajuda) ─
+// Usado pela Home e por todas as telas de listagem (Jogos/Filmes/Séries/Mangás/Livros),
+// no molde do menu "More" do Rokku (mesmas opções em toda tela com toolbar).
+@Composable
+fun AppOverflowMenu(
+    navController: NavController,
+    expanded: Boolean,
+    onDismissRequest: () -> Unit,
+) {
+    val context = LocalContext.current
+    val uriHandler = LocalUriHandler.current
+    val versionName =
+        remember {
+            runCatching {
+                context.packageManager.getPackageInfo(context.packageName, 0).versionName
+            }.getOrDefault("—")
+        }
+
+    OverflowMenu(expanded = expanded, onDismissRequest = onDismissRequest) {
+        OverflowMenuItem(
+            text = "Configurações",
+            icon = Icons.Outlined.Settings,
+            onClick = {
+                onDismissRequest()
+                navController.navigate(Routes.SETTINGS)
+            },
+        )
+        OverflowMenuItem(
+            text = "Status",
+            icon = Icons.Outlined.BarChart,
+            onClick = {
+                onDismissRequest()
+                navController.navigate(Routes.STATS)
+            },
+        )
+        OverflowMenuItem(
+            text = "Histórico",
+            icon = Icons.Outlined.History,
+            onClick = {
+                onDismissRequest()
+                navController.navigate(Routes.HISTORY)
+            },
+        )
+        OverflowMenuItem(
+            text = "Sobre",
+            subtitle = "Versão $versionName",
+            icon = Icons.Outlined.Info,
+            onClick = {
+                onDismissRequest()
+                navController.navigate(Routes.ABOUT)
+            },
+        )
+        OverflowMenuItem(
+            text = "Ajuda",
+            icon = Icons.Outlined.Help,
+            onClick = {
+                onDismissRequest()
+                uriHandler.openUri("https://github.com/oribu-app/oribu-app/issues")
+            },
+        )
     }
 }
 
