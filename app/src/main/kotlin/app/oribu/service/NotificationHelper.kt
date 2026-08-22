@@ -10,7 +10,7 @@ import android.content.Intent
 object NotificationHelper {
     private const val CHANNEL_ID = "manga_status_changes"
     private const val UPDATE_CHANNEL_ID = "app_updates"
-    private const val UPDATE_NOTIFICATION_ID = -1
+    const val UPDATE_NOTIFICATION_ID = -1
     private lateinit var appContext: Context
 
     fun init(context: Context) {
@@ -40,17 +40,22 @@ object NotificationHelper {
         manager.notify(itemId, notification)
     }
 
+    /** Também usada pelo AppUpdateInstallWorker para promover o download a foreground service. */
+    fun updateProgressNotification(
+        context: Context,
+        percent: Int,
+    ): Notification =
+        Notification
+            .Builder(context.applicationContext, UPDATE_CHANNEL_ID)
+            .setContentTitle("Baixando atualização")
+            .setSmallIcon(android.R.drawable.stat_sys_download)
+            .setProgress(100, percent, false)
+            .setOngoing(true)
+            .build()
+
     fun notifyUpdateProgress(percent: Int) {
         if (!::appContext.isInitialized || !manager.areNotificationsEnabled()) return
-        val notification =
-            Notification
-                .Builder(appContext, UPDATE_CHANNEL_ID)
-                .setContentTitle("Baixando atualização")
-                .setSmallIcon(android.R.drawable.stat_sys_download)
-                .setProgress(100, percent, false)
-                .setOngoing(true)
-                .build()
-        manager.notify(UPDATE_NOTIFICATION_ID, notification)
+        manager.notify(UPDATE_NOTIFICATION_ID, updateProgressNotification(appContext, percent))
     }
 
     /**

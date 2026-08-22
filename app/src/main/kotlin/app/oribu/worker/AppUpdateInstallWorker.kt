@@ -2,9 +2,11 @@ package app.oribu.worker
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import androidx.core.content.FileProvider
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
+import androidx.work.ForegroundInfo
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -13,6 +15,7 @@ import app.oribu.service.NotificationHelper
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 /** Baixa o APK de uma release e deixa pronto pra instalar — ver NotificationHelper.notifyUpdateReadyToInstall. */
 class AppUpdateInstallWorker(
@@ -23,6 +26,17 @@ class AppUpdateInstallWorker(
         val url = inputData.getString(KEY_URL) ?: return Result.failure()
         val assetName = inputData.getString(KEY_ASSET_NAME) ?: "update.apk"
         val apkFile = File(applicationContext.externalCacheDir, assetName)
+
+        // Sem isso o worker roda em background puro: com a tela bloqueada o Doze/App Standby
+        // podia congelar o download no meio (nem sucesso nem erro), deixando a notificação de
+        // progresso parada pra sempre — sintoma reportado pelo usuário.
+        setForeground(
+            ForegroundInfo(
+                NotificationHelper.UPDATE_NOTIFICATION_ID,
+                NotificationHelper.updateProgressNotification(applicationContext, 0),
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
+            ),
+        )
 
         return try {
             downloadTo(url, apkFile)
@@ -45,7 +59,15 @@ class AppUpdateInstallWorker(
         url: String,
         apkFile: File,
     ) {
-        val client = OkHttpClient()
+        // Timeouts explícitos: sem eles, um estouro de rede fica tentando ler indefinidamente em
+        // vez de cair no catch de doWork() e reportar o erro pro usuário.
+        val client =
+            OkHttpClient
+                .Builder()
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .callTimeout(10, TimeUnit.MINUTES)
+                .build()
         val request = Request.Builder().url(url).build()
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) throw Exception("Download HTTP ${response.code}")

@@ -55,3 +55,6 @@ The format is a simplified version of [Keep a Changelog](https://keepachangelog.
 
 ### Fixes
 - Steam platform badge text was unreadable (near-black on a dark badge); now white.
+- Update download from Sobre could freeze mid-download with the screen locked (Doze/App Standby
+  killing the plain background worker) and never report success or error; now runs as a foreground
+  service and times out instead of hanging.
