@@ -21,9 +21,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -128,7 +125,7 @@ fun OverflowMenu(
 
     Dialog(
         onDismissRequest = onDismissRequest,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
+        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
     ) {
         // Desliga o dim padrão do próprio Dialog do Android — o scrim é desenhado à mão
         // logo abaixo, para poder usar os mesmos valores exatos do Rokku (0.77/0.45)
@@ -150,9 +147,9 @@ fun OverflowMenu(
                 ),
         ) {
             Column(Modifier.align(Alignment.TopEnd)) {
-                Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
                 // TopAppBar (M3 "small" variant, o único usado no app) tem 64dp de altura;
-                // -2dp replica o topMargin = toolbarHeight - 2dp do OverflowDialog do Rokku.
+                // -2dp replica o topMargin = toolbarHeight - 2dp do OverflowDialog do Rokku,
+                // medido a partir do topo real da tela (ver setDecorFitsSystemWindows acima).
                 Spacer(Modifier.height(62.dp))
                 // Molde exato do OverflowDialogTheme do Rokku: fade_in_grow_from_top.xml
                 // (escala 0.9→1.0 a partir do canto superior direito em 220ms + fade em
@@ -175,8 +172,12 @@ fun OverflowMenu(
                     // overflowCardView do Rokku) em vez do tonalElevation padrão do M3, que
                     // mistura com a cor primária e não bate com o visual de lá.
                     val cardColor = lerp(MaterialTheme.colorScheme.background, MaterialTheme.colorScheme.secondary, 0.075f)
+                    // width(IntrinsicSize.Max) faz o card abraçar o item mais largo do
+                    // conteúdo (equivalente ao overflow_card_view "wrap_content" +
+                    // constraintWidth_min do Rokku) em vez do fillMaxWidth() dos
+                    // OverflowMenuItem esticar o card até a largura da tela inteira.
                     Surface(
-                        modifier = Modifier.padding(end = 14.dp).widthIn(min = 250.dp),
+                        modifier = Modifier.padding(start = 24.dp, end = 14.dp).width(IntrinsicSize.Max).widthIn(min = 250.dp),
                         shape = RoundedCornerShape(12.dp),
                         color = cardColor,
                         tonalElevation = 0.dp,
