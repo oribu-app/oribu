@@ -63,3 +63,6 @@ The format is a simplified version of [Keep a Changelog](https://keepachangelog.
   GitHub API's release ordering (and the tag dates shown on GitHub) were unreliable. Nightly
   tags now point at a freshly-dated commit per build, and the in-app check picks the release
   with the highest build number instead of trusting the API's order.
+- The "toque para instalar" notification after a successful update download could disappear
+  before it could be tapped: it reused the same notification ID as the foreground download
+  service, which Android cancels when the service stops. Now uses its own ID.

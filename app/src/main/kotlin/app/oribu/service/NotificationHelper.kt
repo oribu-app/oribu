@@ -11,6 +11,15 @@ object NotificationHelper {
     private const val CHANNEL_ID = "manga_status_changes"
     private const val UPDATE_CHANNEL_ID = "app_updates"
     const val UPDATE_NOTIFICATION_ID = -1
+
+    /**
+     * ID separado do UPDATE_NOTIFICATION_ID de propósito: esse é o ID promovido a foreground
+     * service durante o download (ver AppUpdateInstallWorker.setForeground). Quando o worker
+     * termina, o Android encerra o foreground service e cancela a notificação daquele ID
+     * junto — mesmo que o conteúdo já tenha sido trocado pra "pronto pra instalar" um instante
+     * antes. Resultado/erro final precisam de um ID próprio pra sobreviver a isso.
+     */
+    private const val UPDATE_RESULT_NOTIFICATION_ID = -2
     private lateinit var appContext: Context
 
     fun init(context: Context) {
@@ -85,7 +94,7 @@ object NotificationHelper {
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true)
                 .build()
-        manager.notify(UPDATE_NOTIFICATION_ID, notification)
+        manager.notify(UPDATE_RESULT_NOTIFICATION_ID, notification)
     }
 
     fun notifyUpdateError() {
@@ -98,7 +107,7 @@ object NotificationHelper {
                 .setSmallIcon(android.R.drawable.stat_notify_error)
                 .setAutoCancel(true)
                 .build()
-        manager.notify(UPDATE_NOTIFICATION_ID, notification)
+        manager.notify(UPDATE_RESULT_NOTIFICATION_ID, notification)
     }
 
     /** Disparada pela checagem silenciosa diária (AppUpdateCheckWorker) quando acha versão nova. */
