@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,11 +24,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import app.oribu.BuildConfig
+import app.oribu.R
 import app.oribu.service.AppUpdateChecker
 import app.oribu.service.AppUpdateResult
 import app.oribu.service.GithubRelease
@@ -113,14 +114,14 @@ fun AboutScreen(navController: NavController) {
         LazyColumn(Modifier.padding(padding).fillMaxSize()) {
             item {
                 AboutRow(
-                    title = "Novidades desta versão",
+                    title = "O que há de novo neste lançamento",
                     onClick = { uriHandler.openUri(AppUpdateChecker.releasesUrl) },
                 )
             }
             if (AppUpdateChecker.updateCheckEnabled) {
                 item {
                     AboutRow(
-                        title = "Verificar atualizações",
+                        title = "Procurar por atualizações",
                         subtitle = if (checkingUpdate) "Checando..." else null,
                         onClick = if (checkingUpdate) null else ::checkForUpdate,
                     )
@@ -142,7 +143,7 @@ fun AboutScreen(navController: NavController) {
                     },
                 )
             }
-            item { AboutRow(title = "Data do build", subtitle = buildTimeLabel) }
+            item { AboutRow(title = "Data de compilação", subtitle = buildTimeLabel) }
             item {
                 Column(Modifier.fillMaxWidth()) {
                     HorizontalDivider()
@@ -165,7 +166,7 @@ fun AboutScreen(navController: NavController) {
                         onClick = { uriHandler.openUri(AppUpdateChecker.repoUrl) },
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.Code,
+                            painter = painterResource(R.drawable.ic_github_24dp),
                             tint = MaterialTheme.colorScheme.primary,
                             contentDescription = "GitHub",
                         )

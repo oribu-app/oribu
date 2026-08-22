@@ -35,10 +35,10 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
-import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.Help
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.QueryStats
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -249,7 +249,7 @@ fun AppOverflowMenu(
         )
         OverflowMenuItem(
             text = "Status",
-            icon = Icons.Outlined.BarChart,
+            icon = Icons.Outlined.QueryStats,
             onClick = {
                 onDismissRequest()
                 navController.navigate(Routes.STATS)
@@ -265,7 +265,7 @@ fun AppOverflowMenu(
         )
         OverflowMenuItem(
             text = "Sobre",
-            subtitle = "Versão $versionName",
+            subtitle = "v$versionName",
             icon = Icons.Outlined.Info,
             onClick = {
                 onDismissRequest()
