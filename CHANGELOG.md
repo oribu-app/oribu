@@ -58,3 +58,8 @@ The format is a simplified version of [Keep a Changelog](https://keepachangelog.
 - Update download from Sobre could freeze mid-download with the screen locked (Doze/App Standby
   killing the plain background worker) and never report success or error; now runs as a foreground
   service and times out instead of hanging.
+- "Procurar por atualizações" could report the app as up to date even when a newer nightly
+  existed: every nightly tag pointed at the same static commit in oribu-nightly, so the
+  GitHub API's release ordering (and the tag dates shown on GitHub) were unreliable. Nightly
+  tags now point at a freshly-dated commit per build, and the in-app check picks the release
+  with the highest build number instead of trusting the API's order.

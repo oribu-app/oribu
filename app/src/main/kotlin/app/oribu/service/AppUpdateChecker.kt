@@ -93,10 +93,14 @@ object AppUpdateChecker {
 
     private fun fetchLatestRelease(): GithubRelease? =
         if (isNightly) {
-            val body = get("https://api.github.com/repos/oribu-app/oribu-nightly/releases")
+            val body = get("https://api.github.com/repos/oribu-app/oribu-nightly/releases?per_page=100")
             val type = object : TypeToken<List<GithubRelease>>() {}.type
             val releases: List<GithubRelease> = gson.fromJson(body, type) ?: emptyList()
-            releases.firstOrNull()
+            // Todo tag rN do oribu-nightly aponta pro mesmo commit estático (o repo não recebe
+            // pushes de código), então o "created_at" que a API usa pra ordenar /releases fica
+            // idêntico em todas — a ordem retornada não é confiável. Escolhe pelo maior N do
+            // tag_name em vez de confiar na ordem da API.
+            releases.maxByOrNull { it.tagName.removePrefix("r").toIntOrNull() ?: -1 }
         } else {
             val body = get("https://api.github.com/repos/oribu-app/oribu-app/releases/latest")
             gson.fromJson(body, GithubRelease::class.java)

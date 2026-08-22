@@ -258,6 +258,28 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # oribu-nightly has no code of its own - its master branch never moves - so a tag
+      # created without an explicit target_commitish always falls back to that same
+      # static commit, and every nightly release ends up with an identical (and
+      # increasingly stale) created_at. That breaks the /releases API's chronological
+      # ordering too, which AppUpdateChecker relied on to find the latest nightly. Fix:
+      # stamp a commit object dated *now*, parented on the current master tip but never
+      # pushed to any branch, and point the tag at that instead.
+      - name: Create dated commit for nightly tag
+        if: env.STAGE == 'nightly'
+        env:
+          GH_TOKEN: ${{ secrets.NIGHTLY_PAT }}
+        run: |
+          set -e
+          BASE_SHA=$(gh api repos/oribu-app/oribu-nightly/git/refs/heads/master --jq .object.sha)
+          TREE_SHA=$(gh api repos/oribu-app/oribu-nightly/git/commits/$BASE_SHA --jq .tree.sha)
+          NEW_SHA=$(gh api repos/oribu-app/oribu-nightly/git/commits \
+            -f message="nightly ${{ env.VERSION_TAG }}" \
+            -f tree="$TREE_SHA" \
+            -f "parents[]=$BASE_SHA" \
+            --jq .sha)
+          echo "NIGHTLY_COMMIT_SHA=$NEW_SHA" >> $GITHUB_ENV
+
       # Published straight to oribu-app/oribu-nightly, not this repo - keeps this repo's
       # release list limited to stable/beta so it stays clean once the website links to it.
       - name: Create Nightly
@@ -267,6 +289,7 @@ jobs:
           token: ${{ secrets.NIGHTLY_PAT }}
           repository: oribu-app/oribu-nightly
           tag_name: ${{ env.VERSION_TAG }}
+          target_commitish: ${{ env.NIGHTLY_COMMIT_SHA }}
           name: Oribu Nightly (${{ env.VERSION_TAG }})
           body: |
             > [!CAUTION]
