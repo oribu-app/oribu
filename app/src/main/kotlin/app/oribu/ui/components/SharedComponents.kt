@@ -1,8 +1,15 @@
 ﻿package app.oribu.ui.components
 
+import android.app.Activity
+import android.content.Context
+import android.graphics.RenderEffect
+import android.graphics.Shader
+import android.os.Build
+import android.os.PowerManager
+import android.view.WindowManager
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -35,6 +42,7 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +51,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -50,6 +59,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -59,14 +69,28 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
 import androidx.navigation.NavController
 import app.oribu.model.MediaStatus
 import app.oribu.ui.navigation.Routes
 import coil.compose.AsyncImage
 
-// ── Overflow menu (estilo Rokku: escurece o fundo e abre ancorado no canto
-// superior direito, logo abaixo da top bar, em vez do DropdownMenu padrão sem
-// scrim do Material) ───────────────────────────────────────────────────────
+private fun Context.findActivity(): Activity? {
+    var context = this
+    while (context is android.content.ContextWrapper) {
+        if (context is Activity) return context
+        context = context.baseContext
+    }
+    return null
+}
+
+// Equivalente ao android.view.animation.DecelerateInterpolator() (factor=1) usado em
+// fade_in_grow_from_top.xml/fade_out_short.xml do Rokku: 1 - (1-x)².
+private val OverflowDecelerateEasing = Easing { fraction -> 1f - (1f - fraction) * (1f - fraction) }
+
+// ── Overflow menu (molde do OverflowDialog + OverflowDialogTheme do Rokku):
+// escurece/borra o conteúdo atrás em vez do DropdownMenu padrão sem scrim do
+// Material, abrindo ancorado no canto superior direito, logo abaixo da top bar.
 @Composable
 fun OverflowMenu(
     expanded: Boolean,
@@ -74,14 +98,51 @@ fun OverflowMenu(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     if (!expanded) return
+
+    val context = LocalContext.current
+    val activity = remember(context) { context.findActivity() }
+
+    // Mesma detecção do blurBehindWindow() do Rokku: blur real do conteúdo atrás do
+    // diálogo só em Android 12+ com cross-window blur habilitado pelo sistema e fora
+    // do modo economia de bateria; caso contrário cai no scrim escuro (0.77 vs 0.45
+    // com blur — valores exatos do Rokku, em vez do scrim fixo anterior).
+    val canBlur =
+        remember {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                (context.getSystemService(Context.WINDOW_SERVICE) as? WindowManager)?.isCrossWindowBlurEnabled == true &&
+                (context.getSystemService(Context.POWER_SERVICE) as? PowerManager)?.isPowerSaveMode == false
+        }
+
+    DisposableEffect(activity, canBlur) {
+        if (canBlur && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            activity?.window?.decorView?.setRenderEffect(
+                RenderEffect.createBlurEffect(20f, 20f, Shader.TileMode.CLAMP),
+            )
+        }
+        onDispose {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                activity?.window?.decorView?.setRenderEffect(null)
+            }
+        }
+    }
+
     Dialog(
         onDismissRequest = onDismissRequest,
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
+        // Desliga o dim padrão do próprio Dialog do Android — o scrim é desenhado à mão
+        // logo abaixo, para poder usar os mesmos valores exatos do Rokku (0.77/0.45)
+        // em vez de somar com o dim default do tema do diálogo.
+        val dialogWindow = (LocalView.current.parent as? DialogWindowProvider)?.window
+        DisposableEffect(dialogWindow) {
+            dialogWindow?.setDimAmount(0f)
+            onDispose {}
+        }
+
         Box(
             Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.4f))
+                .background(Color.Black.copy(alpha = if (canBlur) 0.45f else 0.77f))
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -90,33 +151,35 @@ fun OverflowMenu(
         ) {
             Column(Modifier.align(Alignment.TopEnd)) {
                 Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
-                // TopAppBar (M3 "small" variant, o único usado no app) tem 64dp de altura —
-                // 56dp era a altura do AppBar do Material 2, por isso o menu abria 8dp alto
-                // demais, sobrepondo o rodapé da barra em vez de encostar nela.
-                Spacer(Modifier.height(64.dp))
-                // Molde exato do OverflowDialogTheme do Rokku (fade_in_grow_from_top): escala
-                // 0.9→1.0 crescendo a partir do canto superior direito + fade, 220ms na
-                // abertura; só fade (sem escala) nos 150ms de fechamento.
+                // TopAppBar (M3 "small" variant, o único usado no app) tem 64dp de altura;
+                // -2dp replica o topMargin = toolbarHeight - 2dp do OverflowDialog do Rokku.
+                Spacer(Modifier.height(62.dp))
+                // Molde exato do OverflowDialogTheme do Rokku: fade_in_grow_from_top.xml
+                // (escala 0.9→1.0 a partir do canto superior direito em 220ms + fade em
+                // 150ms, ambos com DecelerateInterpolator) na abertura, fade_out_short.xml
+                // (só fade, 150ms, mesma curva) no fechamento.
                 val visibleState = remember { MutableTransitionState(false) }
                 visibleState.targetState = true
                 AnimatedVisibility(
                     visibleState = visibleState,
                     enter =
-                        fadeIn(tween(220, easing = FastOutSlowInEasing)) +
+                        fadeIn(tween(150, easing = OverflowDecelerateEasing)) +
                             scaleIn(
                                 initialScale = 0.9f,
                                 transformOrigin = TransformOrigin(1f, 0f),
-                                animationSpec = tween(220, easing = FastOutSlowInEasing),
+                                animationSpec = tween(220, easing = OverflowDecelerateEasing),
                             ),
-                    exit = fadeOut(tween(150)),
+                    exit = fadeOut(tween(150, easing = OverflowDecelerateEasing)),
                 ) {
-                    // tonalElevation (mistura com a cor primária) é o equivalente Material3 do
-                    // blendARGB(background, colorSecondary, 0.075f) do card do Rokku; sem
-                    // shadowElevation pra ficar achatado como o cardElevation=0dp de lá.
+                    // Mistura manual com a cor secundária (blendARGB a 7.5%, igual ao
+                    // overflowCardView do Rokku) em vez do tonalElevation padrão do M3, que
+                    // mistura com a cor primária e não bate com o visual de lá.
+                    val cardColor = lerp(MaterialTheme.colorScheme.background, MaterialTheme.colorScheme.secondary, 0.075f)
                     Surface(
-                        modifier = Modifier.padding(end = 14.dp).widthIn(min = 230.dp),
+                        modifier = Modifier.padding(end = 14.dp).widthIn(min = 250.dp),
                         shape = RoundedCornerShape(12.dp),
-                        tonalElevation = 3.dp,
+                        color = cardColor,
+                        tonalElevation = 0.dp,
                         shadowElevation = 0.dp,
                     ) {
                         Column(Modifier.padding(vertical = 6.dp), content = content)
@@ -142,7 +205,7 @@ fun OverflowMenuItem(
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(icon, null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurface)
+        Icon(icon, null, modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSurface)
         Spacer(Modifier.width(12.dp))
         Column {
             Text(text, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)

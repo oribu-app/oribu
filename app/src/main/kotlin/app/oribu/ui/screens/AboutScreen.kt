@@ -4,14 +4,12 @@ import android.os.Build
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -42,7 +40,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AboutScreen(navController: NavController) {
     val context = LocalContext.current
@@ -113,8 +111,6 @@ fun AboutScreen(navController: NavController) {
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         LazyColumn(Modifier.padding(padding).fillMaxSize()) {
-            item { AboutRow(title = "Oribu", subtitle = "Versão $versionName") }
-            item { AboutRow(title = "Desenvolvedor", subtitle = "Thiago Rocha") }
             item {
                 AboutRow(
                     title = "Novidades desta versão",
@@ -160,14 +156,19 @@ fun AboutScreen(navController: NavController) {
                 )
             }
             item {
-                Row(
-                    Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                     horizontalArrangement = Arrangement.Center,
                 ) {
-                    TextButton(onClick = { uriHandler.openUri(AppUpdateChecker.repoUrl) }) {
-                        Icon(Icons.Outlined.Code, null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("GitHub")
+                    IconButton(
+                        modifier = Modifier.padding(4.dp),
+                        onClick = { uriHandler.openUri(AppUpdateChecker.repoUrl) },
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Code,
+                            tint = MaterialTheme.colorScheme.primary,
+                            contentDescription = "GitHub",
+                        )
                     }
                 }
             }
