@@ -30,9 +30,10 @@ The format is a simplified version of [Keep a Changelog](https://keepachangelog.
   Settings > Integrações, which is now editable instead of read-only.
 - Sobre screen, in Rokku's mold: in-app update checking against GitHub Releases (stable and
   nightly channels), downloading and prompting to install the new APK, release notes link, a
-  build-time row, a "Versão" row that copies debug info to the clipboard, an Ajuda link, and an
-  open-source licenses screen (via the AboutLibraries plugin). Also checks silently once a day
-  and posts a notification when a new version is found.
+  build-time row, a "Versão" row that copies debug info to the clipboard, an "Ajude a traduzir"
+  row (not yet linked — pending Weblate setup), and an open-source licenses screen (via the
+  AboutLibraries plugin). Also checks silently once a day and posts a notification when a new
+  version is found.
 - The "..." menu (Configurações, Status, Histórico, Sobre, Ajuda) is now the same on every hobby
   list screen (Jogos, Filmes, Séries, Mangás, Livros), not just Home.
 

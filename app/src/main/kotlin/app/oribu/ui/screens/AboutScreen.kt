@@ -38,8 +38,7 @@ import app.oribu.ui.navigation.Routes
 import app.oribu.worker.AppUpdateInstallWorker
 import kotlinx.coroutines.launch
 import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -59,10 +58,7 @@ fun AboutScreen(navController: NavController) {
     val buildTimeLabel =
         remember {
             runCatching {
-                DateTimeFormatter
-                    .ofPattern("dd/MM/yyyy HH:mm")
-                    .withZone(ZoneId.systemDefault())
-                    .format(Instant.ofEpochMilli(BuildConfig.BUILD_TIME))
+                Instant.ofEpochMilli(BuildConfig.BUILD_TIME).truncatedTo(ChronoUnit.SECONDS).toString()
             }.getOrDefault("—")
         }
 
@@ -100,7 +96,7 @@ fun AboutScreen(navController: NavController) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            LargeTopAppBar(
                 title = { Text("Sobre") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
@@ -147,7 +143,7 @@ fun AboutScreen(navController: NavController) {
             item {
                 Column(Modifier.fillMaxWidth()) {
                     HorizontalDivider()
-                    AboutRow(title = "Ajuda", onClick = { uriHandler.openUri("https://github.com/oribu-app/oribu-app/issues") })
+                    AboutRow(title = "Ajude a traduzir")
                 }
             }
             item {
