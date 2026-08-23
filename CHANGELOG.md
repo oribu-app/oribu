@@ -66,3 +66,8 @@ The format is a simplified version of [Keep a Changelog](https://keepachangelog.
 - The "toque para instalar" notification after a successful update download could disappear
   before it could be tapped: it reused the same notification ID as the foreground download
   service, which Android cancels when the service stops. Now uses its own ID.
+- Installing a downloaded nightly update always failed ("conflito com um pacote já existente"):
+  nightly builds were signed with an auto-generated debug keystore that CI regenerates from
+  scratch on every run, so each nightly had a different signature than the one before it.
+  Nightly/qa builds now sign with a fixed, low-stakes keystore committed to the repo, so
+  updates install cleanly over the previous nightly.

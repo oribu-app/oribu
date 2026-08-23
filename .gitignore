@@ -34,6 +34,9 @@ anilist_token.json
 kitsu_token.json
 *.keystore
 *.jks
+# Exceção: keystore de baixo risco pra assinatura estável de nightly/qa (ver
+# signingConfigs.nightly em app/build.gradle.kts) — não é uma credencial real.
+!app/nightly.keystore
 
 # Local machine config — never portable across dev machines
 local.properties

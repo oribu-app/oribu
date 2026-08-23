@@ -58,6 +58,22 @@ android {
         }
     }
 
+    signingConfigs {
+        // Keystore de baixo risco dedicada às builds nightly/qa, comitada no repo (ver
+        // exceção em .gitignore) — não é uma credencial real, é só uma chave de
+        // assinatura pra manter a mesma assinatura entre execuções de CI. Sem isso,
+        // cada run do GitHub Actions gera um ~/.android/debug.keystore novo e aleatório
+        // (a AGP cria um na hora se não existir), então cada nightly saía com uma
+        // assinatura diferente da anterior e o updater in-app falhava ao instalar por
+        // cima ("conflito com um pacote já existente" — certificados não batem).
+        create("nightly") {
+            storeFile     = file("nightly.keystore")
+            storePassword = "android"
+            keyAlias      = "androiddebugkey"
+            keyPassword   = "android"
+        }
+    }
+
     buildTypes {
         debug {
             // Sufixo próprio para instalar lado a lado com a versão de produção sem
@@ -71,14 +87,17 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         // Build de pré-lançamento gerado a cada push em master pelo CI (workflow build_push.yml).
-        // Assinada com a chave de debug (sem depender de secrets) e instalável lado a lado com
-        // a versão estável graças ao applicationIdSuffix.
+        // Assinada com a keystore "nightly" fixa (sem depender de secrets) e instalável lado
+        // a lado com a versão estável graças ao applicationIdSuffix. Precisa ser uma chave
+        // ESTÁVEL entre execuções de CI — diferente da keystore "debug" (gerada on-the-fly
+        // pela AGP se não existir) — pra permitir atualizar uma nightly já instalada sem
+        // desinstalar antes.
         create("nightly") {
             initWith(getByName("release"))
             matchingFallbacks += "release"
             applicationIdSuffix = ".nightly"
             versionNameSuffix   = "-r$commitCount"
-            signingConfig       = signingConfigs.getByName("debug")
+            signingConfig       = signingConfigs.getByName("nightly")
         }
         // Build de pré-lançamento disparada manualmente (workflow_dispatch), assinada em CI
         // com a keystore de release real via secrets — sem signingConfig aqui de propósito,
@@ -89,14 +108,15 @@ android {
         }
         // Build minificada (menor que a "debug" pura) para distribuir APKs de teste ad hoc —
         // ex.: builds com dados fake para testes de usabilidade fora do time de dev. Assinada
-        // com a chave de debug e isDebuggable=true para poder rodar código guardado por
-        // BuildConfig.DEBUG (como o DebugSeeder).
+        // com a keystore "nightly" fixa (mesmo motivo do build type nightly acima — permite
+        // atualizar uma build "qa" já instalada) e isDebuggable=true para poder rodar código
+        // guardado por BuildConfig.DEBUG (como o DebugSeeder).
         create("qa") {
             initWith(getByName("release"))
             matchingFallbacks += "release"
             applicationIdSuffix = ".qa"
             versionNameSuffix   = "-qa"
-            signingConfig       = signingConfigs.getByName("debug")
+            signingConfig       = signingConfigs.getByName("nightly")
             isDebuggable        = true
         }
     }
