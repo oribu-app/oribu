@@ -103,6 +103,11 @@ fun AboutScreen(navController: NavController) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
                     }
                 },
+                colors =
+                    TopAppBarDefaults.largeTopAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background,
+                        scrolledContainerColor = MaterialTheme.colorScheme.background,
+                    ),
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
