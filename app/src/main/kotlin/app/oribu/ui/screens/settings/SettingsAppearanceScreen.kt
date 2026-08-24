@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -154,8 +155,9 @@ internal fun PreferenceGroupHeader(title: String) {
 }
 
 /**
- * Miniatura com preview ao vivo do tema: barra de topo (primary), fundo (background) e
- * um chip de superfície (surface) — em vez de uma bolinha de cor sólida.
+ * Miniatura de tema no molde do onboarding do Rokku: um mockup de tela (barra de título, card
+ * de superfície, linhas de texto e uma barra de navegação inferior) nas cores reais do tema,
+ * com um selo de check quando selecionado — em vez de uma bolinha de cor sólida.
  */
 @Composable
 private fun ThemePreviewSwatch(
@@ -167,51 +169,94 @@ private fun ThemePreviewSwatch(
     val seed = if (isDark) theme.seedDark else theme.seedLight
     val bg = if (isDark) theme.bgDark else theme.bgLight
     val surface = if (isDark) theme.surfaceDark else theme.surfaceLight
+    val onSurface = if (isDark) Color.White else Color.Black
 
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable(onClick = onClick)) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(112.dp)) {
         Box(
             Modifier
-                .size(width = 68.dp, height = 96.dp)
-                .clip(RoundedCornerShape(10.dp))
+                .size(width = 112.dp, height = 168.dp)
+                .clip(RoundedCornerShape(18.dp))
                 .background(bg)
                 .then(
                     if (selected) {
-                        Modifier.border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(10.dp))
+                        Modifier.border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(18.dp))
                     } else {
-                        Modifier.border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                        Modifier.border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), RoundedCornerShape(18.dp))
                     },
-                ),
+                ).clickable(onClick = onClick),
         ) {
-            // Barra de topo simulando a app bar
-            Box(Modifier.fillMaxWidth().height(22.dp).background(seed))
-            // Chip simulando um card de superfície
-            Box(
-                Modifier
-                    .padding(start = 10.dp, top = 34.dp)
-                    .size(width = 30.dp, height = 20.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(surface)
-                    .border(1.dp, seed.copy(alpha = 0.4f), RoundedCornerShape(4.dp)),
-            )
+            Column(Modifier.fillMaxSize().padding(10.dp)) {
+                Box(
+                    Modifier
+                        .fillMaxWidth(0.55f)
+                        .height(10.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(onSurface),
+                )
+                Spacer(Modifier.height(10.dp))
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(32.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(surface),
+                )
+                Spacer(Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Box(
+                        Modifier
+                            .weight(0.65f)
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(onSurface),
+                    )
+                    Box(
+                        Modifier
+                            .weight(0.35f)
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(seed),
+                    )
+                }
+                Spacer(Modifier.height(6.dp))
+                Box(
+                    Modifier
+                        .fillMaxWidth(0.4f)
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(onSurface),
+                )
+                Spacer(Modifier.weight(1f))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    repeat(3) { i ->
+                        Box(
+                            Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(if (i == 1) seed else onSurface.copy(alpha = 0.35f)),
+                        )
+                    }
+                }
+            }
             if (selected) {
                 Box(
                     Modifier
                         .align(Alignment.TopEnd)
-                        .padding(4.dp)
-                        .size(18.dp)
+                        .padding(6.dp)
+                        .size(20.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primary),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(12.dp))
+                    Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(13.dp))
                 }
             }
         }
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(6.dp))
         Text(
             theme.label,
             style = MaterialTheme.typography.labelSmall,
-            fontSize = 10.sp,
+            textAlign = TextAlign.Center,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
             color =
                 if (selected) {
@@ -219,6 +264,7 @@ private fun ThemePreviewSwatch(
                 } else {
                     MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 },
+            modifier = Modifier.width(112.dp),
         )
     }
 }
