@@ -48,7 +48,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up JDK 17
-        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6
         with:
           java-version: "17"
           distribution: "temurin"
@@ -60,7 +60,7 @@ jobs:
         run: ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager "build-tools;36.1.0" "platforms;android-37.0"
 
       - name: Set up CHANGELOG parser
-        uses: taiki-e/install-action@73bac5e125e37a3224d25cb3852ace65586531ef # parse-changelog
+        uses: taiki-e/install-action@3506c84fcd7e6987ace139e0939c59c79d2d4157 # parse-changelog
 
       - name: Copy CI gradle.properties
         run: |
@@ -224,7 +224,7 @@ jobs:
 
       - name: Create Release
         if: env.STAGE == 'release' || env.STAGE == 'beta'
-        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
         with:
           tag_name: ${{ env.VERSION_TAG }}
           name: Oribu ${{ env.VERSION_TAG }}
@@ -284,7 +284,7 @@ jobs:
       # release list limited to stable/beta so it stays clean once the website links to it.
       - name: Create Nightly
         if: env.STAGE == 'nightly'
-        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
         with:
           token: ${{ secrets.NIGHTLY_PAT }}
           repository: oribu-app/oribu-nightly
