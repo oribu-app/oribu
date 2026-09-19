@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -28,6 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.data.db.DB
 import app.oribu.model.GameConsole
 import app.oribu.model.MediaItem
@@ -143,14 +145,14 @@ fun HomeScreen(
             // ── Filmes + Séries ───────────────────────────────────────────────
             Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 CategoryCard(
-                    label = "Filmes",
+                    label = stringResource(R.string.films_title),
                     color = ColorFilme,
                     lastItem = filmeItem,
                     onTap = { navController.navigate(Routes.FILMS) },
                     modifier = Modifier.weight(1f),
                 )
                 CategoryCard(
-                    label = "Séries",
+                    label = stringResource(R.string.series_title),
                     color = ColorSerie,
                     lastItem = serieItem,
                     onTap = { navController.navigate(Routes.SERIES) },
@@ -161,14 +163,14 @@ fun HomeScreen(
             // ── Mangás + Livros ───────────────────────────────────────────────
             Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 CategoryCard(
-                    label = "Mangás",
+                    label = stringResource(R.string.manga_title),
                     color = ColorManga,
                     lastItem = mangaItem,
                     onTap = { navController.navigate(Routes.MANGA) },
                     modifier = Modifier.weight(1f),
                 )
                 CategoryCard(
-                    label = "Livros",
+                    label = stringResource(R.string.books_title),
                     color = ColorLivro,
                     lastItem = livroItem,
                     onTap = { navController.navigate(Routes.BOOKS) },
@@ -213,7 +215,7 @@ private fun GamesCard(
                 .padding(horizontal = 14.dp, vertical = 10.dp),
             contentAlignment = Alignment.Center,
         ) {
-            Text("Jogos", color = headerAccent, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.games_title), color = headerAccent, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
         Row(Modifier.fillMaxWidth()) {
             PlatformColumn("Steam", steam, ColorSteam.copy(0.12f), readableAccent(Color(0xFF66C0F4), darkTheme), Modifier.weight(1f))
@@ -276,7 +278,12 @@ private fun PlatformColumn(
             )
         } else {
             Box(Modifier.fillMaxWidth().height(80.dp), contentAlignment = Alignment.Center) {
-                Text("Nada\nainda", fontSize = 10.sp, textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurface.copy(0.4f))
+                Text(
+                    stringResource(R.string.home_nothing_yet_multiline),
+                    fontSize = 10.sp,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurface.copy(0.4f),
+                )
             }
         }
     }
@@ -337,7 +344,7 @@ private fun CategoryCard(
             )
         } else {
             Box(Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
-                Text("Nada ainda", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(0.4f))
+                Text(stringResource(R.string.home_nothing_yet), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(0.4f))
             }
         }
     }

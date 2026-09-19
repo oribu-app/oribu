@@ -22,7 +22,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import app.oribu.R
 import app.oribu.data.ApiKeyPreferences
 import app.oribu.service.ApiServices
 import app.oribu.service.GoogleBooksService
@@ -64,7 +66,7 @@ fun ServiceCredentialsList(modifier: Modifier = Modifier) {
     Column(modifier) {
         ServiceCredentialCard(
             name = "TMDB",
-            description = "Filmes e séries",
+            description = stringResource(R.string.service_tmdb_desc),
             status = tmdbStatus,
             onTest = {
                 tmdbStatus = CredentialStatus.TESTING
@@ -90,7 +92,7 @@ fun ServiceCredentialsList(modifier: Modifier = Modifier) {
 
         ServiceCredentialCard(
             name = "IGDB",
-            description = "Jogos (requer app no Twitch Developer Console)",
+            description = stringResource(R.string.service_igdb_desc),
             status = igdbStatus,
             onTest = {
                 igdbStatus = CredentialStatus.TESTING
@@ -132,7 +134,7 @@ fun ServiceCredentialsList(modifier: Modifier = Modifier) {
 
         ServiceCredentialCard(
             name = "Google Books",
-            description = "Livros (opcional — a busca já funciona sem chave)",
+            description = stringResource(R.string.service_google_books_desc),
             status = googleBooksStatus,
             onTest = {
                 googleBooksStatus = CredentialStatus.TESTING
@@ -158,7 +160,7 @@ fun ServiceCredentialsList(modifier: Modifier = Modifier) {
 
         ServiceCredentialCard(
             name = "Steam",
-            description = "Biblioteca e conquistas",
+            description = stringResource(R.string.service_steam_desc),
             status = steamStatus,
             onTest = {
                 steamStatus = CredentialStatus.TESTING
@@ -196,7 +198,7 @@ fun ServiceCredentialsList(modifier: Modifier = Modifier) {
 
         ServiceCredentialCard(
             name = "ITAD",
-            description = "Preços e histórico de descontos (IsThereAnyDeal)",
+            description = stringResource(R.string.service_itad_desc),
             status = itadStatus,
             onTest = {
                 itadStatus = CredentialStatus.TESTING
@@ -221,7 +223,7 @@ fun ServiceCredentialsList(modifier: Modifier = Modifier) {
         }
 
         Text(
-            "AniList não exige chave própria — a busca de mangás e webtoons já funciona sem configuração.",
+            stringResource(R.string.service_anilist_note),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
             modifier = Modifier.padding(16.dp),
@@ -258,7 +260,7 @@ private fun ServiceCredentialCard(
             fields()
             Spacer(Modifier.height(4.dp))
             TextButton(onClick = onTest, enabled = status != CredentialStatus.TESTING) {
-                Text("Testar conexão")
+                Text(stringResource(R.string.service_test_connection))
             }
         }
     }

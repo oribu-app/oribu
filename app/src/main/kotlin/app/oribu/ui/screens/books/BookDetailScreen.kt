@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -34,6 +35,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.data.db.DB
 import app.oribu.model.MediaItem
 import app.oribu.model.MediaStatus
@@ -46,6 +48,7 @@ import app.oribu.ui.navigation.Routes
 import app.oribu.ui.navigation.navigateToAnotacoes
 import app.oribu.ui.navigation.rememberAnotacoesResult
 import app.oribu.ui.theme.ColorLivro
+import app.oribu.ui.theme.CoverThemedSurface
 import app.oribu.util.htmlToPlainText
 import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
@@ -121,7 +124,7 @@ class BookDetailViewModel : ViewModel() {
         val newNotes =
             if (!comment.isNullOrBlank()) {
                 val now = Date()
-                val prefix = SimpleDateFormat("dd/MM", Locale("pt", "BR")).format(now)
+                val prefix = SimpleDateFormat("dd/MM", Locale.getDefault()).format(now)
                 val entry = "$prefix (p.$clampedPage): $comment"
                 if (!current.notes.isNullOrBlank()) "${current.notes}\n$entry" else entry
             } else {
@@ -240,7 +243,7 @@ fun BookDetailScreen(
     var showStartDatePicker by remember { mutableStateOf(false) }
     var showEndDatePicker by remember { mutableStateOf(false) }
 
-    val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")) }
+    val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
 
     // Book cache — prefer extracted fields, fall back to volumeInfo for legacy entries
     val volumeInfo = cache?.get("volumeInfo") as? Map<*, *>
@@ -291,566 +294,643 @@ fun BookDetailScreen(
     val coverWidth = (screenWidth * 0.58f).coerceIn(160.dp, 230.dp)
     val coverHeight = coverWidth / 0.667f
 
-    Scaffold { _ ->
-        Box(Modifier.fillMaxSize()) {
-            LazyColumn(Modifier.fillMaxSize()) {
-                // ── Header: blurred bg + centered cover + title ───────────────────
-                item {
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(coverHeight + 160.dp),
-                    ) {
-                        AsyncImage(
-                            model = coverUrl,
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .blur(28.dp),
-                        )
-                        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)))
-                        Column(
+    CoverThemedSurface(coverUrl) {
+        Scaffold { _ ->
+            Box(Modifier.fillMaxSize()) {
+                LazyColumn(Modifier.fillMaxSize()) {
+                    // ── Header: blurred bg + centered cover + title ───────────────────
+                    item {
+                        Box(
                             Modifier
-                                .align(Alignment.Center)
-                                .padding(horizontal = 24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
+                                .fillMaxWidth()
+                                .height(coverHeight + 160.dp),
                         ) {
-                            Box(
-                                Modifier
-                                    .shadow(30.dp, RoundedCornerShape(8.dp))
-                                    .clip(RoundedCornerShape(8.dp)),
-                            ) {
-                                AsyncImage(
-                                    model = coverUrl,
-                                    contentDescription = null,
-                                    contentScale = ContentScale.Fit,
-                                    modifier = Modifier.width(coverWidth).height(coverHeight),
-                                )
-                            }
-                            Spacer(Modifier.height(12.dp))
-                            Text(
-                                mediaItem.title,
-                                color = Color.White,
-                                fontSize = 19.sp,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                lineHeight = 25.sp,
-                                maxLines = 3,
-                                overflow = TextOverflow.Ellipsis,
+                            AsyncImage(
+                                model = coverUrl,
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier =
+                                    Modifier
+                                        .fillMaxSize()
+                                        .blur(28.dp),
                             )
-                            if (!authors.isNullOrEmpty()) {
-                                Spacer(Modifier.height(4.dp))
+                            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)))
+                            Column(
+                                Modifier
+                                    .align(Alignment.Center)
+                                    .padding(horizontal = 24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                Box(
+                                    Modifier
+                                        .shadow(30.dp, RoundedCornerShape(8.dp))
+                                        .clip(RoundedCornerShape(8.dp)),
+                                ) {
+                                    AsyncImage(
+                                        model = coverUrl,
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Fit,
+                                        modifier = Modifier.width(coverWidth).height(coverHeight),
+                                    )
+                                }
+                                Spacer(Modifier.height(12.dp))
                                 Text(
-                                    authors.joinToString(", "),
-                                    color = Color.White.copy(alpha = 0.7f),
-                                    fontSize = 13.sp,
+                                    mediaItem.title,
+                                    color = Color.White,
+                                    fontSize = 19.sp,
+                                    fontWeight = FontWeight.Bold,
                                     textAlign = TextAlign.Center,
-                                    maxLines = 2,
+                                    lineHeight = 25.sp,
+                                    maxLines = 3,
                                     overflow = TextOverflow.Ellipsis,
                                 )
-                            }
-                        }
-                    }
-                }
-
-                // ── Status button + "..." button (centered) ───────────────────────
-                item {
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp, vertical = 20.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Box {
-                            Button(
-                                onClick = { showStatusMenu = true },
-                                colors = ButtonDefaults.buttonColors(containerColor = ColorLivro),
-                                shape = RoundedCornerShape(4.dp),
-                                border = BorderStroke(1.5.dp, Color.White.copy(alpha = 0.24f)),
-                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
-                            ) {
-                                Icon(Icons.Default.UnfoldMore, null, modifier = Modifier.size(16.dp))
-                                Spacer(Modifier.width(4.dp))
-                                Text(mediaItem.status.label, fontSize = 13.sp)
-                            }
-                            DropdownMenu(expanded = showStatusMenu, onDismissRequest = { showStatusMenu = false }) {
-                                MediaStatus.forBook().forEach { s ->
-                                    val selected = s == mediaItem.status
-                                    DropdownMenuItem(
-                                        text = { Text(s.label) },
-                                        trailingIcon = {
-                                            if (selected) {
-                                                Icon(
-                                                    Icons.Default.Check,
-                                                    null,
-                                                    tint = ColorLivro,
-                                                    modifier = Modifier.size(16.dp),
-                                                )
-                                            }
-                                        },
-                                        onClick = {
-                                            vm.setStatus(s, pages)
-                                            showStatusMenu = false
-                                        },
-                                    )
-                                }
-                            }
-                        }
-                        Spacer(Modifier.width(12.dp))
-                        Box {
-                            IconButton(onClick = { showMoreMenu = true }) {
-                                Icon(Icons.Default.MoreHoriz, null)
-                            }
-                            DropdownMenu(expanded = showMoreMenu, onDismissRequest = { showMoreMenu = false }) {
-                                DropdownMenuItem(text = {
-                                    Text(
-                                        "Atualizar",
-                                    )
-                                }, leadingIcon = { Icon(Icons.Default.Refresh, null) }, onClick = {
-                                    vm.refreshCache()
-                                    showMoreMenu =
-                                        false
-                                })
-                                DropdownMenuItem(text = {
-                                    Text(
-                                        "Editar progresso",
-                                    )
-                                }, leadingIcon = { Icon(Icons.Default.Bookmark, null) }, onClick = {
-                                    pageInput =
-                                        (mediaItem.currentProgress ?: 0).toString()
-                                    ; commentInput = ""
-                                    showPageDialog = true
-                                    showMoreMenu = false
-                                })
-                                DropdownMenuItem(text = {
-                                    Text(
-                                        "Editar data de início",
-                                    )
-                                }, leadingIcon = { Icon(Icons.Default.CalendarMonth, null) }, onClick = {
-                                    showStartDatePicker =
-                                        true
-                                    ; showMoreMenu = false
-                                })
-                                DropdownMenuItem(text = {
-                                    Text(
-                                        "Editar data de conclusão",
-                                    )
-                                }, leadingIcon = { Icon(Icons.Default.EventAvailable, null) }, onClick = {
-                                    showEndDatePicker =
-                                        true
-                                    ; showMoreMenu = false
-                                })
-                                DropdownMenuItem(text = {
-                                    Text(
-                                        "Anotações",
-                                    )
-                                }, leadingIcon = { Icon(Icons.AutoMirrored.Filled.Notes, null) }, onClick = {
-                                    navController.navigateToAnotacoes(mediaItem)
-                                    showMoreMenu =
-                                        false
-                                })
-                                DropdownMenuItem(text = {
-                                    Text(if (mediaItem.favorite) "Remover dos favoritos" else "Favoritar")
-                                }, leadingIcon = {
-                                    Icon(
-                                        if (mediaItem.favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                        null,
-                                    )
-                                }, onClick = {
-                                    vm.toggleFavorite()
-                                    showMoreMenu =
-                                        false
-                                })
-                                HorizontalDivider()
-                                DropdownMenuItem(text = {
-                                    Text("Remover livro", color = MaterialTheme.colorScheme.error)
-                                }, leadingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) }, onClick = {
-                                    showDelete =
-                                        true
-                                    ; showMoreMenu = false
-                                })
-                            }
-                        }
-                    }
-                }
-
-                // Synopsis
-                if (synopsis != null) {
-                    item {
-                        Column(Modifier.padding(16.dp)) {
-                            Text("Sinopse", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                            Spacer(Modifier.height(4.dp))
-                            Text(
-                                synopsis,
-                                style = MaterialTheme.typography.bodyMedium,
-                                maxLines = if (synopsisExpanded) Int.MAX_VALUE else 4,
-                            )
-                            TextButton(onClick = { synopsisExpanded = !synopsisExpanded }) {
-                                Text(if (synopsisExpanded) "Ver menos" else "Ver mais")
-                            }
-                        }
-                    }
-                }
-
-                // Informações
-                item {
-                    Column(Modifier.padding(horizontal = 16.dp)) {
-                        Text("Informações", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                        Spacer(Modifier.height(10.dp))
-                        Card(shape = RoundedCornerShape(12.dp)) {
-                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                if (!authors.isNullOrEmpty()) BookInfoRow("Autor", authors.joinToString(", "))
-                                if (publisher != null) BookInfoRow("Editora", publisher)
-                                if (genre != null) BookInfoRow("Gênero", genre)
-                                if (pages != null) BookInfoRow("Páginas", "$pages")
-                            }
-                        }
-                    }
-                    Spacer(Modifier.height(16.dp))
-                }
-
-                // Progresso
-                item {
-                    Column(Modifier.padding(horizontal = 16.dp)) {
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text("Histórico de Leitura", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                            IconButton(
-                                onClick = {
-                                    pageInput = (mediaItem.currentProgress ?: 0).toString()
-                                    commentInput = ""
-                                    showPageDialog = true
-                                },
-                                modifier = Modifier.size(32.dp),
-                            ) {
-                                Icon(Icons.Default.Edit, contentDescription = "Editar", tint = ColorLivro, modifier = Modifier.size(18.dp))
-                            }
-                        }
-                        Spacer(Modifier.height(10.dp))
-                        Card(shape = RoundedCornerShape(12.dp)) {
-                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                val displayedPage =
-                                    (mediaItem.currentProgress ?: 0).let { p ->
-                                        if (pages != null) p.coerceIn(0, pages) else p
-                                    }
-                                if (pages != null && pages > 0) {
-                                    LinearProgressIndicator(
-                                        progress = { (displayedPage.toFloat() / pages.toFloat()).coerceIn(0f, 1f) },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        color = ColorLivro,
-                                        trackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
-                                        strokeCap = StrokeCap.Butt,
-                                    )
-                                }
-                                val pctSuffix =
-                                    if (pages != null && pages > 0) {
-                                        val pct = (displayedPage.toFloat() / pages.toFloat() * 100).toInt().coerceIn(0, 100)
-                                        " ($pct%)"
-                                    } else {
-                                        ""
-                                    }
-                                Text(
-                                    "Página $displayedPage" + (pages?.let { " de $it" } ?: "") + pctSuffix,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                                )
-                                if (commentLines.isNotEmpty()) {
+                                if (!authors.isNullOrEmpty()) {
                                     Spacer(Modifier.height(4.dp))
-                                    commentLines.take(2).forEach { line ->
-                                        Text(
-                                            line,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
-                                            fontStyle = FontStyle.Italic,
-                                        )
-                                    }
-                                    if (commentLines.size > 2) {
-                                        Spacer(Modifier.height(2.dp))
-                                        Text(
-                                            "Ver histórico completo",
-                                            color = ColorLivro,
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            modifier = Modifier.clickable { showHistorySheet = true },
-                                        )
-                                    }
+                                    Text(
+                                        authors.joinToString(", "),
+                                        color = Color.White.copy(alpha = 0.7f),
+                                        fontSize = 13.sp,
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
                                 }
                             }
                         }
                     }
-                    Spacer(Modifier.height(16.dp))
-                }
 
-                // ── Nota ─────────────────────────────────────────────────────────
-                item {
-                    Column(Modifier.padding(horizontal = 16.dp)) {
+                    // ── Status button + "..." button (centered) ───────────────────────
+                    item {
                         Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp, vertical = 20.dp),
+                            horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text("Nota", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                            if (!editingRating) {
+                            Box {
+                                Button(
+                                    onClick = { showStatusMenu = true },
+                                    colors = ButtonDefaults.buttonColors(containerColor = ColorLivro),
+                                    shape = RoundedCornerShape(4.dp),
+                                    border = BorderStroke(1.5.dp, Color.White.copy(alpha = 0.24f)),
+                                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+                                ) {
+                                    Icon(Icons.Default.UnfoldMore, null, modifier = Modifier.size(16.dp))
+                                    Spacer(Modifier.width(4.dp))
+                                    Text(mediaItem.status.label, fontSize = 13.sp)
+                                }
+                                DropdownMenu(expanded = showStatusMenu, onDismissRequest = { showStatusMenu = false }) {
+                                    MediaStatus.forBook().forEach { s ->
+                                        val selected = s == mediaItem.status
+                                        DropdownMenuItem(
+                                            text = { Text(s.label) },
+                                            trailingIcon = {
+                                                if (selected) {
+                                                    Icon(
+                                                        Icons.Default.Check,
+                                                        null,
+                                                        tint = ColorLivro,
+                                                        modifier = Modifier.size(16.dp),
+                                                    )
+                                                }
+                                            },
+                                            onClick = {
+                                                vm.setStatus(s, pages)
+                                                showStatusMenu = false
+                                            },
+                                        )
+                                    }
+                                }
+                            }
+                            Spacer(Modifier.width(12.dp))
+                            Box {
+                                IconButton(onClick = { showMoreMenu = true }) {
+                                    Icon(Icons.Default.MoreHoriz, null)
+                                }
+                                DropdownMenu(expanded = showMoreMenu, onDismissRequest = { showMoreMenu = false }) {
+                                    DropdownMenuItem(text = {
+                                        Text(
+                                            stringResource(R.string.action_refresh),
+                                        )
+                                    }, leadingIcon = { Icon(Icons.Default.Refresh, null) }, onClick = {
+                                        vm.refreshCache()
+                                        showMoreMenu =
+                                            false
+                                    })
+                                    DropdownMenuItem(text = {
+                                        Text(
+                                            stringResource(R.string.manga_detail_edit_progress),
+                                        )
+                                    }, leadingIcon = { Icon(Icons.Default.Bookmark, null) }, onClick = {
+                                        pageInput =
+                                            (mediaItem.currentProgress ?: 0).toString()
+                                        ; commentInput = ""
+                                        showPageDialog = true
+                                        showMoreMenu = false
+                                    })
+                                    DropdownMenuItem(text = {
+                                        Text(
+                                            stringResource(R.string.manga_detail_edit_start_date),
+                                        )
+                                    }, leadingIcon = { Icon(Icons.Default.CalendarMonth, null) }, onClick = {
+                                        showStartDatePicker =
+                                            true
+                                        ; showMoreMenu = false
+                                    })
+                                    DropdownMenuItem(text = {
+                                        Text(
+                                            stringResource(R.string.book_detail_edit_end_date),
+                                        )
+                                    }, leadingIcon = { Icon(Icons.Default.EventAvailable, null) }, onClick = {
+                                        showEndDatePicker =
+                                            true
+                                        ; showMoreMenu = false
+                                    })
+                                    DropdownMenuItem(text = {
+                                        Text(
+                                            stringResource(R.string.label_notes),
+                                        )
+                                    }, leadingIcon = { Icon(Icons.AutoMirrored.Filled.Notes, null) }, onClick = {
+                                        navController.navigateToAnotacoes(mediaItem)
+                                        showMoreMenu =
+                                            false
+                                    })
+                                    DropdownMenuItem(text = {
+                                        Text(
+                                            stringResource(
+                                                if (mediaItem.favorite) R.string.action_remove_favorite else R.string.action_favorite,
+                                            ),
+                                        )
+                                    }, leadingIcon = {
+                                        Icon(
+                                            if (mediaItem.favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                            null,
+                                        )
+                                    }, onClick = {
+                                        vm.toggleFavorite()
+                                        showMoreMenu =
+                                            false
+                                    })
+                                    HorizontalDivider()
+                                    DropdownMenuItem(text = {
+                                        Text(stringResource(R.string.book_detail_remove_book), color = MaterialTheme.colorScheme.error)
+                                    }, leadingIcon = {
+                                        Icon(
+                                            Icons.Default.Delete,
+                                            null,
+                                            tint = MaterialTheme.colorScheme.error,
+                                        )
+                                    }, onClick = {
+                                        showDelete =
+                                            true
+                                        ; showMoreMenu = false
+                                    })
+                                }
+                            }
+                        }
+                    }
+
+                    // Synopsis
+                    if (synopsis != null) {
+                        item {
+                            Column(Modifier.padding(16.dp)) {
+                                Text(
+                                    stringResource(R.string.label_synopsis),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    synopsis,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    maxLines = if (synopsisExpanded) Int.MAX_VALUE else 4,
+                                )
+                                TextButton(onClick = { synopsisExpanded = !synopsisExpanded }) {
+                                    Text(stringResource(if (synopsisExpanded) R.string.action_see_less else R.string.action_see_more))
+                                }
+                            }
+                        }
+                    }
+
+                    // Informações
+                    item {
+                        Column(Modifier.padding(horizontal = 16.dp)) {
+                            Text(
+                                stringResource(R.string.label_information),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            Spacer(Modifier.height(10.dp))
+                            Card(shape = RoundedCornerShape(12.dp)) {
+                                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    if (!authors.isNullOrEmpty()) {
+                                        BookInfoRow(
+                                            stringResource(R.string.book_detail_author),
+                                            authors.joinToString(", "),
+                                        )
+                                    }
+                                    if (publisher != null) BookInfoRow(stringResource(R.string.label_publisher), publisher)
+                                    if (genre != null) BookInfoRow(stringResource(R.string.label_genre), genre)
+                                    if (pages != null) BookInfoRow(stringResource(R.string.book_detail_pages), "$pages")
+                                }
+                            }
+                        }
+                        Spacer(Modifier.height(16.dp))
+                    }
+
+                    // Progresso
+                    item {
+                        Column(Modifier.padding(horizontal = 16.dp)) {
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    stringResource(R.string.book_detail_reading_history),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
                                 IconButton(
                                     onClick = {
-                                        pendingRating = mediaItem.rating ?: 0.0
-                                        editingRating = true
+                                        pageInput = (mediaItem.currentProgress ?: 0).toString()
+                                        commentInput = ""
+                                        showPageDialog = true
                                     },
                                     modifier = Modifier.size(32.dp),
                                 ) {
                                     Icon(
                                         Icons.Default.Edit,
-                                        contentDescription = "Editar",
+                                        contentDescription = stringResource(R.string.action_edit),
                                         tint = ColorLivro,
                                         modifier = Modifier.size(18.dp),
                                     )
                                 }
                             }
-                        }
-                        Spacer(Modifier.height(10.dp))
-                        Card(shape = RoundedCornerShape(12.dp)) {
-                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                if (editingRating) {
-                                    HalfStarRatingPicker(rating = pendingRating, onRatingChange = { pendingRating = it })
-                                    if (pendingRating > 0) {
-                                        Text(
-                                            bookRatingPhrase(pendingRating) ?: "",
-                                            style = MaterialTheme.typography.bodySmall,
+                            Spacer(Modifier.height(10.dp))
+                            Card(shape = RoundedCornerShape(12.dp)) {
+                                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    val displayedPage =
+                                        (mediaItem.currentProgress ?: 0).let { p ->
+                                            if (pages != null) p.coerceIn(0, pages) else p
+                                        }
+                                    if (pages != null && pages > 0) {
+                                        LinearProgressIndicator(
+                                            progress = { (displayedPage.toFloat() / pages.toFloat()).coerceIn(0f, 1f) },
+                                            modifier = Modifier.fillMaxWidth(),
                                             color = ColorLivro,
+                                            trackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                                            strokeCap = StrokeCap.Butt,
                                         )
                                     }
-                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                        OutlinedButton(
-                                            onClick = { editingRating = false },
-                                            modifier = Modifier.weight(1f),
-                                            shape = RoundedCornerShape(12.dp),
-                                        ) { Text("Cancelar") }
-                                        Button(
-                                            onClick = {
-                                                vm.saveRating(if (pendingRating > 0) pendingRating else null)
-                                                editingRating = false
-                                            },
-                                            modifier = Modifier.weight(1f),
-                                            shape = RoundedCornerShape(12.dp),
-                                            colors = ButtonDefaults.buttonColors(containerColor = ColorLivro),
-                                        ) { Text("Salvar") }
-                                    }
-                                } else if (mediaItem.rating != null) {
-                                    HalfStarRatingDisplay(rating = mediaItem.rating)
+                                    val pctSuffix =
+                                        if (pages != null && pages > 0) {
+                                            val pct = (displayedPage.toFloat() / pages.toFloat() * 100).toInt().coerceIn(0, 100)
+                                            " ($pct%)"
+                                        } else {
+                                            ""
+                                        }
+                                    val pageLabel =
+                                        if (pages != null) {
+                                            stringResource(R.string.book_detail_page_of_total, displayedPage, pages)
+                                        } else {
+                                            stringResource(R.string.book_detail_page_current, displayedPage)
+                                        }
                                     Text(
-                                        bookRatingPhrase(mediaItem.rating) ?: "",
+                                        pageLabel + pctSuffix,
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                                     )
-                                } else {
-                                    Text(
-                                        "Nenhuma avaliação ainda",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                                    )
+                                    if (commentLines.isNotEmpty()) {
+                                        Spacer(Modifier.height(4.dp))
+                                        commentLines.take(2).forEach { line ->
+                                            Text(
+                                                line,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                                                fontStyle = FontStyle.Italic,
+                                            )
+                                        }
+                                        if (commentLines.size > 2) {
+                                            Spacer(Modifier.height(2.dp))
+                                            Text(
+                                                stringResource(R.string.book_detail_view_full_history),
+                                                color = ColorLivro,
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                modifier = Modifier.clickable { showHistorySheet = true },
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
+                        Spacer(Modifier.height(16.dp))
                     }
-                    Spacer(Modifier.height(16.dp))
-                }
 
-                // ── Resenha ──────────────────────────────────────────────────────
-                item {
-                    Column(Modifier.padding(horizontal = 16.dp)) {
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text("Resenha", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                            if (!editingReview) {
+                    // ── Nota ─────────────────────────────────────────────────────────
+                    item {
+                        Column(Modifier.padding(horizontal = 16.dp)) {
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    stringResource(R.string.manga_detail_rating),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                if (!editingRating) {
+                                    IconButton(
+                                        onClick = {
+                                            pendingRating = mediaItem.rating ?: 0.0
+                                            editingRating = true
+                                        },
+                                        modifier = Modifier.size(32.dp),
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Edit,
+                                            contentDescription = stringResource(R.string.action_edit),
+                                            tint = ColorLivro,
+                                            modifier = Modifier.size(18.dp),
+                                        )
+                                    }
+                                }
+                            }
+                            Spacer(Modifier.height(10.dp))
+                            Card(shape = RoundedCornerShape(12.dp)) {
+                                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    if (editingRating) {
+                                        HalfStarRatingPicker(rating = pendingRating, onRatingChange = { pendingRating = it })
+                                        if (pendingRating > 0) {
+                                            Text(
+                                                bookRatingPhrase(pendingRating) ?: "",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = ColorLivro,
+                                            )
+                                        }
+                                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                            OutlinedButton(
+                                                onClick = { editingRating = false },
+                                                modifier = Modifier.weight(1f),
+                                                shape = RoundedCornerShape(12.dp),
+                                            ) { Text(stringResource(R.string.action_cancel)) }
+                                            Button(
+                                                onClick = {
+                                                    vm.saveRating(if (pendingRating > 0) pendingRating else null)
+                                                    editingRating = false
+                                                },
+                                                modifier = Modifier.weight(1f),
+                                                shape = RoundedCornerShape(12.dp),
+                                                colors = ButtonDefaults.buttonColors(containerColor = ColorLivro),
+                                            ) { Text(stringResource(R.string.action_save)) }
+                                        }
+                                    } else if (mediaItem.rating != null) {
+                                        HalfStarRatingDisplay(rating = mediaItem.rating)
+                                        Text(
+                                            bookRatingPhrase(mediaItem.rating) ?: "",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                        )
+                                    } else {
+                                        Text(
+                                            stringResource(R.string.manga_detail_no_rating),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        Spacer(Modifier.height(16.dp))
+                    }
+
+                    // ── Resenha ──────────────────────────────────────────────────────
+                    item {
+                        Column(Modifier.padding(horizontal = 16.dp)) {
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    stringResource(R.string.manga_detail_review),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                if (!editingReview) {
+                                    IconButton(
+                                        onClick = {
+                                            pendingReviewText = mediaItem.bookReviewText ?: ""
+                                            editingReview = true
+                                        },
+                                        modifier = Modifier.size(32.dp),
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Edit,
+                                            contentDescription = stringResource(R.string.action_edit),
+                                            tint = ColorLivro,
+                                            modifier = Modifier.size(18.dp),
+                                        )
+                                    }
+                                }
+                            }
+                            Spacer(Modifier.height(10.dp))
+                            Card(shape = RoundedCornerShape(12.dp)) {
+                                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    if (editingReview) {
+                                        OutlinedTextField(
+                                            value = pendingReviewText,
+                                            onValueChange = { pendingReviewText = it },
+                                            placeholder = {
+                                                Text(
+                                                    stringResource(R.string.manga_detail_review_text_placeholder),
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                )
+                                            },
+                                            minLines = 3,
+                                            maxLines = 6,
+                                            modifier = Modifier.fillMaxWidth(),
+                                        )
+                                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                            OutlinedButton(
+                                                onClick = { editingReview = false },
+                                                modifier = Modifier.weight(1f),
+                                                shape = RoundedCornerShape(12.dp),
+                                            ) { Text(stringResource(R.string.action_cancel)) }
+                                            Button(
+                                                onClick = {
+                                                    vm.saveReview(pendingReviewText)
+                                                    editingReview = false
+                                                },
+                                                modifier = Modifier.weight(1f),
+                                                shape = RoundedCornerShape(12.dp),
+                                                colors = ButtonDefaults.buttonColors(containerColor = ColorLivro),
+                                            ) { Text(stringResource(R.string.action_save)) }
+                                        }
+                                    } else if (!mediaItem.bookReviewText.isNullOrBlank()) {
+                                        Text(
+                                            mediaItem.bookReviewText,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+                                            fontStyle = FontStyle.Italic,
+                                        )
+                                    } else {
+                                        Text(
+                                            stringResource(R.string.manga_detail_no_review),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        Spacer(Modifier.height(16.dp))
+                    }
+
+                    // Datas
+                    item {
+                        Column(Modifier.padding(horizontal = 16.dp)) {
+                            Text(
+                                stringResource(R.string.label_dates),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            Spacer(Modifier.height(10.dp))
+                            Card(shape = RoundedCornerShape(12.dp)) {
+                                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    if (mediaItem.readingStartDate != null) {
+                                        BookInfoRow(
+                                            stringResource(R.string.book_detail_start),
+                                            dateFormatter.format(mediaItem.readingStartDate),
+                                        )
+                                    }
+                                    if (mediaItem.completionDate != null) {
+                                        BookInfoRow(
+                                            stringResource(R.string.book_detail_completed),
+                                            dateFormatter.format(mediaItem.completionDate),
+                                        )
+                                    }
+                                    if (mediaItem.rereadingDate != null) {
+                                        BookInfoRow(
+                                            stringResource(R.string.book_detail_reread),
+                                            dateFormatter.format(mediaItem.rereadingDate),
+                                        )
+                                    }
+                                    BookInfoRow(stringResource(R.string.label_added), dateFormatter.format(mediaItem.addedDate))
+                                    if (releaseDateMs != null) {
+                                        BookInfoRow(
+                                            stringResource(R.string.book_detail_edition_publication),
+                                            dateFormatter.format(java.util.Date(releaseDateMs)),
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        Spacer(Modifier.height(16.dp))
+                    }
+
+                    // ── Citações ─────────────────────────────────────────────────────
+                    item {
+                        Column(Modifier.padding(horizontal = 16.dp)) {
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    stringResource(R.string.book_detail_quotes),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
                                 IconButton(
                                     onClick = {
-                                        pendingReviewText = mediaItem.bookReviewText ?: ""
-                                        editingReview = true
+                                        navController.currentBackStackEntry?.savedStateHandle?.set("quoteBook", mediaItem)
+                                        navController.navigate(Routes.BOOKS_ADD_QUOTE)
                                     },
                                     modifier = Modifier.size(32.dp),
                                 ) {
                                     Icon(
-                                        Icons.Default.Edit,
-                                        contentDescription = "Editar",
+                                        Icons.Default.Add,
+                                        contentDescription = stringResource(R.string.book_detail_add_quote),
                                         tint = ColorLivro,
-                                        modifier = Modifier.size(18.dp),
+                                        modifier = Modifier.size(20.dp),
                                     )
                                 }
                             }
-                        }
-                        Spacer(Modifier.height(10.dp))
-                        Card(shape = RoundedCornerShape(12.dp)) {
-                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                if (editingReview) {
-                                    OutlinedTextField(
-                                        value = pendingReviewText,
-                                        onValueChange = { pendingReviewText = it },
-                                        placeholder = { Text("Impressões, spoilers…", style = MaterialTheme.typography.bodySmall) },
-                                        minLines = 3,
-                                        maxLines = 6,
-                                        modifier = Modifier.fillMaxWidth(),
-                                    )
-                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                        OutlinedButton(
-                                            onClick = { editingReview = false },
-                                            modifier = Modifier.weight(1f),
-                                            shape = RoundedCornerShape(12.dp),
-                                        ) { Text("Cancelar") }
-                                        Button(
-                                            onClick = {
-                                                vm.saveReview(pendingReviewText)
-                                                editingReview = false
-                                            },
-                                            modifier = Modifier.weight(1f),
-                                            shape = RoundedCornerShape(12.dp),
-                                            colors = ButtonDefaults.buttonColors(containerColor = ColorLivro),
-                                        ) { Text("Salvar") }
-                                    }
-                                } else if (!mediaItem.bookReviewText.isNullOrBlank()) {
+                            Spacer(Modifier.height(10.dp))
+                            if (quotes.isEmpty()) {
+                                Card(shape = RoundedCornerShape(12.dp)) {
                                     Text(
-                                        mediaItem.bookReviewText,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
-                                        fontStyle = FontStyle.Italic,
-                                    )
-                                } else {
-                                    Text(
-                                        "Nenhuma resenha ainda",
+                                        stringResource(R.string.book_detail_no_quotes),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                        modifier = Modifier.padding(16.dp),
                                     )
                                 }
-                            }
-                        }
-                    }
-                    Spacer(Modifier.height(16.dp))
-                }
-
-                // Datas
-                item {
-                    Column(Modifier.padding(horizontal = 16.dp)) {
-                        Text("Datas", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                        Spacer(Modifier.height(10.dp))
-                        Card(shape = RoundedCornerShape(12.dp)) {
-                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                if (mediaItem.readingStartDate != null) {
-                                    BookInfoRow("Início", dateFormatter.format(mediaItem.readingStartDate))
-                                }
-                                if (mediaItem.completionDate != null) {
-                                    BookInfoRow("Concluído", dateFormatter.format(mediaItem.completionDate))
-                                }
-                                if (mediaItem.rereadingDate != null) {
-                                    BookInfoRow("Releitura", dateFormatter.format(mediaItem.rereadingDate))
-                                }
-                                BookInfoRow("Adicionado", dateFormatter.format(mediaItem.addedDate))
-                                if (releaseDateMs != null) {
-                                    BookInfoRow("Publicação desta edição", dateFormatter.format(java.util.Date(releaseDateMs)))
-                                }
-                            }
-                        }
-                    }
-                    Spacer(Modifier.height(16.dp))
-                }
-
-                // ── Citações ─────────────────────────────────────────────────────
-                item {
-                    Column(Modifier.padding(horizontal = 16.dp)) {
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text("Citações", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                            IconButton(
-                                onClick = {
-                                    navController.currentBackStackEntry?.savedStateHandle?.set("quoteBook", mediaItem)
-                                    navController.navigate(Routes.BOOKS_ADD_QUOTE)
-                                },
-                                modifier = Modifier.size(32.dp),
-                            ) {
-                                Icon(
-                                    Icons.Default.Add,
-                                    contentDescription = "Adicionar citação",
-                                    tint = ColorLivro,
-                                    modifier = Modifier.size(20.dp),
-                                )
-                            }
-                        }
-                        Spacer(Modifier.height(10.dp))
-                        if (quotes.isEmpty()) {
-                            Card(shape = RoundedCornerShape(12.dp)) {
-                                Text(
-                                    "Nenhuma citação ainda",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                                    modifier = Modifier.padding(16.dp),
-                                )
-                            }
-                        } else {
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                quotes.forEach { quote ->
-                                    Card(shape = RoundedCornerShape(12.dp)) {
-                                        Row(
-                                            Modifier.padding(16.dp),
-                                            verticalAlignment = Alignment.Top,
-                                        ) {
-                                            Column(Modifier.weight(1f)) {
-                                                Text(
-                                                    "“${quote.quote}”",
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                    fontStyle = FontStyle.Italic,
-                                                )
-                                                if (!quote.comment.isNullOrBlank()) {
-                                                    Spacer(Modifier.height(6.dp))
+                            } else {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    quotes.forEach { quote ->
+                                        Card(shape = RoundedCornerShape(12.dp)) {
+                                            Row(
+                                                Modifier.padding(16.dp),
+                                                verticalAlignment = Alignment.Top,
+                                            ) {
+                                                Column(Modifier.weight(1f)) {
                                                     Text(
-                                                        quote.comment,
-                                                        style = MaterialTheme.typography.bodySmall,
-                                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                                        "“${quote.quote}”",
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        fontStyle = FontStyle.Italic,
+                                                    )
+                                                    if (!quote.comment.isNullOrBlank()) {
+                                                        Spacer(Modifier.height(6.dp))
+                                                        Text(
+                                                            quote.comment,
+                                                            style = MaterialTheme.typography.bodySmall,
+                                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                                        )
+                                                    }
+                                                }
+                                                IconButton(onClick = { vm.deleteQuote(quote.id) }, modifier = Modifier.size(24.dp)) {
+                                                    Icon(
+                                                        Icons.Default.Close,
+                                                        contentDescription = stringResource(R.string.action_remove),
+                                                        modifier = Modifier.size(16.dp),
                                                     )
                                                 }
-                                            }
-                                            IconButton(onClick = { vm.deleteQuote(quote.id) }, modifier = Modifier.size(24.dp)) {
-                                                Icon(Icons.Default.Close, contentDescription = "Remover", modifier = Modifier.size(16.dp))
                                             }
                                         }
                                     }
                                 }
                             }
                         }
+                        Spacer(Modifier.height(16.dp))
                     }
-                    Spacer(Modifier.height(16.dp))
-                }
 
-                item {
-                    AnotacoesSection(mediaItem.personalNotes) { navController.navigateToAnotacoes(mediaItem) }
-                }
+                    item {
+                        AnotacoesSection(mediaItem.personalNotes) { navController.navigateToAnotacoes(mediaItem) }
+                    }
 
-                item { Spacer(Modifier.height(80.dp)) }
-            }
-            // ── Floating nav: back ────────────────────────────────────────────
-            IconButton(
-                onClick = { navController.popBackStack() },
-                modifier = Modifier.statusBarsPadding().padding(4.dp),
-            ) {
-                Box(
-                    Modifier
-                        .size(34.dp)
-                        .background(Color.Black.copy(alpha = 0.54f), CircleShape),
-                    contentAlignment = Alignment.Center,
+                    item { Spacer(Modifier.height(80.dp)) }
+                }
+                // ── Floating nav: back ────────────────────────────────────────────
+                IconButton(
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier.statusBarsPadding().padding(4.dp),
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White, modifier = Modifier.size(18.dp))
+                    Box(
+                        Modifier
+                            .size(34.dp)
+                            .background(Color.Black.copy(alpha = 0.54f), CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White, modifier = Modifier.size(18.dp))
+                    }
                 }
-            }
-        } // end Box
+            } // end Box
+        }
     }
 
     if (showPageDialog) {
@@ -858,21 +938,21 @@ fun BookDetailScreen(
         val error =
             when {
                 pageInput.isBlank() -> null
-                pageNum == null -> "Digite um número válido"
-                pageNum < 0 -> "Não pode ser negativo"
-                pages != null && pageNum > pages -> "Máximo: $pages páginas"
+                pageNum == null -> stringResource(R.string.manga_detail_error_invalid_number)
+                pageNum < 0 -> stringResource(R.string.manga_detail_error_negative)
+                pages != null && pageNum > pages -> stringResource(R.string.book_detail_error_max_pages, pages)
                 else -> null
             }
         val canSave = error == null && pageInput.isNotBlank()
         AlertDialog(
             onDismissRequest = { showPageDialog = false },
-            title = { Text("Página atual") },
+            title = { Text(stringResource(R.string.book_detail_current_page_title)) },
             text = {
                 Column {
                     OutlinedTextField(
                         value = pageInput,
                         onValueChange = { pageInput = it },
-                        label = { Text("Página") },
+                        label = { Text(stringResource(R.string.book_detail_page_field_label)) },
                         isError = error != null,
                         supportingText = error?.let { { Text(it) } },
                         singleLine = true,
@@ -881,7 +961,9 @@ fun BookDetailScreen(
                     OutlinedTextField(
                         value = commentInput,
                         onValueChange = { commentInput = it },
-                        placeholder = { Text("Comentário (opcional)", style = MaterialTheme.typography.bodySmall) },
+                        placeholder = {
+                            Text(stringResource(R.string.add_quote_comment_placeholder), style = MaterialTheme.typography.bodySmall)
+                        },
                         minLines = 2,
                         maxLines = 4,
                     )
@@ -894,9 +976,9 @@ fun BookDetailScreen(
                         pageNum?.let { vm.setProgress(it, commentInput, pages) }
                         showPageDialog = false
                     },
-                ) { Text("Salvar") }
+                ) { Text(stringResource(R.string.action_save)) }
             },
-            dismissButton = { TextButton(onClick = { showPageDialog = false }) { Text("Cancelar") } },
+            dismissButton = { TextButton(onClick = { showPageDialog = false }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
 
@@ -933,15 +1015,15 @@ fun BookDetailScreen(
     if (showDelete) {
         AlertDialog(
             onDismissRequest = { showDelete = false },
-            title = { Text("Remover livro") },
-            text = { Text("Remover \"${mediaItem.title}\" da sua biblioteca?") },
+            title = { Text(stringResource(R.string.book_detail_remove_book)) },
+            text = { Text(stringResource(R.string.book_detail_remove_confirm, mediaItem.title)) },
             confirmButton = {
                 Button(
                     onClick = { vm.delete { navController.popBackStack() } },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                ) { Text("Remover") }
+                ) { Text(stringResource(R.string.action_remove)) }
             },
-            dismissButton = { TextButton(onClick = { showDelete = false }) { Text("Cancelar") } },
+            dismissButton = { TextButton(onClick = { showDelete = false }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
 }
@@ -960,11 +1042,15 @@ private fun BookHistorySheet(
 
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.padding(horizontal = 20.dp).padding(bottom = 32.dp)) {
-            Text("Histórico de leitura", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(
+                stringResource(R.string.book_detail_reading_history),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
             Spacer(Modifier.height(12.dp))
             if (list.isEmpty()) {
                 Text(
-                    "Nenhuma anotação.",
+                    stringResource(R.string.book_detail_no_notes),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                 )
@@ -1006,7 +1092,7 @@ private fun BookHistorySheet(
     editingIndex?.let { index ->
         AlertDialog(
             onDismissRequest = { editingIndex = null },
-            title = { Text("Editar anotação") },
+            title = { Text(stringResource(R.string.book_detail_edit_note_title)) },
             text = {
                 OutlinedTextField(
                     value = editingText,
@@ -1022,17 +1108,17 @@ private fun BookHistorySheet(
                         onSave(list)
                     }
                     editingIndex = null
-                }) { Text("Salvar") }
+                }) { Text(stringResource(R.string.action_save)) }
             },
-            dismissButton = { TextButton(onClick = { editingIndex = null }) { Text("Cancelar") } },
+            dismissButton = { TextButton(onClick = { editingIndex = null }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
 
     deletingIndex?.let { index ->
         AlertDialog(
             onDismissRequest = { deletingIndex = null },
-            title = { Text("Remover anotação") },
-            text = { Text("Remover esta anotação do histórico?") },
+            title = { Text(stringResource(R.string.book_detail_remove_note_title)) },
+            text = { Text(stringResource(R.string.book_detail_remove_note_confirm)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -1041,9 +1127,9 @@ private fun BookHistorySheet(
                         deletingIndex = null
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                ) { Text("Remover") }
+                ) { Text(stringResource(R.string.action_remove)) }
             },
-            dismissButton = { TextButton(onClick = { deletingIndex = null }) { Text("Cancelar") } },
+            dismissButton = { TextButton(onClick = { deletingIndex = null }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
 }
@@ -1059,9 +1145,11 @@ private fun BookDatePickerDialog(
     DatePickerDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            TextButton(onClick = { state.selectedDateMillis?.let { onConfirm(it) } ?: onDismiss() }) { Text("Confirmar") }
+            TextButton(onClick = { state.selectedDateMillis?.let { onConfirm(it) } ?: onDismiss() }) {
+                Text(stringResource(R.string.action_confirm))
+            }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     ) {
         DatePicker(state = state)
     }

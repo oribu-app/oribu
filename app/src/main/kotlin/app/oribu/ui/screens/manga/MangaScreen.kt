@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -23,6 +24,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.data.db.DB
 import app.oribu.model.MediaItem
 import app.oribu.model.MediaStatus
@@ -73,7 +75,14 @@ fun MangaScreen(
 ) {
     val allItems by vm.allItems.collectAsStateWithLifecycle()
 
-    val tabs = listOf("Todos", "Lendo", "Lidos", "Em Hiato", "Quero Ler")
+    val tabs =
+        listOf(
+            stringResource(R.string.films_tab_all),
+            stringResource(R.string.manga_tab_reading),
+            stringResource(R.string.manga_tab_read),
+            stringResource(R.string.manga_tab_on_hold),
+            stringResource(R.string.manga_tab_want_to_read),
+        )
     var selectedTab by remember { mutableIntStateOf(0) }
     var showMenu by remember { mutableStateOf(false) }
 
@@ -114,7 +123,7 @@ fun MangaScreen(
         topBar = {
             Column {
                 TopAppBar(
-                    title = { Text("Mangás") },
+                    title = { Text(stringResource(R.string.manga_title)) },
                     navigationIcon = {
                         IconButton(onClick = {
                             navController.navigate(Routes.HOME) { launchSingleTop = true }
@@ -146,21 +155,37 @@ fun MangaScreen(
                 containerColor = ColorManga,
                 contentColor = Color.White,
                 icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                text = { Text("Adicionar mangá") },
+                text = { Text(stringResource(R.string.manga_add_button)) },
             )
         },
     ) { padding ->
+        val addMangaLabel = stringResource(R.string.manga_add_button)
         Box(Modifier.padding(padding).fillMaxSize()) {
             if (filtered.isEmpty()) {
                 val (title, subtitle) =
                     when (selectedTab) {
-                        0 -> "Nenhum mangá na biblioteca" to "Adicione um mangá para começar"
-                        1 -> "Nenhum mangá em leitura" to "Mangás que você está lendo aparecerão aqui"
-                        2 -> "Nenhum mangá lido" to "Mangás que você concluiu aparecerão aqui"
-                        3 -> "Nenhum mangá em hiato" to "Mangás pausados aparecerão aqui"
-                        else -> "Lista de leitura vazia" to "Mangás que você quer ler aparecerão aqui"
+                        0 -> {
+                            stringResource(R.string.manga_empty_all_title) to stringResource(R.string.manga_empty_all_subtitle)
+                        }
+
+                        1 -> {
+                            stringResource(R.string.manga_empty_reading_title) to
+                                stringResource(R.string.manga_empty_reading_subtitle)
+                        }
+
+                        2 -> {
+                            stringResource(R.string.manga_empty_read_title) to stringResource(R.string.manga_empty_read_subtitle)
+                        }
+
+                        3 -> {
+                            stringResource(R.string.manga_empty_on_hold_title) to stringResource(R.string.manga_empty_on_hold_subtitle)
+                        }
+
+                        else -> {
+                            stringResource(R.string.manga_empty_want_title) to stringResource(R.string.manga_empty_want_subtitle)
+                        }
                     }
-                EmptyState(title, subtitle, "Adicionar mangá", onButton = { navController.navigate(Routes.MANGA_ADD) })
+                EmptyState(title, subtitle, addMangaLabel, onButton = { navController.navigate(Routes.MANGA_ADD) })
             } else {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(3),

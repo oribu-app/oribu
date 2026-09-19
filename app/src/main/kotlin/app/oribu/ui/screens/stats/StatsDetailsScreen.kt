@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -19,6 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.data.db.DB
 import app.oribu.model.MediaItem
 import app.oribu.model.MediaType
@@ -54,7 +56,17 @@ fun StatsDetailsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (typeFilter != null) "Detalhes — ${typeFilter.labelPt}" else "Detalhes") },
+                title = {
+                    Text(
+                        if (typeFilter !=
+                            null
+                        ) {
+                            stringResource(R.string.stats_details_title, typeFilter.label)
+                        } else {
+                            stringResource(R.string.stats_details)
+                        },
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
@@ -104,7 +116,7 @@ private fun HobbyChartCard(
 
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            hobby.labelPtPlural.uppercase(),
+            hobby.labelPlural.uppercase(),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = hobby.color,

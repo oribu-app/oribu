@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -34,6 +35,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.data.db.DB
 import app.oribu.model.GameConsole
 import app.oribu.model.GamePlaythrough
@@ -49,6 +51,7 @@ import app.oribu.ui.components.CoverImage
 import app.oribu.ui.navigation.navigateToAnotacoes
 import app.oribu.ui.navigation.rememberAnotacoesResult
 import app.oribu.ui.theme.ColorJogo
+import app.oribu.ui.theme.CoverThemedSurface
 import coil.compose.AsyncImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -231,7 +234,7 @@ fun GameDetailScreen(
     val expansions = (cache?.get("expansions") as? List<*>)?.filterIsInstance<Map<String, Any?>>()
     val recommendations = (cache?.get("recommendations") as? List<*>)?.filterIsInstance<Map<String, Any?>>()
 
-    val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")) }
+    val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
     val currentPlatformLabel = consoleDisplayName(console)
     // Enquanto o cache não traz a lista completa da API (ex.: jogo recém-adicionado),
     // ainda mostramos ao menos a plataforma já rastreada — essencial pra exclusivos.
@@ -240,14 +243,14 @@ fun GameDetailScreen(
 
     val registroLabel =
         when (mediaItem.status) {
-            MediaStatus.PLAYING -> "Jogando"
-            MediaStatus.REPLAYING -> "Rejogando"
-            MediaStatus.QUEUED -> "Backlog"
-            MediaStatus.FINISHED -> "Completado · História"
-            MediaStatus.COMPLETED -> "Completado · Extras"
-            MediaStatus.PLATINUM -> "Completado · 100%"
-            MediaStatus.DROPPED -> "Abandonado"
-            MediaStatus.WAITING_RELEASE -> "Em Breve"
+            MediaStatus.PLAYING -> mediaItem.status.label
+            MediaStatus.REPLAYING -> mediaItem.status.label
+            MediaStatus.QUEUED -> stringResource(R.string.games_tab_backlog)
+            MediaStatus.FINISHED -> stringResource(R.string.game_detail_status_completed_story)
+            MediaStatus.COMPLETED -> stringResource(R.string.game_detail_status_completed_extras)
+            MediaStatus.PLATINUM -> stringResource(R.string.game_detail_status_completed_100)
+            MediaStatus.DROPPED -> mediaItem.status.label
+            MediaStatus.WAITING_RELEASE -> stringResource(R.string.games_tab_upcoming)
             else -> mediaItem.status.label
         }
 
@@ -255,588 +258,638 @@ fun GameDetailScreen(
     val coverWidth = (screenWidth * 0.58f).coerceIn(160.dp, 230.dp)
     val coverHeight = coverWidth / 0.714f
 
-    Scaffold { _ ->
-        Box(Modifier.fillMaxSize()) {
-            LazyColumn(Modifier.fillMaxSize()) {
-                // ── Header ────────────────────────────────────────────────────
-                item {
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(coverHeight + 160.dp), // cover + top status bar space + title
-                    ) {
-                        // Blurred background
-                        AsyncImage(
-                            model = bgUrl,
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize().blur(28.dp),
-                        )
-                        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)))
-
-                        // Centered cover + title (below status bar area)
-                        Column(
-                            Modifier
-                                .fillMaxWidth()
-                                .align(Alignment.Center)
-                                .padding(top = 56.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                        ) {
-                            // Cover with shadow
-                            Box(
-                                Modifier
-                                    .shadow(30.dp, RoundedCornerShape(8.dp))
-                                    .clip(RoundedCornerShape(8.dp)),
-                            ) {
-                                AsyncImage(
-                                    model = coverUrl,
-                                    contentDescription = null,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier.width(coverWidth).height(coverHeight),
-                                )
-                            }
-                            Spacer(Modifier.height(28.dp))
-                            // Title
-                            Text(
-                                mediaItem.title,
-                                color = Color.White,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                textAlign = TextAlign.Center,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.padding(horizontal = 28.dp),
-                                lineHeight = 26.sp,
-                            )
-                        }
-
-                        // Bottom gradient fade
+    CoverThemedSurface(coverUrl) {
+        Scaffold { _ ->
+            Box(Modifier.fillMaxSize()) {
+                LazyColumn(Modifier.fillMaxSize()) {
+                    // ── Header ────────────────────────────────────────────────────
+                    item {
                         Box(
                             Modifier
                                 .fillMaxWidth()
-                                .height(60.dp)
-                                .align(Alignment.BottomCenter)
-                                .background(
-                                    androidx.compose.ui.graphics.Brush.verticalGradient(
-                                        listOf(Color.Transparent, Color.Black.copy(alpha = 0.45f)),
-                                    ),
-                                ),
-                        )
-                    }
-                }
+                                .height(coverHeight + 160.dp), // cover + top status bar space + title
+                        ) {
+                            // Blurred background
+                            AsyncImage(
+                                model = bgUrl,
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize().blur(28.dp),
+                            )
+                            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)))
 
-                // ── Status button row (centered) ──────────────────────────────
-                item {
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 20.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        // Status button — IntrinsicWidth style, centered
-                        // Aguardando Lançamento é um status fixo: some sozinho quando o jogo sai.
-                        val statusFixed = mediaItem.status == MediaStatus.WAITING_RELEASE
-                        Box {
-                            Surface(
-                                color = platformColor,
-                                shape = RoundedCornerShape(10.dp),
-                                modifier =
-                                    Modifier
-                                        .widthIn(min = 150.dp, max = 260.dp)
-                                        .let { if (statusFixed) it else it.clickable { showStatusMenu = true } },
+                            // Centered cover + title (below status bar area)
+                            Column(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .align(Alignment.Center)
+                                    .padding(top = 56.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
                             ) {
-                                Row(
-                                    Modifier.padding(horizontal = 20.dp, vertical = 13.dp),
-                                    horizontalArrangement = Arrangement.Center,
-                                    verticalAlignment = Alignment.CenterVertically,
+                                // Cover with shadow
+                                Box(
+                                    Modifier
+                                        .shadow(30.dp, RoundedCornerShape(8.dp))
+                                        .clip(RoundedCornerShape(8.dp)),
                                 ) {
-                                    Icon(
-                                        if (statusFixed) Icons.Default.Schedule else Icons.Default.UnfoldMore,
-                                        null,
-                                        tint = Color.White,
-                                        modifier = Modifier.size(18.dp),
-                                    )
-                                    Spacer(Modifier.width(8.dp))
-                                    Text(
-                                        registroLabel,
-                                        color = Color.White,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 14.sp,
+                                    AsyncImage(
+                                        model = coverUrl,
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.width(coverWidth).height(coverHeight),
                                     )
                                 }
-                            }
-                            DropdownMenu(expanded = showStatusMenu, onDismissRequest = { showStatusMenu = false }) {
-                                GameStatusMenuItem(
-                                    Icons.Default.PlayArrow,
-                                    "Jogando",
-                                    mediaItem.status == MediaStatus.PLAYING,
-                                    platformColor,
-                                ) {
-                                    vm.setStatus(MediaStatus.PLAYING)
-                                    showStatusMenu =
-                                        false
-                                }
-                                GameStatusMenuItem(
-                                    Icons.Default.Replay,
-                                    "Rejogando",
-                                    mediaItem.status == MediaStatus.REPLAYING,
-                                    platformColor,
-                                ) {
-                                    vm.setStatus(MediaStatus.REPLAYING)
-                                    showStatusMenu =
-                                        false
-                                }
-                                GameStatusMenuItem(Icons.Default.Queue, "Backlog", mediaItem.status == MediaStatus.QUEUED, platformColor) {
-                                    vm.setStatus(MediaStatus.QUEUED)
-                                    showStatusMenu =
-                                        false
-                                }
-                                DropdownMenuItem(
-                                    text = { Text("Completado") },
-                                    leadingIcon = {
-                                        Icon(
-                                            Icons.Default.CheckCircle,
-                                            null,
-                                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                                        )
-                                    },
-                                    trailingIcon = {
-                                        if (mediaItem.status in listOf(MediaStatus.FINISHED, MediaStatus.COMPLETED, MediaStatus.PLATINUM)) {
-                                            Icon(Icons.Default.Check, null, tint = platformColor, modifier = Modifier.size(16.dp))
-                                        } else {
-                                            Icon(
-                                                Icons.Default.ChevronRight,
-                                                null,
-                                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                                                modifier = Modifier.size(18.dp),
-                                            )
-                                        }
-                                    },
-                                    onClick = {
-                                        showStatusMenu = false
-                                        showCompletedMenu = true
-                                    },
+                                Spacer(Modifier.height(28.dp))
+                                // Title
+                                Text(
+                                    mediaItem.title,
+                                    color = Color.White,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.padding(horizontal = 28.dp),
+                                    lineHeight = 26.sp,
                                 )
-                                GameStatusMenuItem(
-                                    Icons.Default.Close,
-                                    "Abandonado",
-                                    mediaItem.status == MediaStatus.DROPPED,
-                                    platformColor,
-                                ) {
-                                    vm.setStatus(MediaStatus.DROPPED)
-                                    showStatusMenu =
-                                        false
-                                }
                             }
+
+                            // Bottom gradient fade
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(60.dp)
+                                    .align(Alignment.BottomCenter)
+                                    .background(
+                                        androidx.compose.ui.graphics.Brush.verticalGradient(
+                                            listOf(Color.Transparent, Color.Black.copy(alpha = 0.45f)),
+                                        ),
+                                    ),
+                            )
                         }
-                        // "Completado" submenu — História / Extras / 100%
-                        Box {
-                            DropdownMenu(expanded = showCompletedMenu, onDismissRequest = { showCompletedMenu = false }) {
-                                GameStatusMenuItem(
-                                    Icons.Default.MenuBook,
-                                    "História",
-                                    mediaItem.status == MediaStatus.FINISHED,
-                                    platformColor,
+                    }
+
+                    // ── Status button row (centered) ──────────────────────────────
+                    item {
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 20.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            // Status button — IntrinsicWidth style, centered
+                            // Aguardando Lançamento é um status fixo: some sozinho quando o jogo sai.
+                            val statusFixed = mediaItem.status == MediaStatus.WAITING_RELEASE
+                            Box {
+                                Surface(
+                                    color = platformColor,
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier =
+                                        Modifier
+                                            .widthIn(min = 150.dp, max = 260.dp)
+                                            .let { if (statusFixed) it else it.clickable { showStatusMenu = true } },
                                 ) {
-                                    vm.setStatus(MediaStatus.FINISHED)
-                                    showCompletedMenu =
-                                        false
+                                    Row(
+                                        Modifier.padding(horizontal = 20.dp, vertical = 13.dp),
+                                        horizontalArrangement = Arrangement.Center,
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        Icon(
+                                            if (statusFixed) Icons.Default.Schedule else Icons.Default.UnfoldMore,
+                                            null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(18.dp),
+                                        )
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(
+                                            registroLabel,
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 14.sp,
+                                        )
+                                    }
                                 }
-                                GameStatusMenuItem(
-                                    Icons.Default.AutoAwesome,
-                                    "Extras",
-                                    mediaItem.status == MediaStatus.COMPLETED,
-                                    platformColor,
-                                ) {
-                                    vm.setStatus(MediaStatus.COMPLETED)
-                                    showCompletedMenu =
-                                        false
-                                }
-                                GameStatusMenuItem(
-                                    Icons.Default.EmojiEvents,
-                                    "100%",
-                                    mediaItem.status == MediaStatus.PLATINUM,
-                                    platformColor,
-                                ) {
-                                    vm.setStatus(MediaStatus.PLATINUM)
-                                    showCompletedMenu =
-                                        false
+                                DropdownMenu(expanded = showStatusMenu, onDismissRequest = { showStatusMenu = false }) {
+                                    GameStatusMenuItem(
+                                        Icons.Default.PlayArrow,
+                                        MediaStatus.PLAYING.label,
+                                        mediaItem.status == MediaStatus.PLAYING,
+                                        platformColor,
+                                    ) {
+                                        vm.setStatus(MediaStatus.PLAYING)
+                                        showStatusMenu =
+                                            false
+                                    }
+                                    GameStatusMenuItem(
+                                        Icons.Default.Replay,
+                                        MediaStatus.REPLAYING.label,
+                                        mediaItem.status == MediaStatus.REPLAYING,
+                                        platformColor,
+                                    ) {
+                                        vm.setStatus(MediaStatus.REPLAYING)
+                                        showStatusMenu =
+                                            false
+                                    }
+                                    GameStatusMenuItem(
+                                        Icons.Default.Queue,
+                                        stringResource(R.string.games_tab_backlog),
+                                        mediaItem.status == MediaStatus.QUEUED,
+                                        platformColor,
+                                    ) {
+                                        vm.setStatus(MediaStatus.QUEUED)
+                                        showStatusMenu =
+                                            false
+                                    }
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.game_detail_completed_menu)) },
+                                        leadingIcon = {
+                                            Icon(
+                                                Icons.Default.CheckCircle,
+                                                null,
+                                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                                            )
+                                        },
+                                        trailingIcon = {
+                                            if (mediaItem.status in
+                                                listOf(MediaStatus.FINISHED, MediaStatus.COMPLETED, MediaStatus.PLATINUM)
+                                            ) {
+                                                Icon(Icons.Default.Check, null, tint = platformColor, modifier = Modifier.size(16.dp))
+                                            } else {
+                                                Icon(
+                                                    Icons.Default.ChevronRight,
+                                                    null,
+                                                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                                    modifier = Modifier.size(18.dp),
+                                                )
+                                            }
+                                        },
+                                        onClick = {
+                                            showStatusMenu = false
+                                            showCompletedMenu = true
+                                        },
+                                    )
+                                    GameStatusMenuItem(
+                                        Icons.Default.Close,
+                                        MediaStatus.DROPPED.label,
+                                        mediaItem.status == MediaStatus.DROPPED,
+                                        platformColor,
+                                    ) {
+                                        vm.setStatus(MediaStatus.DROPPED)
+                                        showStatusMenu =
+                                            false
+                                    }
                                 }
                             }
-                        }
-                        Spacer(Modifier.width(8.dp))
-                        // "..." button — 48x48 square with border
-                        Box {
-                            IconButton(onClick = { showMoreMenu = true }) {
-                                Icon(Icons.Default.MoreHoriz, null)
+                            // "Completed" submenu — Story / Extras / 100%
+                            Box {
+                                DropdownMenu(expanded = showCompletedMenu, onDismissRequest = { showCompletedMenu = false }) {
+                                    GameStatusMenuItem(
+                                        Icons.Default.MenuBook,
+                                        stringResource(R.string.game_detail_completed_story),
+                                        mediaItem.status == MediaStatus.FINISHED,
+                                        platformColor,
+                                    ) {
+                                        vm.setStatus(MediaStatus.FINISHED)
+                                        showCompletedMenu =
+                                            false
+                                    }
+                                    GameStatusMenuItem(
+                                        Icons.Default.AutoAwesome,
+                                        "Extras",
+                                        mediaItem.status == MediaStatus.COMPLETED,
+                                        platformColor,
+                                    ) {
+                                        vm.setStatus(MediaStatus.COMPLETED)
+                                        showCompletedMenu =
+                                            false
+                                    }
+                                    GameStatusMenuItem(
+                                        Icons.Default.EmojiEvents,
+                                        "100%",
+                                        mediaItem.status == MediaStatus.PLATINUM,
+                                        platformColor,
+                                    ) {
+                                        vm.setStatus(MediaStatus.PLATINUM)
+                                        showCompletedMenu =
+                                            false
+                                    }
+                                }
                             }
-                            DropdownMenu(expanded = showMoreMenu, onDismissRequest = { showMoreMenu = false }) {
-                                DropdownMenuItem(text = {
-                                    Text(
-                                        "Atualizar",
-                                    )
-                                }, leadingIcon = { Icon(Icons.Default.Refresh, null) }, onClick = {
-                                    vm.refreshCache()
-                                    showMoreMenu =
-                                        false
-                                })
-                                DropdownMenuItem(text = {
-                                    Text(
-                                        "Anotações",
-                                    )
-                                }, leadingIcon = { Icon(Icons.AutoMirrored.Filled.Notes, null) }, onClick = {
-                                    navController.navigateToAnotacoes(mediaItem)
-                                    showMoreMenu =
-                                        false
-                                })
-                                if ((platforms?.size ?: 0) > 1) {
+                            Spacer(Modifier.width(8.dp))
+                            // "..." button — 48x48 square with border
+                            Box {
+                                IconButton(onClick = { showMoreMenu = true }) {
+                                    Icon(Icons.Default.MoreHoriz, null)
+                                }
+                                DropdownMenu(expanded = showMoreMenu, onDismissRequest = { showMoreMenu = false }) {
                                     DropdownMenuItem(text = {
                                         Text(
-                                            "Alterar plataforma",
+                                            stringResource(R.string.action_refresh),
                                         )
-                                    }, leadingIcon = { Icon(Icons.Default.Devices, null) }, onClick = {
-                                        showConsoleMenu =
+                                    }, leadingIcon = { Icon(Icons.Default.Refresh, null) }, onClick = {
+                                        vm.refreshCache()
+                                        showMoreMenu =
+                                            false
+                                    })
+                                    DropdownMenuItem(text = {
+                                        Text(
+                                            stringResource(R.string.label_notes),
+                                        )
+                                    }, leadingIcon = { Icon(Icons.AutoMirrored.Filled.Notes, null) }, onClick = {
+                                        navController.navigateToAnotacoes(mediaItem)
+                                        showMoreMenu =
+                                            false
+                                    })
+                                    if ((platforms?.size ?: 0) > 1) {
+                                        DropdownMenuItem(text = {
+                                            Text(
+                                                stringResource(R.string.game_detail_change_platform),
+                                            )
+                                        }, leadingIcon = { Icon(Icons.Default.Devices, null) }, onClick = {
+                                            showConsoleMenu =
+                                                true
+                                            ; showMoreMenu = false
+                                        })
+                                    }
+                                    DropdownMenuItem(text = {
+                                        Text(
+                                            stringResource(
+                                                if (mediaItem.favorite) R.string.action_remove_favorite else R.string.action_favorite,
+                                            ),
+                                        )
+                                    }, leadingIcon = {
+                                        Icon(
+                                            if (mediaItem.favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                            null,
+                                        )
+                                    }, onClick = {
+                                        vm.toggleFavorite()
+                                        showMoreMenu =
+                                            false
+                                    })
+                                    HorizontalDivider()
+                                    DropdownMenuItem(text = {
+                                        Text(stringResource(R.string.game_detail_remove_game), color = MaterialTheme.colorScheme.error)
+                                    }, leadingIcon = {
+                                        Icon(
+                                            Icons.Default.Delete,
+                                            null,
+                                            tint = MaterialTheme.colorScheme.error,
+                                        )
+                                    }, onClick = {
+                                        showDelete =
                                             true
                                         ; showMoreMenu = false
                                     })
                                 }
-                                DropdownMenuItem(text = {
-                                    Text(if (mediaItem.favorite) "Remover dos favoritos" else "Favoritar")
-                                }, leadingIcon = {
-                                    Icon(
-                                        if (mediaItem.favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                        null,
-                                    )
-                                }, onClick = {
-                                    vm.toggleFavorite()
-                                    showMoreMenu =
-                                        false
-                                })
-                                HorizontalDivider()
-                                DropdownMenuItem(text = {
-                                    Text("Remover jogo", color = MaterialTheme.colorScheme.error)
-                                }, leadingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) }, onClick = {
-                                    showDelete =
-                                        true
-                                    ; showMoreMenu = false
-                                })
                             }
                         }
                     }
-                }
 
-                val contentPad = Modifier.padding(horizontal = 16.dp)
+                    val contentPad = Modifier.padding(horizontal = 16.dp)
 
-                // ── Sinopse ───────────────────────────────────────────────────
-                if (synopsis != null) {
-                    item {
-                        Column(contentPad) {
-                            GameSectionTitle("Sinopse")
-                            Spacer(Modifier.height(10.dp))
-                            Text(
-                                synopsis,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.78f),
-                                maxLines = if (synopsisExpanded) Int.MAX_VALUE else 4,
-                                overflow = TextOverflow.Ellipsis,
-                                lineHeight = 22.sp,
-                            )
-                            Spacer(Modifier.height(4.dp))
-                            Text(
-                                if (synopsisExpanded) "Ver menos" else "Ver mais",
-                                color = platformColor,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.clickable { synopsisExpanded = !synopsisExpanded },
-                            )
-                            Spacer(Modifier.height(24.dp))
-                        }
-                    }
-                }
-
-                // ── Informações ───────────────────────────────────────────────
-                if (genre != null || developer != null || publisher != null) {
-                    item {
-                        Column(contentPad) {
-                            GameSectionTitle("Informações")
-                            Spacer(Modifier.height(10.dp))
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                if (genre != null) GameInfoTile("Gênero", genre)
-                                if (developer != null) GameInfoTile("Desenvolvedor", developer)
-                                if (publisher != null) GameInfoTile("Publicadora", publisher)
-                            }
-                            Spacer(Modifier.height(24.dp))
-                        }
-                    }
-                }
-
-                // ── Disponível em ─────────────────────────────────────────────
-                if (!platformsDisplay.isNullOrEmpty()) {
-                    item {
-                        Column(contentPad) {
-                            GameSectionTitle("Disponível em")
-                            Spacer(Modifier.height(10.dp))
-                            androidx.compose.foundation.layout.FlowRow(
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp),
-                            ) {
-                                platformsDisplay.forEach { platform ->
-                                    val highlighted = platform == currentPlatformLabel
-                                    PlatformTag(platform, highlighted, platformColor)
-                                }
-                            }
-                            Spacer(Modifier.height(24.dp))
-                        }
-                    }
-                }
-
-                // ── DLCs e Expansões ────────────────────────────────────────────
-                if (!dlcs.isNullOrEmpty() || !expansions.isNullOrEmpty()) {
-                    item {
-                        Column(contentPad) {
-                            GameSectionTitle("DLCs e Expansões")
-                            Spacer(Modifier.height(12.dp))
-                            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                items((expansions.orEmpty() + dlcs.orEmpty())) { g ->
-                                    GameRelatedTile(
-                                        title = g["title"] as? String ?: "",
-                                        coverUrl = g["coverUrl"] as? String,
-                                    )
-                                }
-                            }
-                            Spacer(Modifier.height(24.dp))
-                        }
-                    }
-                }
-
-                // ── Datas ─────────────────────────────────────────────────────
-                item {
-                    Column(contentPad) {
-                        GameSectionTitle("Datas")
-                        Spacer(Modifier.height(10.dp))
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            GameInfoTile("Adicionado", dateFormatter.format(mediaItem.addedDate))
-                            if (mediaItem.historyCompletionDate != null) {
-                                GameInfoTile("Concluído (História)", dateFormatter.format(mediaItem.historyCompletionDate))
-                            }
-                            if (mediaItem.extrasCompletionDate != null) {
-                                GameInfoTile("Concluído (Extras)", dateFormatter.format(mediaItem.extrasCompletionDate))
-                            }
-                            if (mediaItem.platinumCompletionDate != null) {
-                                GameInfoTile("Concluído (100%)", dateFormatter.format(mediaItem.platinumCompletionDate))
-                            }
-                            if (releaseDateMs != null) {
-                                GameInfoTile("Lançamento", dateFormatter.format(java.util.Date(releaseDateMs)))
-                            }
-                        }
-                        Spacer(Modifier.height(24.dp))
-                    }
-                }
-
-                // ── Jogatinas ─────────────────────────────────────────────────
-                item {
-                    Column(contentPad) {
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            GameSectionTitle("Jogatinas")
-                            IconButton(
-                                onClick = {
-                                    editingPlaythrough = null
-                                    showAddPlaythrough = true
-                                },
-                                modifier = Modifier.size(32.dp),
-                            ) {
-                                Icon(
-                                    Icons.Default.Add,
-                                    contentDescription = "Nova jogatina",
-                                    tint = platformColor,
-                                    modifier = Modifier.size(20.dp),
-                                )
-                            }
-                        }
-                        Spacer(Modifier.height(8.dp))
-                        if (playthroughs.isEmpty()) {
-                            Text(
-                                "Nenhuma jogatina registrada ainda",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                            )
-                        } else {
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                playthroughs.forEach { pt ->
-                                    PlaythroughTile(
-                                        playthrough = pt,
-                                        dateFormatter = dateFormatter,
-                                        color = platformColor,
-                                        onClick = {
-                                            editingPlaythrough = pt
-                                            showAddPlaythrough = true
-                                        },
-                                        onDelete = { vm.deletePlaythrough(pt.id) },
-                                    )
-                                }
-                            }
-                        }
-                        Spacer(Modifier.height(24.dp))
-                    }
-                }
-
-                item {
-                    AnotacoesSection(mediaItem.personalNotes) { navController.navigateToAnotacoes(mediaItem) }
-                }
-
-                // ── Duração estimada (HLTB) ───────────────────────────────────
-                if (hltb != null && (hltb.mainStorySeconds != null || hltb.mainExtraSeconds != null || hltb.completionistSeconds != null)) {
-                    item {
-                        Column(contentPad) {
-                            Row(verticalAlignment = Alignment.Bottom) {
-                                GameSectionTitle("Duração estimada")
-                                Spacer(Modifier.width(6.dp))
-                                Text("HowLongToBeat", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
-                            }
-                            Spacer(Modifier.height(10.dp))
-                            HltbCard(hltb, platformColor)
-                            Spacer(Modifier.height(24.dp))
-                        }
-                    }
-                }
-
-                // ── Preços (IsThereAnyDeal) ────────────────────────────────────
-                if (vm.itadDeals.isNotEmpty()) {
-                    item {
-                        Column(contentPad) {
-                            Row(verticalAlignment = Alignment.Bottom) {
-                                GameSectionTitle("Preços")
-                                Spacer(Modifier.width(6.dp))
-                                Text("IsThereAnyDeal", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
-                            }
-                            Spacer(Modifier.height(10.dp))
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                vm.itadDeals.sortedBy { it.price }.forEach { deal -> PriceDealTile(deal, platformColor) }
-                            }
-                            if (vm.priceHistory.size >= 2) {
-                                Spacer(Modifier.height(16.dp))
+                    // ── Sinopse ───────────────────────────────────────────────────
+                    if (synopsis != null) {
+                        item {
+                            Column(contentPad) {
+                                GameSectionTitle(stringResource(R.string.label_synopsis))
+                                Spacer(Modifier.height(10.dp))
                                 Text(
-                                    "Menor preço ao longo do tempo",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                                )
-                                Spacer(Modifier.height(8.dp))
-                                val runningMinPoints =
-                                    remember(vm.priceHistory) {
-                                        var min = Double.MAX_VALUE
-                                        vm.priceHistory.map { p ->
-                                            min = minOf(min, p.price)
-                                            app.oribu.ui.components
-                                                .LinePoint(p.timestampMs.toFloat(), min.toFloat())
-                                        }
-                                    }
-                                app.oribu.ui.components.LineChartCanvas(
-                                    points = runningMinPoints,
-                                    lineColor = platformColor,
-                                    modifier = Modifier.fillMaxWidth().height(80.dp),
+                                    synopsis,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.78f),
+                                    maxLines = if (synopsisExpanded) Int.MAX_VALUE else 4,
+                                    overflow = TextOverflow.Ellipsis,
+                                    lineHeight = 22.sp,
                                 )
                                 Spacer(Modifier.height(4.dp))
-                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text(
-                                        dateFormatter.format(java.util.Date(vm.priceHistory.first().timestampMs)),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                                Text(
+                                    stringResource(if (synopsisExpanded) R.string.action_see_less else R.string.action_see_more),
+                                    color = platformColor,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.clickable { synopsisExpanded = !synopsisExpanded },
+                                )
+                                Spacer(Modifier.height(24.dp))
+                            }
+                        }
+                    }
+
+                    // ── Informações ───────────────────────────────────────────────
+                    if (genre != null || developer != null || publisher != null) {
+                        item {
+                            Column(contentPad) {
+                                GameSectionTitle(stringResource(R.string.label_information))
+                                Spacer(Modifier.height(10.dp))
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    if (genre != null) GameInfoTile(stringResource(R.string.label_genre), genre)
+                                    if (developer != null) GameInfoTile(stringResource(R.string.label_developer), developer)
+                                    if (publisher != null) GameInfoTile(stringResource(R.string.label_publisher), publisher)
+                                }
+                                Spacer(Modifier.height(24.dp))
+                            }
+                        }
+                    }
+
+                    // ── Disponível em ─────────────────────────────────────────────
+                    if (!platformsDisplay.isNullOrEmpty()) {
+                        item {
+                            Column(contentPad) {
+                                GameSectionTitle(stringResource(R.string.game_detail_available_on))
+                                Spacer(Modifier.height(10.dp))
+                                androidx.compose.foundation.layout.FlowRow(
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                                ) {
+                                    platformsDisplay.forEach { platform ->
+                                        val highlighted = platform == currentPlatformLabel
+                                        PlatformTag(platform, highlighted, platformColor)
+                                    }
+                                }
+                                Spacer(Modifier.height(24.dp))
+                            }
+                        }
+                    }
+
+                    // ── DLCs e Expansões ────────────────────────────────────────────
+                    if (!dlcs.isNullOrEmpty() || !expansions.isNullOrEmpty()) {
+                        item {
+                            Column(contentPad) {
+                                GameSectionTitle(stringResource(R.string.game_detail_dlcs_expansions))
+                                Spacer(Modifier.height(12.dp))
+                                LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    items((expansions.orEmpty() + dlcs.orEmpty())) { g ->
+                                        GameRelatedTile(
+                                            title = g["title"] as? String ?: "",
+                                            coverUrl = g["coverUrl"] as? String,
+                                        )
+                                    }
+                                }
+                                Spacer(Modifier.height(24.dp))
+                            }
+                        }
+                    }
+
+                    // ── Datas ─────────────────────────────────────────────────────
+                    item {
+                        Column(contentPad) {
+                            GameSectionTitle(stringResource(R.string.label_dates))
+                            Spacer(Modifier.height(10.dp))
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                GameInfoTile(stringResource(R.string.label_added), dateFormatter.format(mediaItem.addedDate))
+                                if (mediaItem.historyCompletionDate != null) {
+                                    GameInfoTile(
+                                        stringResource(R.string.game_detail_completed_story_date),
+                                        dateFormatter.format(mediaItem.historyCompletionDate),
                                     )
-                                    Text(
-                                        "R$ %.2f menor preço".format(runningMinPoints.last().y),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = platformColor,
+                                }
+                                if (mediaItem.extrasCompletionDate != null) {
+                                    GameInfoTile(
+                                        stringResource(R.string.game_detail_completed_extras_date),
+                                        dateFormatter.format(mediaItem.extrasCompletionDate),
+                                    )
+                                }
+                                if (mediaItem.platinumCompletionDate != null) {
+                                    GameInfoTile(
+                                        stringResource(R.string.game_detail_completed_100_date),
+                                        dateFormatter.format(mediaItem.platinumCompletionDate),
+                                    )
+                                }
+                                if (releaseDateMs != null) {
+                                    GameInfoTile(
+                                        stringResource(R.string.label_release_date),
+                                        dateFormatter.format(java.util.Date(releaseDateMs)),
                                     )
                                 }
                             }
                             Spacer(Modifier.height(24.dp))
                         }
                     }
-                }
 
-                // ── Conquistas / Troféus ──────────────────────────────────────
-                val showAchievements =
-                    mediaItem.achievementsUnlocked != null || mediaItem.totalAchievements != null || mediaItem.hasTrophies
-                if (showAchievements) {
+                    // ── Jogatinas ─────────────────────────────────────────────────
                     item {
                         Column(contentPad) {
-                            GameSectionTitle(if (console?.isPlayStation == true) "Troféus" else "Conquistas")
-                            Spacer(Modifier.height(10.dp))
-                            AchievementsCard(mediaItem, console?.isPlayStation == true, platformColor)
-                            if (!achievements.isNullOrEmpty()) {
-                                Spacer(Modifier.height(12.dp))
-                                val sorted =
-                                    remember(achievements) {
-                                        achievements.sortedByDescending { it["achieved"] as? Boolean == true }
-                                    }
-                                val visible = if (showAllAchievements) sorted else sorted.take(5)
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                GameSectionTitle(stringResource(R.string.game_detail_playthroughs))
+                                IconButton(
+                                    onClick = {
+                                        editingPlaythrough = null
+                                        showAddPlaythrough = true
+                                    },
+                                    modifier = Modifier.size(32.dp),
+                                ) {
+                                    Icon(
+                                        Icons.Default.Add,
+                                        contentDescription = stringResource(R.string.game_detail_new_playthrough),
+                                        tint = platformColor,
+                                        modifier = Modifier.size(20.dp),
+                                    )
+                                }
+                            }
+                            Spacer(Modifier.height(8.dp))
+                            if (playthroughs.isEmpty()) {
+                                Text(
+                                    stringResource(R.string.game_detail_no_playthroughs),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                )
+                            } else {
                                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    visible.forEach { a ->
-                                        AchievementRow(
-                                            name = a["name"] as? String ?: "",
-                                            description = a["description"] as? String,
-                                            iconUrl = a["icon"] as? String,
-                                            achieved = a["achieved"] as? Boolean == true,
+                                    playthroughs.forEach { pt ->
+                                        PlaythroughTile(
+                                            playthrough = pt,
+                                            dateFormatter = dateFormatter,
+                                            color = platformColor,
+                                            onClick = {
+                                                editingPlaythrough = pt
+                                                showAddPlaythrough = true
+                                            },
+                                            onDelete = { vm.deletePlaythrough(pt.id) },
+                                        )
+                                    }
+                                }
+                            }
+                            Spacer(Modifier.height(24.dp))
+                        }
+                    }
+
+                    item {
+                        AnotacoesSection(mediaItem.personalNotes) { navController.navigateToAnotacoes(mediaItem) }
+                    }
+
+                    // ── Duração estimada (HLTB) ───────────────────────────────────
+                    if (hltb != null &&
+                        (hltb.mainStorySeconds != null || hltb.mainExtraSeconds != null || hltb.completionistSeconds != null)
+                    ) {
+                        item {
+                            Column(contentPad) {
+                                Row(verticalAlignment = Alignment.Bottom) {
+                                    GameSectionTitle(stringResource(R.string.game_detail_estimated_duration))
+                                    Spacer(Modifier.width(6.dp))
+                                    Text("HowLongToBeat", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                                }
+                                Spacer(Modifier.height(10.dp))
+                                HltbCard(hltb, platformColor)
+                                Spacer(Modifier.height(24.dp))
+                            }
+                        }
+                    }
+
+                    // ── Preços (IsThereAnyDeal) ────────────────────────────────────
+                    if (vm.itadDeals.isNotEmpty()) {
+                        item {
+                            Column(contentPad) {
+                                Row(verticalAlignment = Alignment.Bottom) {
+                                    GameSectionTitle(stringResource(R.string.label_prices))
+                                    Spacer(Modifier.width(6.dp))
+                                    Text("IsThereAnyDeal", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                                }
+                                Spacer(Modifier.height(10.dp))
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    vm.itadDeals.sortedBy { it.price }.forEach { deal -> PriceDealTile(deal, platformColor) }
+                                }
+                                if (vm.priceHistory.size >= 2) {
+                                    Spacer(Modifier.height(16.dp))
+                                    Text(
+                                        stringResource(R.string.game_detail_lowest_price_over_time),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                    )
+                                    Spacer(Modifier.height(8.dp))
+                                    val runningMinPoints =
+                                        remember(vm.priceHistory) {
+                                            var min = Double.MAX_VALUE
+                                            vm.priceHistory.map { p ->
+                                                min = minOf(min, p.price)
+                                                app.oribu.ui.components
+                                                    .LinePoint(p.timestampMs.toFloat(), min.toFloat())
+                                            }
+                                        }
+                                    app.oribu.ui.components.LineChartCanvas(
+                                        points = runningMinPoints,
+                                        lineColor = platformColor,
+                                        modifier = Modifier.fillMaxWidth().height(80.dp),
+                                    )
+                                    Spacer(Modifier.height(4.dp))
+                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                        Text(
+                                            dateFormatter.format(java.util.Date(vm.priceHistory.first().timestampMs)),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                                        )
+                                        Text(
+                                            stringResource(
+                                                R.string.game_detail_lowest_price,
+                                                "R$ %.2f".format(runningMinPoints.last().y),
+                                            ),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.SemiBold,
                                             color = platformColor,
                                         )
                                     }
                                 }
-                                if (sorted.size > 5) {
-                                    Spacer(Modifier.height(6.dp))
-                                    Text(
-                                        if (showAllAchievements) "Ver menos" else "Ver todas (${sorted.size})",
-                                        color = platformColor,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        modifier = Modifier.clickable { showAllAchievements = !showAllAchievements },
-                                    )
-                                }
+                                Spacer(Modifier.height(24.dp))
                             }
-                            Spacer(Modifier.height(24.dp))
                         }
                     }
-                }
 
-                // ── Recomendações ────────────────────────────────────────────────
-                if (!recommendations.isNullOrEmpty()) {
-                    item {
-                        Column(contentPad) {
-                            GameSectionTitle("Recomendações")
-                            Spacer(Modifier.height(12.dp))
-                            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                items(recommendations) { g ->
-                                    GameRelatedTile(
-                                        title = g["title"] as? String ?: "",
-                                        coverUrl = g["coverUrl"] as? String,
-                                    )
+                    // ── Conquistas / Troféus ──────────────────────────────────────
+                    val showAchievements =
+                        mediaItem.achievementsUnlocked != null || mediaItem.totalAchievements != null || mediaItem.hasTrophies
+                    if (showAchievements) {
+                        item {
+                            Column(contentPad) {
+                                GameSectionTitle(
+                                    stringResource(
+                                        if (console?.isPlayStation ==
+                                            true
+                                        ) {
+                                            R.string.label_trophies
+                                        } else {
+                                            R.string.label_achievements
+                                        },
+                                    ),
+                                )
+                                Spacer(Modifier.height(10.dp))
+                                AchievementsCard(mediaItem, console?.isPlayStation == true, platformColor)
+                                if (!achievements.isNullOrEmpty()) {
+                                    Spacer(Modifier.height(12.dp))
+                                    val sorted =
+                                        remember(achievements) {
+                                            achievements.sortedByDescending { it["achieved"] as? Boolean == true }
+                                        }
+                                    val visible = if (showAllAchievements) sorted else sorted.take(5)
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        visible.forEach { a ->
+                                            AchievementRow(
+                                                name = a["name"] as? String ?: "",
+                                                description = a["description"] as? String,
+                                                iconUrl = a["icon"] as? String,
+                                                achieved = a["achieved"] as? Boolean == true,
+                                                color = platformColor,
+                                            )
+                                        }
+                                    }
+                                    if (sorted.size > 5) {
+                                        Spacer(Modifier.height(6.dp))
+                                        Text(
+                                            if (showAllAchievements) {
+                                                stringResource(R.string.action_see_less)
+                                            } else {
+                                                stringResource(R.string.game_detail_view_all_achievements, sorted.size)
+                                            },
+                                            color = platformColor,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            modifier = Modifier.clickable { showAllAchievements = !showAllAchievements },
+                                        )
+                                    }
                                 }
+                                Spacer(Modifier.height(24.dp))
                             }
-                            Spacer(Modifier.height(24.dp))
                         }
                     }
+
+                    // ── Recomendações ────────────────────────────────────────────────
+                    if (!recommendations.isNullOrEmpty()) {
+                        item {
+                            Column(contentPad) {
+                                GameSectionTitle(stringResource(R.string.label_recommendations))
+                                Spacer(Modifier.height(12.dp))
+                                LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    items(recommendations) { g ->
+                                        GameRelatedTile(
+                                            title = g["title"] as? String ?: "",
+                                            coverUrl = g["coverUrl"] as? String,
+                                        )
+                                    }
+                                }
+                                Spacer(Modifier.height(24.dp))
+                            }
+                        }
+                    }
+
+                    item { Spacer(Modifier.height(80.dp)) }
                 }
 
-                item { Spacer(Modifier.height(80.dp)) }
-            }
-
-            // Floating back button — circular, black-54 background
-            IconButton(
-                onClick = { navController.popBackStack() },
-                modifier = Modifier.statusBarsPadding().padding(4.dp),
-            ) {
-                Box(
-                    Modifier
-                        .size(34.dp)
-                        .background(Color.Black.copy(alpha = 0.54f), CircleShape),
-                    contentAlignment = Alignment.Center,
+                // Floating back button — circular, black-54 background
+                IconButton(
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier.statusBarsPadding().padding(4.dp),
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White, modifier = Modifier.size(18.dp))
+                    Box(
+                        Modifier
+                            .size(34.dp)
+                            .background(Color.Black.copy(alpha = 0.54f), CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White, modifier = Modifier.size(18.dp))
+                    }
                 }
             }
         }
@@ -844,9 +897,10 @@ fun GameDetailScreen(
 
     // ── Console selection sheet ────────────────────────────────────────────────
     if (showConsoleMenu) {
-        // PC e Steam são a mesma plataforma para fins de biblioteca (sem suporte a Epic
-        // Games ou outras lojas separadas) — apresentadas como uma única opção "PC",
-        // que usa o console STEAM internamente para manter o rastreio de conquistas.
+        // PC and Steam are the same platform for library purposes (no support for Epic
+        // Games or other separate stores) — presented as a single "PC" option, which
+        // uses the STEAM console internally to keep achievement tracking working.
+        val othersLabel = stringResource(R.string.label_others)
         val groups =
             listOf(
                 "PC" to listOf(GameConsole.STEAM),
@@ -875,11 +929,11 @@ fun GameDetailScreen(
                         GameConsole.DS,
                         GameConsole.GBA,
                     ),
-                "Outros" to listOf(GameConsole.MOBILE, GameConsole.OUTRO),
+                othersLabel to listOf(GameConsole.MOBILE, GameConsole.OUTRO),
             )
         ModalBottomSheet(onDismissRequest = { showConsoleMenu = false }) {
             Text(
-                "Alterar plataforma",
+                stringResource(R.string.game_detail_change_platform),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
@@ -937,16 +991,18 @@ fun GameDetailScreen(
     if (showDelete) {
         AlertDialog(
             onDismissRequest = { showDelete = false },
-            title = { Text("Remover jogo") },
-            text = { Text("Remover \"${mediaItem.title}\" da biblioteca?") },
+            title = { Text(stringResource(R.string.game_detail_remove_game)) },
+            text = { Text(stringResource(R.string.game_detail_remove_confirm, mediaItem.title)) },
             confirmButton = {
                 Button(onClick = {
                     vm.delete {
                         navController.popBackStack()
                     }
-                }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) { Text("Remover") }
+                }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) {
+                    Text(stringResource(R.string.action_remove))
+                }
             },
-            dismissButton = { TextButton(onClick = { showDelete = false }) { Text("Cancelar") } },
+            dismissButton = { TextButton(onClick = { showDelete = false }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
 }
@@ -1064,13 +1120,21 @@ private fun PlaythroughTile(
                         Icon(Icons.Default.MoreHoriz, contentDescription = null, modifier = Modifier.size(18.dp))
                     }
                     DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-                        DropdownMenuItem(text = { Text("Editar") }, leadingIcon = { Icon(Icons.Default.Edit, null) }, onClick = {
-                            showMenu =
-                                false
-                            ; onClick()
-                        })
                         DropdownMenuItem(
-                            text = { Text("Excluir jogatina", color = MaterialTheme.colorScheme.error) },
+                            text = { Text(stringResource(R.string.action_edit)) },
+                            leadingIcon = { Icon(Icons.Default.Edit, null) },
+                            onClick = {
+                                showMenu = false
+                                onClick()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    stringResource(R.string.game_detail_delete_playthrough),
+                                    color = MaterialTheme.colorScheme.error,
+                                )
+                            },
                             leadingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) },
                             onClick = {
                                 showMenu = false
@@ -1102,7 +1166,7 @@ private fun PlaythroughTile(
                             playthrough.endDate?.let { dateFormatter.format(it) },
                         ).joinToString(" → ")
                     Text(
-                        range.ifEmpty { "Não iniciada" },
+                        range.ifEmpty { stringResource(R.string.game_detail_playthrough_not_started) },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     )
@@ -1164,7 +1228,7 @@ private fun AddPlaythroughDialog(
     onDismiss: () -> Unit,
     onSave: (GamePlaythrough) -> Unit,
 ) {
-    val fmt = remember { SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")) }
+    val fmt = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
     var title by remember { mutableStateOf(initial?.title ?: "") }
     var startStr by remember { mutableStateOf(initial?.startDate?.let { fmt.format(it) } ?: "") }
     var endStr by remember { mutableStateOf(initial?.endDate?.let { fmt.format(it) } ?: "") }
@@ -1174,18 +1238,27 @@ private fun AddPlaythroughDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (initial == null) "Nova jogatina" else "Editar jogatina") },
+        title = {
+            Text(
+                stringResource(
+                    if (initial == null) R.string.game_detail_playthrough_new_title else R.string.game_detail_playthrough_edit_title,
+                ),
+            )
+        },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    placeholder = { Text("Ex.: Primeira zerada, Speedrun...") },
+                    placeholder = { Text(stringResource(R.string.game_detail_playthrough_title_placeholder)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Column {
-                    Text("Progresso: ${progress.toInt()}%", style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        stringResource(R.string.game_detail_playthrough_progress, progress.toInt()),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
                     Slider(
                         value = progress,
                         onValueChange = { progress = it },
@@ -1198,14 +1271,14 @@ private fun AddPlaythroughDialog(
                     OutlinedTextField(
                         value = startStr,
                         onValueChange = { startStr = it },
-                        label = { Text("Início (dd/MM/aaaa)") },
+                        label = { Text(stringResource(R.string.game_detail_playthrough_start_label)) },
                         singleLine = true,
                         modifier = Modifier.weight(1f),
                     )
                     OutlinedTextField(
                         value = endStr,
                         onValueChange = { endStr = it },
-                        label = { Text("Fim (dd/MM/aaaa)") },
+                        label = { Text(stringResource(R.string.game_detail_playthrough_end_label)) },
                         singleLine = true,
                         modifier = Modifier.weight(1f),
                     )
@@ -1213,14 +1286,14 @@ private fun AddPlaythroughDialog(
                 OutlinedTextField(
                     value = hoursStr,
                     onValueChange = { hoursStr = it.filter(Char::isDigit) },
-                    label = { Text("Horas jogadas") },
+                    label = { Text(stringResource(R.string.game_detail_playthrough_hours_label)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 OutlinedTextField(
                     value = notes,
                     onValueChange = { notes = it },
-                    placeholder = { Text("Notas (opcional)") },
+                    placeholder = { Text(stringResource(R.string.label_notes_optional)) },
                     minLines = 2,
                     maxLines = 4,
                     modifier = Modifier.fillMaxWidth(),
@@ -1243,9 +1316,9 @@ private fun AddPlaythroughDialog(
                         ),
                     )
                 },
-            ) { Text("Salvar") }
+            ) { Text(stringResource(R.string.action_save)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }
 
@@ -1380,7 +1453,7 @@ private fun AchievementsCard(
             if (pct != null) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(
-                        if (isPS) "Troféus desbloqueados" else "Conquistas desbloqueadas",
+                        stringResource(if (isPS) R.string.game_detail_trophies_unlocked else R.string.game_detail_achievements_unlocked),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
                     )
@@ -1395,7 +1468,7 @@ private fun AchievementsCard(
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    "${(pct * 100).toInt()}% concluído",
+                    stringResource(R.string.game_detail_percent_completed, (pct * 100).toInt()),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
                 )
@@ -1403,9 +1476,15 @@ private fun AchievementsCard(
             }
             if (item.hasTrophies) {
                 Row {
-                    if (item.platinumTrophy == true) TrophyBadge("✓", "Platina", Color(0xFF90A4AE))
-                    if (item.goldTrophies != null) TrophyBadge("${item.goldTrophies}", "Ouro", Color(0xFFFFD700))
-                    if (item.silverTrophies != null) TrophyBadge("${item.silverTrophies}", "Prata", Color(0xFFB0BEC5))
+                    if (item.platinumTrophy == true) {
+                        TrophyBadge("✓", stringResource(R.string.game_detail_trophy_platinum), Color(0xFF90A4AE))
+                    }
+                    if (item.goldTrophies != null) {
+                        TrophyBadge("${item.goldTrophies}", stringResource(R.string.game_detail_trophy_gold), Color(0xFFFFD700))
+                    }
+                    if (item.silverTrophies != null) {
+                        TrophyBadge("${item.silverTrophies}", stringResource(R.string.game_detail_trophy_silver), Color(0xFFB0BEC5))
+                    }
                     if (item.bronzeTrophies != null) TrophyBadge("${item.bronzeTrophies}", "Bronze", Color(0xFFCD7F32))
                 }
             }
@@ -1419,7 +1498,7 @@ private fun AchievementsCard(
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        if (isPS) "Nenhum troféu registrado ainda." else "Nenhuma conquista registrada ainda.",
+                        stringResource(if (isPS) R.string.game_detail_no_trophies else R.string.game_detail_no_achievements),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
                     )

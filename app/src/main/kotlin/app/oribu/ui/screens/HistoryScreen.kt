@@ -16,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,6 +25,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.data.db.DB
 import app.oribu.model.MediaItem
 import app.oribu.model.MediaStatus
@@ -48,22 +50,6 @@ private val concludedStatuses =
         MediaStatus.HISTORY,
     )
 
-private val months =
-    listOf(
-        "Janeiro",
-        "Fevereiro",
-        "Março",
-        "Abril",
-        "Maio",
-        "Junho",
-        "Julho",
-        "Agosto",
-        "Setembro",
-        "Outubro",
-        "Novembro",
-        "Dezembro",
-    )
-
 class HistoryViewModel : ViewModel() {
     val concluded =
         DB.repo
@@ -83,6 +69,21 @@ fun HistoryScreen(
 ) {
     val concluded by vm.concluded.collectAsStateWithLifecycle()
 
+    val months =
+        listOf(
+            stringResource(R.string.month_january),
+            stringResource(R.string.month_february),
+            stringResource(R.string.month_march),
+            stringResource(R.string.month_april),
+            stringResource(R.string.month_may),
+            stringResource(R.string.month_june),
+            stringResource(R.string.month_july),
+            stringResource(R.string.month_august),
+            stringResource(R.string.month_september),
+            stringResource(R.string.month_october),
+            stringResource(R.string.month_november),
+            stringResource(R.string.month_december),
+        )
     val currentYear = remember { Calendar.getInstance().get(Calendar.YEAR) }
     var selectedYear by remember { mutableIntStateOf(currentYear) }
     var showWrapped by remember { mutableStateOf(false) }
@@ -120,12 +121,12 @@ fun HistoryScreen(
             map
         }
 
-    val dateFmt = remember { SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")) }
+    val dateFmt = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Histórico") },
+                title = { Text(stringResource(R.string.history_title)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
@@ -161,12 +162,12 @@ fun HistoryScreen(
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            "Nenhum título concluído em $selectedYear",
+                            stringResource(R.string.history_empty_title, selectedYear),
                             style = MaterialTheme.typography.titleMedium,
                         )
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            "Títulos concluídos aparecem aqui",
+                            stringResource(R.string.history_empty_subtitle),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                         )
@@ -201,9 +202,9 @@ fun HistoryScreen(
     if (showWrapped) {
         AlertDialog(
             onDismissRequest = { showWrapped = false },
-            title = { Text("Resumo do ano") },
-            text = { Text("O resumo visual do seu ano estará disponível em breve.") },
-            confirmButton = { TextButton(onClick = { showWrapped = false }) { Text("Ok") } },
+            title = { Text(stringResource(R.string.history_wrapped_title)) },
+            text = { Text(stringResource(R.string.history_wrapped_message)) },
+            confirmButton = { TextButton(onClick = { showWrapped = false }) { Text(stringResource(R.string.action_ok)) } },
         )
     }
 }
@@ -243,7 +244,7 @@ private fun HistoryItemRow(
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(item.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
             Text(
-                "${item.type.labelPt} · ${item.status.label}",
+                "${item.type.label} · ${item.status.label}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
             )

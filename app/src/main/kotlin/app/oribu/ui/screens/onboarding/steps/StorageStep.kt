@@ -15,7 +15,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import app.oribu.R
 import app.oribu.data.StoragePreferences
 
 @Composable
@@ -36,13 +38,12 @@ fun StorageStep() {
 
     Column(Modifier.fillMaxWidth()) {
         Text(
-            "Escolha uma pasta no seu dispositivo para uso futuro em backups. Pode ser " +
-                "configurada ou trocada depois em Configurações — esse passo é opcional.",
+            stringResource(R.string.onboarding_storage_description),
             style = MaterialTheme.typography.bodyMedium,
         )
         Spacer(Modifier.height(16.dp))
         Button(modifier = Modifier.fillMaxWidth(), onClick = { pickFolder.launch(null) }) {
-            Text(if (folderUri != null) "Trocar pasta" else "Selecionar pasta")
+            Text(stringResource(if (folderUri != null) R.string.onboarding_change_folder else R.string.onboarding_select_folder))
         }
         if (folderUri != null) {
             Spacer(Modifier.height(8.dp))

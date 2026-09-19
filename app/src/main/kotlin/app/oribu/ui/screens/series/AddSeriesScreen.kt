@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -18,6 +19,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.data.db.DB
 import app.oribu.model.ApiSearchResult
 import app.oribu.model.MediaItem
@@ -48,7 +50,7 @@ class AddSeriesViewModel : ViewModel() {
             loading = true
             _searchError.value = null
             if (!ApiServices.tmdbAvailable) {
-                _searchError.value = "TMDB não configurado — adicione tmdb_bearer_token ao secrets.json"
+                _searchError.value = "TMDB not configured — add tmdb_bearer_token to secrets.json"
                 _results.value = emptyList()
                 loading = false
                 return@launch
@@ -109,7 +111,7 @@ fun AddSeriesScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Adicionar Série") },
+                title = { Text(stringResource(R.string.series_add_button)) },
                 navigationIcon = { IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.Default.ArrowBack, null) } },
             )
         },
@@ -118,7 +120,7 @@ fun AddSeriesScreen(
             OutlinedTextField(
                 value = query,
                 onValueChange = { query = it },
-                label = { Text("Buscar série...") },
+                label = { Text(stringResource(R.string.add_series_search_placeholder)) },
                 trailingIcon = {
                     if (query.isNotEmpty()) {
                         IconButton(onClick = {
@@ -187,11 +189,12 @@ fun AddSeriesScreen(
     }
 }
 
+@Composable
 private fun seriesStatusInfo(status: MediaStatus): Pair<ImageVector, String> =
     when (status) {
-        MediaStatus.WATCHING -> Icons.Default.PlayArrow to "Acompanhando os episódios"
-        MediaStatus.REWATCHING -> Icons.Default.Replay to "Vendo tudo de novo"
-        MediaStatus.QUEUED -> Icons.Default.Bookmark to "Quer começar a assistir"
-        MediaStatus.HISTORY -> Icons.Default.History to "Já assistiu, sem acompanhar mais"
+        MediaStatus.WATCHING -> Icons.Default.PlayArrow to stringResource(R.string.add_series_status_watching_subtitle)
+        MediaStatus.REWATCHING -> Icons.Default.Replay to stringResource(R.string.add_series_status_rewatching_subtitle)
+        MediaStatus.QUEUED -> Icons.Default.Bookmark to stringResource(R.string.add_series_status_queued_subtitle)
+        MediaStatus.HISTORY -> Icons.Default.History to stringResource(R.string.add_series_status_history_subtitle)
         else -> Icons.Default.Bookmark to ""
     }

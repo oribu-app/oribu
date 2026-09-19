@@ -27,9 +27,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import app.oribu.R
 
 private fun notificationsGranted(context: Context) =
     ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
@@ -54,16 +56,16 @@ fun PermissionsStep() {
         }
 
     Column(Modifier.fillMaxWidth()) {
-        Text("Opcional, mas recomendado", style = MaterialTheme.typography.titleLarge)
+        Text(stringResource(R.string.onboarding_permissions_title), style = MaterialTheme.typography.titleLarge)
         PermissionItem(
-            title = "Notificações",
-            subtitle = "Avisos de novidades e atualizações da biblioteca",
+            title = stringResource(R.string.settings_notifications_title),
+            subtitle = stringResource(R.string.onboarding_notif_subtitle),
             granted = notifGranted,
             onButtonClick = { notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS) },
         )
         PermissionItem(
-            title = "Ignorar otimização de bateria",
-            subtitle = "Evita que o sistema atrase a atualização diária em segundo plano",
+            title = stringResource(R.string.onboarding_battery_title),
+            subtitle = stringResource(R.string.onboarding_battery_subtitle),
             granted = batteryIgnoredState,
             onButtonClick = {
                 context.startActivity(
@@ -91,7 +93,7 @@ private fun PermissionItem(
                 if (granted) {
                     Icon(Icons.Default.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                 } else {
-                    Text("Conceder")
+                    Text(stringResource(R.string.onboarding_grant))
                 }
             }
         },

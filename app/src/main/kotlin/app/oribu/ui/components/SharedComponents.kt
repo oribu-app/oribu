@@ -57,6 +57,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -68,6 +69,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.model.MediaStatus
 import app.oribu.ui.navigation.Routes
 import coil.compose.AsyncImage
@@ -241,7 +243,7 @@ fun AppOverflowMenu(
 
     OverflowMenu(expanded = expanded, onDismissRequest = onDismissRequest) {
         OverflowMenuItem(
-            text = "Configurações",
+            text = stringResource(R.string.settings_title),
             icon = Icons.Outlined.Settings,
             onClick = {
                 onDismissRequest()
@@ -249,7 +251,7 @@ fun AppOverflowMenu(
             },
         )
         OverflowMenuItem(
-            text = "Status",
+            text = stringResource(R.string.label_status),
             icon = Icons.Outlined.QueryStats,
             onClick = {
                 onDismissRequest()
@@ -257,7 +259,7 @@ fun AppOverflowMenu(
             },
         )
         OverflowMenuItem(
-            text = "Histórico",
+            text = stringResource(R.string.history_title),
             icon = Icons.Outlined.History,
             onClick = {
                 onDismissRequest()
@@ -265,7 +267,7 @@ fun AppOverflowMenu(
             },
         )
         OverflowMenuItem(
-            text = "Sobre",
+            text = stringResource(R.string.about_title),
             subtitle = "v$versionName",
             icon = Icons.Outlined.Info,
             onClick = {
@@ -274,7 +276,7 @@ fun AppOverflowMenu(
             },
         )
         OverflowMenuItem(
-            text = "Ajuda",
+            text = stringResource(R.string.common_help),
             icon = Icons.Outlined.Help,
             onClick = {
                 onDismissRequest()
@@ -322,21 +324,23 @@ fun StarRatingDisplay(rating: Int) {
 // ── Avaliação por estrelas com meia-estrela (0 a 5, passo 0.5) ──────────────
 // Usado pela avaliação de Livros: cada metade de estrela tem uma frase curta
 // associada (ver bookRatingPhrase), então o rating precisa granularidade de 0.5.
-private val halfStarPhrases =
+private val halfStarPhraseRes =
     mapOf(
-        0.5 to "Péssimo",
-        1.0 to "Muito ruim",
-        1.5 to "Ruim",
-        2.0 to "Fraco",
-        2.5 to "Mediano",
-        3.0 to "Ok",
-        3.5 to "Bom",
-        4.0 to "Muito bom",
-        4.5 to "Excelente",
-        5.0 to "Obra-prima",
+        0.5 to R.string.rating_awful,
+        1.0 to R.string.rating_very_bad,
+        1.5 to R.string.rating_bad,
+        2.0 to R.string.rating_weak,
+        2.5 to R.string.rating_average,
+        3.0 to R.string.rating_ok,
+        3.5 to R.string.rating_good,
+        4.0 to R.string.rating_very_good,
+        4.5 to R.string.rating_excellent,
+        5.0 to R.string.rating_masterpiece,
     )
 
-fun bookRatingPhrase(rating: Double?): String? = rating?.let { r -> halfStarPhrases[(kotlin.math.round(r * 2) / 2.0)] }
+@Composable
+fun bookRatingPhrase(rating: Double?): String? =
+    rating?.let { r -> halfStarPhraseRes[(kotlin.math.round(r * 2) / 2.0)]?.let { stringResource(it) } }
 
 @Composable
 fun HalfStarRatingPicker(
@@ -427,9 +431,9 @@ fun AnotacoesSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("Anotações", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.label_notes), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
             IconButton(onClick = onEditClick, modifier = Modifier.size(28.dp)) {
-                Icon(Icons.Default.Edit, contentDescription = "Editar anotação", modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.component_edit_note), modifier = Modifier.size(16.dp))
             }
         }
         Spacer(Modifier.height(4.dp))
@@ -567,7 +571,7 @@ fun MediaGridCard(
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        "Na biblioteca",
+                        stringResource(R.string.search_in_library),
                         color = Color.White,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -585,7 +589,12 @@ fun MediaGridCard(
                     contentAlignment = Alignment.Center,
                 ) {
                     IconButton(onClick = onAddClick, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Default.Add, contentDescription = "Add", tint = Color.White, modifier = Modifier.size(20.dp))
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = stringResource(R.string.action_add),
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp),
+                        )
                     }
                 }
             }

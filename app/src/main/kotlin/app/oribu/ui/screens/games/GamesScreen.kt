@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -27,6 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.data.PlatformPreferences
 import app.oribu.data.db.DB
 import app.oribu.model.GameConsole
@@ -140,14 +142,21 @@ fun GamesScreen(
             ).sortedBy { it.releaseDate }
         }
 
-    val tabs = listOf("Jogando", "Zerado", "Platinado", "Backlog", "Em Breve")
+    val tabs =
+        listOf(
+            stringResource(R.string.games_tab_playing),
+            stringResource(R.string.games_tab_finished),
+            stringResource(R.string.games_tab_platinum),
+            stringResource(R.string.games_tab_backlog),
+            stringResource(R.string.games_tab_upcoming),
+        )
     var selectedTab by remember { mutableIntStateOf(0) }
 
     Scaffold(
         topBar = {
             Column {
                 TopAppBar(
-                    title = { Text("Jogos") },
+                    title = { Text(stringResource(R.string.games_title)) },
                     navigationIcon = {
                         IconButton(onClick = {
                             navController.navigate(Routes.HOME) { launchSingleTop = true }
@@ -193,18 +202,19 @@ fun GamesScreen(
                 containerColor = ColorJogo,
                 contentColor = Color.White,
                 icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                text = { Text("Adicionar jogo") },
+                text = { Text(stringResource(R.string.games_add_button)) },
             )
         },
     ) { padding ->
+        val addGameLabel = stringResource(R.string.games_add_button)
         Box(Modifier.padding(padding).fillMaxSize()) {
             when (selectedTab) {
                 0 -> {
                     GameGrid(
                         items = playing,
-                        emptyTitle = "Nenhum jogo em andamento",
-                        emptySubtitle = "Adicione um jogo para começar",
-                        emptyButton = "Adicionar jogo",
+                        emptyTitle = stringResource(R.string.games_empty_playing_title),
+                        emptySubtitle = stringResource(R.string.games_empty_playing_subtitle),
+                        emptyButton = addGameLabel,
                         onEmpty = { navController.navigate(Routes.GAMES_ADD) },
                         onTap = { navigateToDetail(navController, it) },
                         showCheckBtn = true,
@@ -215,9 +225,9 @@ fun GamesScreen(
                 1 -> {
                     GameGrid(
                         items = finished,
-                        emptyTitle = "Nenhum jogo zerado",
-                        emptySubtitle = "Jogos que você terminou aparecerão aqui",
-                        emptyButton = "Adicionar jogo",
+                        emptyTitle = stringResource(R.string.games_empty_finished_title),
+                        emptySubtitle = stringResource(R.string.games_empty_finished_subtitle),
+                        emptyButton = addGameLabel,
                         onEmpty = { navController.navigate(Routes.GAMES_ADD) },
                         onTap = { navigateToDetail(navController, it) },
                     )
@@ -226,9 +236,9 @@ fun GamesScreen(
                 2 -> {
                     GameGrid(
                         items = platinum,
-                        emptyTitle = "Nenhum jogo platinado",
-                        emptySubtitle = "Jogos com conquistas completas aparecerão aqui",
-                        emptyButton = "Adicionar jogo",
+                        emptyTitle = stringResource(R.string.games_empty_platinum_title),
+                        emptySubtitle = stringResource(R.string.games_empty_platinum_subtitle),
+                        emptyButton = addGameLabel,
                         onEmpty = { navController.navigate(Routes.GAMES_ADD) },
                         onTap = { navigateToDetail(navController, it) },
                     )
@@ -237,9 +247,9 @@ fun GamesScreen(
                 3 -> {
                     GameGrid(
                         items = backlog,
-                        emptyTitle = "Backlog vazio",
-                        emptySubtitle = "Jogos que você quer jogar aparecerão aqui",
-                        emptyButton = "Adicionar jogo",
+                        emptyTitle = stringResource(R.string.games_empty_backlog_title),
+                        emptySubtitle = stringResource(R.string.games_empty_backlog_subtitle),
+                        emptyButton = addGameLabel,
                         onEmpty = { navController.navigate(Routes.GAMES_ADD) },
                         onTap = { navigateToDetail(navController, it) },
                     )
@@ -263,13 +273,13 @@ fun GamesScreen(
         val isPc = item.console == GameConsole.PC
         AlertDialog(
             onDismissRequest = { finishDialog = null },
-            title = { Text("Jogo finalizado!") },
+            title = { Text(stringResource(R.string.games_finish_dialog_title)) },
             text = {
                 Text(
                     when {
-                        isSteam || isPc -> "Você vai buscar todas as conquistas ou mover para Zerado?"
-                        isPs -> "Você vai buscar a platina ou mover para Zerado?"
-                        else -> "Deseja mover este jogo para Zerado?"
+                        isSteam || isPc -> stringResource(R.string.games_finish_dialog_message_achievements)
+                        isPs -> stringResource(R.string.games_finish_dialog_message_platinum)
+                        else -> stringResource(R.string.games_finish_dialog_message_generic)
                     },
                 )
             },
@@ -279,19 +289,19 @@ fun GamesScreen(
                         TextButton(onClick = {
                             vm.markFinished(item, MediaStatus.COMPLETED)
                             finishDialog = null
-                        }) { Text("Buscar conquistas") }
+                        }) { Text(stringResource(R.string.games_finish_action_achievements)) }
                     }
                     if (isPs) {
                         TextButton(onClick = {
                             vm.markFinished(item, MediaStatus.PLATINUM)
                             finishDialog = null
-                        }) { Text("Buscar platina") }
+                        }) { Text(stringResource(R.string.games_finish_action_platinum)) }
                     }
                     TextButton(onClick = {
                         vm.markFinished(item, MediaStatus.FINISHED)
                         finishDialog = null
-                    }) { Text("Mover para zerado") }
-                    TextButton(onClick = { finishDialog = null }) { Text("Cancelar") }
+                    }) { Text(stringResource(R.string.games_finish_action_move_finished)) }
+                    TextButton(onClick = { finishDialog = null }) { Text(stringResource(R.string.action_cancel)) }
                 }
             },
             dismissButton = null,
@@ -441,9 +451,9 @@ private fun UpcomingTab(
 ) {
     if (items.isEmpty()) {
         EmptyState(
-            title = "Nenhum lançamento pendente",
-            subtitle = "Jogos com data de lançamento futura aparecerão aqui",
-            buttonLabel = "Adicionar jogo",
+            title = stringResource(R.string.games_empty_upcoming_title),
+            subtitle = stringResource(R.string.games_empty_upcoming_subtitle),
+            buttonLabel = stringResource(R.string.games_add_button),
             onButton = onEmpty,
         )
         return
@@ -451,18 +461,18 @@ private fun UpcomingTab(
 
     val months =
         listOf(
-            "Janeiro",
-            "Fevereiro",
-            "Março",
-            "Abril",
-            "Maio",
-            "Junho",
-            "Julho",
-            "Agosto",
-            "Setembro",
-            "Outubro",
-            "Novembro",
-            "Dezembro",
+            stringResource(R.string.month_january),
+            stringResource(R.string.month_february),
+            stringResource(R.string.month_march),
+            stringResource(R.string.month_april),
+            stringResource(R.string.month_may),
+            stringResource(R.string.month_june),
+            stringResource(R.string.month_july),
+            stringResource(R.string.month_august),
+            stringResource(R.string.month_september),
+            stringResource(R.string.month_october),
+            stringResource(R.string.month_november),
+            stringResource(R.string.month_december),
         )
 
     data class MonthGroup(
@@ -553,15 +563,21 @@ private fun FiltersSheet(
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.padding(start = 20.dp, end = 20.dp, bottom = 32.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Filtros", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+                Text(
+                    stringResource(R.string.games_filters_title),
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                )
                 Spacer(Modifier.weight(1f))
                 if (status != null || console != null) {
-                    TextButton(onClick = onClear) { Text("Limpar") }
+                    TextButton(onClick = onClear) { Text(stringResource(R.string.action_clear)) }
                 }
             }
             Spacer(Modifier.height(12.dp))
 
-            Text("Plataforma", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold))
+            Text(
+                stringResource(R.string.label_platform),
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+            )
             Spacer(Modifier.height(8.dp))
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -583,7 +599,10 @@ private fun FiltersSheet(
             }
 
             Spacer(Modifier.height(16.dp))
-            Text("Status", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold))
+            Text(
+                stringResource(R.string.label_status),
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+            )
             Spacer(Modifier.height(8.dp))
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -609,7 +628,7 @@ private fun FiltersSheet(
                 onClick = { onApply(status, console) },
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("Aplicar filtros")
+                Text(stringResource(R.string.games_filters_apply))
             }
         }
     }

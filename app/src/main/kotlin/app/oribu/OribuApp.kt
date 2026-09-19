@@ -10,7 +10,9 @@ import app.oribu.debug.DebugSeeder
 import app.oribu.service.ApiServices
 import app.oribu.service.GameDatasetImporter
 import app.oribu.service.NotificationHelper
+import app.oribu.ui.locale.AppLocaleController
 import app.oribu.ui.theme.AppThemeController
+import app.oribu.ui.theme.CoverThemeController
 import app.oribu.worker.AppUpdateCheckWorker
 import app.oribu.worker.CacheUpdateWorker
 import kotlinx.coroutines.CoroutineScope
@@ -30,6 +32,8 @@ class OribuApp : Application() {
         StoragePreferences.init(this)
         ApiKeyPreferences.init(this)
         AppThemeController.init(this)
+        AppLocaleController.init(this)
+        CoverThemeController.init(this)
         appScope.launch {
             ApiServices.init(this@OribuApp)
             // Import GiantBomb dataset on first run (no-op if already done)

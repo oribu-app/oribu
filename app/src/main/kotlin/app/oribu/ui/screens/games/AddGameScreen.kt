@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -19,6 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.data.db.DB
 import app.oribu.model.ApiSearchResult
 import app.oribu.model.GameConsole
@@ -64,8 +66,8 @@ class AddGameViewModel : ViewModel() {
         onDone: () -> Unit,
     ) {
         viewModelScope.launch {
-            // "Aguardando Lançamento" não é uma opção escolhível — o jogo cai nela
-            // automaticamente quando o Backlog é selecionado mas ele ainda não saiu.
+            // "Waiting Release" isn't a selectable option — the game falls into it
+            // automatically when Backlog is picked but it hasn't come out yet.
             val finalStatus =
                 if (status == MediaStatus.QUEUED && result.releaseDate?.after(Date()) == true) {
                     MediaStatus.WAITING_RELEASE
@@ -107,7 +109,7 @@ fun AddGameScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Adicionar Jogo") },
+                title = { Text(stringResource(R.string.add_game_title)) },
                 navigationIcon = { IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.Default.ArrowBack, null) } },
             )
         },
@@ -116,7 +118,7 @@ fun AddGameScreen(
             OutlinedTextField(
                 value = query,
                 onValueChange = { query = it },
-                label = { Text("Buscar jogo...") },
+                label = { Text(stringResource(R.string.add_game_search_placeholder)) },
                 trailingIcon = {
                     if (query.isNotEmpty()) {
                         IconButton(onClick = {
@@ -166,7 +168,7 @@ fun AddGameScreen(
         val availableConsoles = consolesForPlatforms(result.platforms)
         ModalBottomSheet(onDismissRequest = { showConsoleSheet = null }) {
             Column(Modifier.padding(16.dp)) {
-                Text("Plataforma", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.label_platform), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
                 availableConsoles.forEach { console ->
                     ListItem(
@@ -222,15 +224,40 @@ fun AddGameScreen(
 
 private fun isUnreleased(result: ApiSearchResult): Boolean = result.releaseDate?.after(Date()) == true
 
+@Composable
 private fun gameStatusInfo(status: MediaStatus): Triple<ImageVector, String, String> =
     when (status) {
-        MediaStatus.PLAYING -> Triple(Icons.Default.PlayArrow, status.label, "Jogando no momento")
-        MediaStatus.REPLAYING -> Triple(Icons.Default.Replay, status.label, "Recomeçando do zero")
-        MediaStatus.QUEUED -> Triple(Icons.Default.Queue, "Backlog", "Guardado para jogar depois")
-        MediaStatus.FINISHED -> Triple(Icons.Default.MenuBook, status.label, "Terminou a história principal")
-        MediaStatus.COMPLETED -> Triple(Icons.Default.AutoAwesome, status.label, "Terminou tudo, incluindo extras")
-        MediaStatus.PLATINUM -> Triple(Icons.Default.EmojiEvents, status.label, "Conquistou todos os troféus")
-        else -> Triple(Icons.Default.Queue, status.label, "")
+        MediaStatus.PLAYING -> {
+            Triple(Icons.Default.PlayArrow, status.label, stringResource(R.string.add_game_status_playing_subtitle))
+        }
+
+        MediaStatus.REPLAYING -> {
+            Triple(Icons.Default.Replay, status.label, stringResource(R.string.add_game_status_replaying_subtitle))
+        }
+
+        MediaStatus.QUEUED -> {
+            Triple(
+                Icons.Default.Queue,
+                stringResource(R.string.games_tab_backlog),
+                stringResource(R.string.add_game_status_queued_subtitle),
+            )
+        }
+
+        MediaStatus.FINISHED -> {
+            Triple(Icons.Default.MenuBook, status.label, stringResource(R.string.add_game_status_finished_subtitle))
+        }
+
+        MediaStatus.COMPLETED -> {
+            Triple(Icons.Default.AutoAwesome, status.label, stringResource(R.string.add_game_status_completed_subtitle))
+        }
+
+        MediaStatus.PLATINUM -> {
+            Triple(Icons.Default.EmojiEvents, status.label, stringResource(R.string.add_game_status_platinum_subtitle))
+        }
+
+        else -> {
+            Triple(Icons.Default.Queue, status.label, "")
+        }
     }
 
 private fun consolesForPlatforms(platforms: List<String>?): List<GameConsole> {
@@ -239,8 +266,8 @@ private fun consolesForPlatforms(platforms: List<String>?): List<GameConsole> {
         platforms
             .mapNotNull { name ->
                 when (name) {
-                    // PC e Steam contam como a mesma plataforma — usamos STEAM para já habilitar
-                    // o rastreio de conquistas (sem suporte a lojas separadas como Epic Games).
+                    // PC and Steam count as the same platform — we use STEAM to already enable
+                    // achievement tracking (no support for separate stores like Epic Games).
                     "PC" -> GameConsole.STEAM
 
                     "Steam" -> GameConsole.STEAM

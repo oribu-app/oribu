@@ -17,6 +17,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -26,6 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.data.db.DB
 import app.oribu.data.db.entity.MovieListEntity
 import app.oribu.data.db.entity.MovieListItemEntity
@@ -113,7 +116,14 @@ fun FilmsScreen(
     val listItems by vm.listItems.collectAsStateWithLifecycle()
 
     val hoje = remember { Date() }
-    val tabs = listOf("Todos", "Assistidos", "Quero Assistir", "Listas", "Em Breve")
+    val tabs =
+        listOf(
+            stringResource(R.string.films_tab_all),
+            stringResource(R.string.films_tab_watched),
+            stringResource(R.string.films_tab_want_to_watch),
+            stringResource(R.string.films_tab_lists),
+            stringResource(R.string.label_coming_soon),
+        )
     var selectedTab by remember { mutableIntStateOf(0) }
 
     val allListedIds = remember(listItems) { listItems.values.flatten().toSet() }
@@ -162,7 +172,7 @@ fun FilmsScreen(
         topBar = {
             Column {
                 TopAppBar(
-                    title = { Text("Filmes") },
+                    title = { Text(stringResource(R.string.films_title)) },
                     navigationIcon = {
                         IconButton(onClick = {
                             navController.navigate(Routes.HOME) { launchSingleTop = true }
@@ -194,19 +204,20 @@ fun FilmsScreen(
                 containerColor = ColorFilme,
                 contentColor = Color.White,
                 icon = { Icon(Icons.Default.Add, null) },
-                text = { Text("Adicionar filme") },
+                text = { Text(stringResource(R.string.films_add_button)) },
             )
         },
     ) { padding ->
+        val addFilmLabel = stringResource(R.string.films_add_button)
         Box(Modifier.padding(padding).fillMaxSize()) {
             when (selectedTab) {
                 // ── Todos ──────────────────────────────────────────────────────
                 0 -> {
                     if (allItems.isEmpty()) {
                         EmptyState(
-                            "Nenhum filme na biblioteca",
-                            "Adicione um filme para começar",
-                            "Adicionar filme",
+                            stringResource(R.string.films_empty_all_title),
+                            stringResource(R.string.films_empty_all_subtitle),
+                            addFilmLabel,
                             onButton = { navController.navigate(Routes.FILMS_ADD) },
                         )
                     } else {
@@ -218,7 +229,7 @@ fun FilmsScreen(
                                 FilterChip(
                                     selected = favoritesOnly,
                                     onClick = { favoritesOnly = !favoritesOnly },
-                                    label = { Text("Favoritos") },
+                                    label = { Text(stringResource(R.string.label_favorites)) },
                                     leadingIcon = { Icon(Icons.Default.Favorite, null, modifier = Modifier.size(16.dp)) },
                                     colors =
                                         FilterChipDefaults.filterChipColors(
@@ -234,7 +245,10 @@ fun FilmsScreen(
                                 GenreFilterRow(availablePlatforms, selectedPlatform, ColorFilme) { selectedPlatform = it }
                             }
                             if (genreFiltered.isEmpty()) {
-                                EmptyState("Nenhum filme com esse filtro", "Tente outro filtro")
+                                EmptyState(
+                                    stringResource(R.string.films_empty_filtered_title),
+                                    stringResource(R.string.films_empty_filtered_subtitle),
+                                )
                             } else {
                                 FilmGrid(genreFiltered) { navigateToDetail(navController, it) }
                             }
@@ -246,9 +260,9 @@ fun FilmsScreen(
                 1 -> {
                     if (watched.isEmpty()) {
                         EmptyState(
-                            "Nenhum filme assistido",
-                            "Filmes que você assistiu aparecerão aqui",
-                            "Adicionar filme",
+                            stringResource(R.string.films_empty_watched_title),
+                            stringResource(R.string.films_empty_watched_subtitle),
+                            addFilmLabel,
                             onButton = { navController.navigate(Routes.FILMS_ADD) },
                         )
                     } else {
@@ -260,9 +274,9 @@ fun FilmsScreen(
                 2 -> {
                     if (queued.isEmpty()) {
                         EmptyState(
-                            "Nenhum filme na fila",
-                            "Filmes que você quer assistir aparecerão aqui",
-                            "Adicionar filme",
+                            stringResource(R.string.films_empty_queued_title),
+                            stringResource(R.string.films_empty_queued_subtitle),
+                            addFilmLabel,
                             onButton = { navController.navigate(Routes.FILMS_ADD) },
                         )
                     } else {
@@ -299,13 +313,13 @@ fun FilmsScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             Text(
-                                "Nenhuma lista ainda",
+                                stringResource(R.string.films_empty_lists_title),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
                             )
                             Spacer(Modifier.height(6.dp))
                             Text(
-                                "Crie listas para organizar filmes por tema ou ocasião",
+                                stringResource(R.string.films_empty_lists_subtitle),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                             )
@@ -318,7 +332,7 @@ fun FilmsScreen(
                             ) {
                                 Icon(Icons.Default.Add, null, modifier = Modifier.size(18.dp))
                                 Spacer(Modifier.width(8.dp))
-                                Text("Nova lista")
+                                Text(stringResource(R.string.films_new_list))
                             }
                         }
                     } else {
@@ -337,7 +351,7 @@ fun FilmsScreen(
                                 ) {
                                     Icon(Icons.Default.Add, null, modifier = Modifier.size(18.dp))
                                     Spacer(Modifier.width(8.dp))
-                                    Text("Nova lista")
+                                    Text(stringResource(R.string.films_new_list))
                                 }
                             }
 
@@ -362,9 +376,9 @@ fun FilmsScreen(
                 4 -> {
                     if (upcoming.isEmpty()) {
                         EmptyState(
-                            "Nenhum lançamento pendente",
-                            "Filmes com data futura aparecerão aqui",
-                            "Adicionar filme",
+                            stringResource(R.string.films_empty_upcoming_title),
+                            stringResource(R.string.films_empty_upcoming_subtitle),
+                            addFilmLabel,
                             onButton = { navController.navigate(Routes.FILMS_ADD) },
                         )
                     } else {
@@ -376,7 +390,7 @@ fun FilmsScreen(
                                     val cal = Calendar.getInstance().also { c -> c.time = it.releaseDate!! }
                                     Pair(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH))
                                 }.toSortedMap(compareBy({ it.first }, { it.second }))
-                        val monthFmt = remember { java.text.SimpleDateFormat("MMMM yyyy", Locale("pt", "BR")) }
+                        val monthFmt = remember { java.text.SimpleDateFormat("MMMM yyyy", Locale.getDefault()) }
 
                         LazyColumn(contentPadding = PaddingValues(bottom = 16.dp)) {
                             byMonth.forEach { (yearMonth, films) ->
@@ -400,7 +414,7 @@ fun FilmsScreen(
                             if (noDate.isNotEmpty()) {
                                 item(key = "header_nodate") {
                                     Text(
-                                        "Sem data definida",
+                                        stringResource(R.string.films_no_date_header),
                                         style = MaterialTheme.typography.labelLarge,
                                         color = ColorFilme,
                                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
@@ -452,8 +466,8 @@ fun FilmsScreen(
     deleteTarget?.let { target ->
         AlertDialog(
             onDismissRequest = { deleteTarget = null },
-            title = { Text("Excluir lista") },
-            text = { Text("Excluir \"${target.name}\"? Os filmes não serão removidos da biblioteca.") },
+            title = { Text(stringResource(R.string.films_delete_list_title)) },
+            text = { Text(stringResource(R.string.films_delete_list_confirm, target.name)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -462,10 +476,10 @@ fun FilmsScreen(
                     },
                     shape = ListButtonShape,
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                ) { Text("Excluir") }
+                ) { Text(stringResource(R.string.action_delete)) }
             },
             dismissButton = {
-                OutlinedButton(onClick = { deleteTarget = null }, shape = ListButtonShape) { Text("Cancelar") }
+                OutlinedButton(onClick = { deleteTarget = null }, shape = ListButtonShape) { Text(stringResource(R.string.action_cancel)) }
             },
         )
     }
@@ -483,20 +497,20 @@ private fun CreateListDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Nova lista") },
+        title = { Text(stringResource(R.string.films_new_list)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Nome *") },
+                    label = { Text(stringResource(R.string.films_list_name_required)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Descrição (opcional)") },
+                    label = { Text(stringResource(R.string.label_description_optional)) },
                     minLines = 2,
                     maxLines = 3,
                     modifier = Modifier.fillMaxWidth(),
@@ -509,10 +523,10 @@ private fun CreateListDialog(
                 enabled = name.isNotBlank(),
                 shape = ListButtonShape,
                 colors = ButtonDefaults.buttonColors(containerColor = ColorFilme),
-            ) { Text("Criar") }
+            ) { Text(stringResource(R.string.action_create)) }
         },
         dismissButton = {
-            OutlinedButton(onClick = onDismiss, shape = ListButtonShape) { Text("Cancelar") }
+            OutlinedButton(onClick = onDismiss, shape = ListButtonShape) { Text(stringResource(R.string.action_cancel)) }
         },
     )
 }
@@ -549,7 +563,7 @@ private fun ListCard(
                     )
                 }
                 Text(
-                    "$filmCount filme${if (filmCount != 1) "s" else ""}",
+                    pluralStringResource(R.plurals.movie_count, filmCount, filmCount),
                     style = MaterialTheme.typography.bodySmall,
                     color = ColorFilme.copy(alpha = 0.8f),
                     modifier = Modifier.padding(top = 4.dp),
@@ -598,7 +612,7 @@ private fun MovieListSheet(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Nome") },
+                label = { Text(stringResource(R.string.label_name)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -606,7 +620,7 @@ private fun MovieListSheet(
             OutlinedTextField(
                 value = description,
                 onValueChange = { description = it },
-                label = { Text("Descrição (opcional)") },
+                label = { Text(stringResource(R.string.label_description_optional)) },
                 minLines = 2,
                 maxLines = 3,
                 modifier = Modifier.fillMaxWidth(),
@@ -620,7 +634,7 @@ private fun MovieListSheet(
                     modifier = Modifier.fillMaxWidth(),
                     shape = ListButtonShape,
                     colors = ButtonDefaults.buttonColors(containerColor = ColorFilme),
-                ) { Text("Salvar alterações") }
+                ) { Text(stringResource(R.string.action_save_changes)) }
             }
 
             HorizontalDivider(Modifier.padding(vertical = 16.dp))
@@ -628,13 +642,13 @@ private fun MovieListSheet(
             // Films section
             if (allFilms.isEmpty()) {
                 Text(
-                    "Nenhum filme na biblioteca ainda.",
+                    stringResource(R.string.films_sheet_no_films),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                 )
             } else {
                 Text(
-                    "Filmes",
+                    stringResource(R.string.films_title),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(bottom = 8.dp),
@@ -668,7 +682,7 @@ private fun MovieListSheet(
             ) {
                 Icon(Icons.Outlined.Delete, null, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(6.dp))
-                Text("Excluir lista")
+                Text(stringResource(R.string.films_delete_list_title))
             }
         }
     }

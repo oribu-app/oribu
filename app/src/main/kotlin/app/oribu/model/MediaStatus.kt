@@ -7,32 +7,32 @@ enum class MediaStatus(
     val dbValue: String,
 ) {
     // Games
-    COMPLETED("Completado", "completado"),
-    FINISHED("Zerado", "finalizado"),
-    PLAYING("Jogando", "jogando"),
-    REPLAYING("Rejogando", "rejogando"),
-    PLATINUM("Platinado", "platinado"),
+    COMPLETED("Completed", "completado"),
+    FINISHED("Finished", "finalizado"),
+    PLAYING("Playing", "jogando"),
+    REPLAYING("Replaying", "rejogando"),
+    PLATINUM("Platinum", "platinado"),
 
     // Movies
-    WATCHED("Assistido", "assistido"),
-    WATCHING("Assistindo", "assistindo"),
-    REWATCHING("Reassistindo", "reassistindo"),
+    WATCHED("Watched", "assistido"),
+    WATCHING("Watching", "assistindo"),
+    REWATCHING("Rewatching", "reassistindo"),
 
     // Series
-    CONCLUDED("Concluída", "concluida"),
-    HISTORY("Histórico", "historico"),
-    WAITING_EPISODES("Aguardando Episódios", "aguardandoEpisodios"),
+    CONCLUDED("Concluded", "concluida"),
+    HISTORY("History", "historico"),
+    WAITING_EPISODES("Waiting Episodes", "aguardandoEpisodios"),
 
     // Manga / Books
-    READ("Lido", "lido"),
-    READING("Lendo", "lendo"),
-    REREADING("Relendo", "relendo"),
-    ON_HOLD("Pausado", "pausado"),
+    READ("Read", "lido"),
+    READING("Reading", "lendo"),
+    REREADING("Rereading", "relendo"),
+    ON_HOLD("On Hold", "pausado"),
 
     // All
-    QUEUED("Na Fila", "naFila"),
-    DROPPED("Abandonado", "abandonado"),
-    WAITING_RELEASE("Aguardando Lançamento", "aguardandoLancamento"),
+    QUEUED("Queued", "naFila"),
+    DROPPED("Dropped", "abandonado"),
+    WAITING_RELEASE("Waiting Release", "aguardandoLancamento"),
     ;
 
     val color: Color get() =

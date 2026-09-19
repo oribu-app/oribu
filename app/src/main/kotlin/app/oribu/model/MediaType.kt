@@ -1,6 +1,9 @@
 ﻿package app.oribu.model
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import app.oribu.ui.theme.AppThemeController
 
 enum class MediaType(
     val label: String,
@@ -14,27 +17,17 @@ enum class MediaType(
     BOOK("Book", "livro"),
     ;
 
-    val labelPt: String get() =
+    val labelPlural: String get() =
         when (this) {
-            GAME -> "Jogo"
-            MANGA -> "Mangá"
-            WEBTOON -> "Webtoon"
-            SERIES -> "Série"
-            MOVIE -> "Filme"
-            BOOK -> "Livro"
-        }
-
-    val labelPtPlural: String get() =
-        when (this) {
-            GAME -> "Jogos"
-            MANGA -> "Mangás"
+            GAME -> "Games"
+            MANGA -> "Manga"
             WEBTOON -> "Webtoons"
-            SERIES -> "Séries"
-            MOVIE -> "Filmes"
-            BOOK -> "Livros"
+            SERIES -> "Series"
+            MOVIE -> "Movies"
+            BOOK -> "Books"
         }
 
-    val color: Color get() =
+    private val fixedColor: Color get() =
         when (this) {
             GAME -> Color(0xFF7B1FA2)
             MANGA, WEBTOON -> Color(0xFFE91E63)
@@ -42,6 +35,10 @@ enum class MediaType(
             MOVIE -> Color(0xFFFF6F00)
             BOOK -> Color(0xFF388E3C)
         }
+
+    val color: Color
+        @Composable get() =
+            if (AppThemeController.useThemeAccentColor) MaterialTheme.colorScheme.primary else fixedColor
 
     companion object {
         fun fromDb(value: String) = entries.firstOrNull { it.dbValue == value } ?: GAME

@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -27,6 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.data.db.DB
 import app.oribu.data.db.entity.SeriesEpisodeEntity
 import app.oribu.model.MediaItem
@@ -67,7 +69,14 @@ fun SeriesScreen(
     val allEpisodes by vm.allEpisodes.collectAsStateWithLifecycle()
 
     val hoje = remember { Date() }
-    val tabs = listOf("Todos", "Assistindo", "Quero Assistir", "Histórico", "Em Breve")
+    val tabs =
+        listOf(
+            stringResource(R.string.films_tab_all),
+            stringResource(R.string.series_tab_watching),
+            stringResource(R.string.films_tab_want_to_watch),
+            stringResource(R.string.series_tab_history),
+            stringResource(R.string.label_coming_soon),
+        )
     var selectedTab by remember { mutableIntStateOf(0) }
     var showMenu by remember { mutableStateOf(false) }
 
@@ -123,7 +132,7 @@ fun SeriesScreen(
         topBar = {
             Column {
                 TopAppBar(
-                    title = { Text("Séries") },
+                    title = { Text(stringResource(R.string.series_title)) },
                     navigationIcon = {
                         IconButton(onClick = {
                             navController.navigate(Routes.HOME) { launchSingleTop = true }
@@ -155,22 +164,23 @@ fun SeriesScreen(
                 containerColor = ColorSerie,
                 contentColor = Color.White,
                 icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                text = { Text("Adicionar série") },
+                text = { Text(stringResource(R.string.series_add_button)) },
             )
         },
     ) { padding ->
+        val addSeriesLabel = stringResource(R.string.series_add_button)
         Box(Modifier.padding(padding).fillMaxSize()) {
             // ── Histórico — lista plana de episódios assistidos (estilo SeriesGuide) ──
             if (selectedTab == 3) {
                 if (watchedEpisodesFlat.isEmpty()) {
                     EmptyState(
-                        "Histórico vazio",
-                        "Episódios que você marcar como assistidos aparecerão aqui",
-                        "Adicionar série",
+                        stringResource(R.string.series_empty_history_title),
+                        stringResource(R.string.series_empty_history_subtitle),
+                        addSeriesLabel,
                         onButton = { navController.navigate(Routes.SERIES_ADD) },
                     )
                 } else {
-                    val dateFmt = remember { SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")) }
+                    val dateFmt = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
 
                     LazyColumn(
                         Modifier.fillMaxSize(),
@@ -192,12 +202,25 @@ fun SeriesScreen(
             } else if (filtered.isEmpty()) {
                 val (title, subtitle) =
                     when (selectedTab) {
-                        0 -> "Nenhuma série na biblioteca" to "Adicione uma série para começar"
-                        1 -> "Nenhuma série em andamento" to "Séries que você está assistindo aparecerão aqui"
-                        2 -> "Nenhuma série na fila" to "Séries que você quer assistir aparecerão aqui"
-                        else -> "Nenhum lançamento pendente" to "Séries aguardando estreia ou nova temporada aparecerão aqui"
+                        0 -> {
+                            stringResource(R.string.series_empty_all_title) to stringResource(R.string.series_empty_all_subtitle)
+                        }
+
+                        1 -> {
+                            stringResource(R.string.series_empty_watching_title) to
+                                stringResource(R.string.series_empty_watching_subtitle)
+                        }
+
+                        2 -> {
+                            stringResource(R.string.series_empty_queued_title) to stringResource(R.string.series_empty_queued_subtitle)
+                        }
+
+                        else -> {
+                            stringResource(R.string.series_empty_upcoming_title) to
+                                stringResource(R.string.series_empty_upcoming_subtitle)
+                        }
                     }
-                EmptyState(title, subtitle, "Adicionar série", onButton = { navController.navigate(Routes.SERIES_ADD) })
+                EmptyState(title, subtitle, addSeriesLabel, onButton = { navController.navigate(Routes.SERIES_ADD) })
             } else {
                 val genreFiltered =
                     if (selectedTab == 0) {
@@ -218,7 +241,7 @@ fun SeriesScreen(
                             FilterChip(
                                 selected = favoritesOnly,
                                 onClick = { favoritesOnly = !favoritesOnly },
-                                label = { Text("Favoritos") },
+                                label = { Text(stringResource(R.string.label_favorites)) },
                                 leadingIcon = { Icon(Icons.Default.Favorite, null, modifier = Modifier.size(16.dp)) },
                                 colors =
                                     FilterChipDefaults.filterChipColors(
@@ -235,7 +258,10 @@ fun SeriesScreen(
                         }
                     }
                     if (genreFiltered.isEmpty()) {
-                        EmptyState("Nenhuma série com esse filtro", "Tente outro filtro")
+                        EmptyState(
+                            stringResource(R.string.series_empty_filtered_title),
+                            stringResource(R.string.films_empty_filtered_subtitle),
+                        )
                     } else {
                         LazyVerticalGrid(
                             columns = GridCells.Fixed(3),

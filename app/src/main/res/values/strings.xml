@@ -1,4 +1,530 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Oribu</string>
+
+    <!-- Common -->
+    <string name="action_cancel">Cancel</string>
+    <string name="action_clear">Clear</string>
+    <string name="action_close">Close</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_save">Save</string>
+    <string name="action_remove">Remove</string>
+    <string name="action_refresh">Refresh</string>
+    <string name="action_favorite">Add to favorites</string>
+    <string name="action_remove_favorite">Remove from favorites</string>
+    <string name="action_see_more">See more</string>
+    <string name="action_see_less">See less</string>
+    <string name="label_platform">Platform</string>
+    <string name="label_status">Status</string>
+    <string name="label_others">Others</string>
+    <string name="label_favorites">Favorites</string>
+    <string name="label_coming_soon">Coming Soon</string>
+    <string name="label_name">Name</string>
+    <string name="label_description_optional">Description (optional)</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_create">Create</string>
+    <string name="action_add">Add</string>
+    <string name="action_save_changes">Save changes</string>
+    <plurals name="movie_count">
+        <item quantity="one">%d movie</item>
+        <item quantity="other">%d movies</item>
+    </plurals>
+    <string name="label_notes">Notes</string>
+    <string name="label_notes_optional">Notes (optional)</string>
+    <string name="label_synopsis">Synopsis</string>
+    <string name="label_information">Information</string>
+    <string name="label_genre">Genre</string>
+    <string name="label_developer">Developer</string>
+    <string name="label_publisher">Publisher</string>
+    <string name="label_dates">Dates</string>
+    <string name="label_added">Added</string>
+    <string name="label_release_date">Release date</string>
+    <string name="label_prices">Prices</string>
+    <string name="label_trophies">Trophies</string>
+    <string name="label_achievements">Achievements</string>
+    <string name="label_recommendations">Recommendations</string>
+
+    <!-- Months -->
+    <string name="month_january">January</string>
+    <string name="month_february">February</string>
+    <string name="month_march">March</string>
+    <string name="month_april">April</string>
+    <string name="month_may">May</string>
+    <string name="month_june">June</string>
+    <string name="month_july">July</string>
+    <string name="month_august">August</string>
+    <string name="month_september">September</string>
+    <string name="month_october">October</string>
+    <string name="month_november">November</string>
+    <string name="month_december">December</string>
+
+    <!-- Games -->
+    <string name="games_title">Games</string>
+    <string name="games_add_button">Add game</string>
+    <string name="games_tab_playing">Playing</string>
+    <string name="games_tab_finished">Finished</string>
+    <string name="games_tab_platinum">Platinum</string>
+    <string name="games_tab_backlog">Backlog</string>
+    <string name="games_tab_upcoming">Coming Soon</string>
+    <string name="games_empty_playing_title">No games in progress</string>
+    <string name="games_empty_playing_subtitle">Add a game to get started</string>
+    <string name="games_empty_finished_title">No finished games</string>
+    <string name="games_empty_finished_subtitle">Games you\'ve finished will show up here</string>
+    <string name="games_empty_platinum_title">No platinum games</string>
+    <string name="games_empty_platinum_subtitle">Games with completed trophies will show up here</string>
+    <string name="games_empty_backlog_title">Empty backlog</string>
+    <string name="games_empty_backlog_subtitle">Games you want to play will show up here</string>
+    <string name="games_empty_upcoming_title">No upcoming releases</string>
+    <string name="games_empty_upcoming_subtitle">Games with a future release date will show up here</string>
+    <string name="games_finish_dialog_title">Game finished!</string>
+    <string name="games_finish_dialog_message_achievements">Will you go for every achievement or move it to Finished?</string>
+    <string name="games_finish_dialog_message_platinum">Will you go for the platinum or move it to Finished?</string>
+    <string name="games_finish_dialog_message_generic">Move this game to Finished?</string>
+    <string name="games_finish_action_achievements">Go for achievements</string>
+    <string name="games_finish_action_platinum">Go for platinum</string>
+    <string name="games_finish_action_move_finished">Move to Finished</string>
+    <string name="games_filters_title">Filters</string>
+    <string name="games_filters_apply">Apply filters</string>
+    <string name="add_game_title">Add Game</string>
+    <string name="add_game_search_placeholder">Search game...</string>
+    <string name="add_game_status_playing_subtitle">Currently playing</string>
+    <string name="add_game_status_replaying_subtitle">Starting over from scratch</string>
+    <string name="add_game_status_queued_subtitle">Saved to play later</string>
+    <string name="add_game_status_finished_subtitle">Finished the main story</string>
+    <string name="add_game_status_completed_subtitle">Finished everything, including extras</string>
+    <string name="add_game_status_platinum_subtitle">Earned every trophy</string>
+
+    <!-- Game detail -->
+    <string name="game_detail_status_completed_story">Completed · Story</string>
+    <string name="game_detail_status_completed_extras">Completed · Extras</string>
+    <string name="game_detail_status_completed_100">Completed · 100%</string>
+    <string name="game_detail_completed_menu">Completed</string>
+    <string name="game_detail_completed_story">Story</string>
+    <string name="game_detail_change_platform">Change platform</string>
+    <string name="game_detail_remove_game">Remove game</string>
+    <string name="game_detail_available_on">Available on</string>
+    <string name="game_detail_dlcs_expansions">DLCs &amp; Expansions</string>
+    <string name="game_detail_completed_story_date">Completed (Story)</string>
+    <string name="game_detail_completed_extras_date">Completed (Extras)</string>
+    <string name="game_detail_completed_100_date">Completed (100%)</string>
+    <string name="game_detail_playthroughs">Playthroughs</string>
+    <string name="game_detail_new_playthrough">New playthrough</string>
+    <string name="game_detail_no_playthroughs">No playthroughs recorded yet</string>
+    <string name="game_detail_estimated_duration">Estimated duration</string>
+    <string name="game_detail_lowest_price_over_time">Lowest price over time</string>
+    <string name="game_detail_lowest_price">Lowest price: %1$s</string>
+    <string name="game_detail_view_all_achievements">View all (%1$d)</string>
+    <string name="game_detail_remove_confirm">Remove \"%1$s\" from your library?</string>
+    <string name="game_detail_playthrough_new_title">New playthrough</string>
+    <string name="game_detail_playthrough_edit_title">Edit playthrough</string>
+    <string name="game_detail_playthrough_title_placeholder">E.g.: First playthrough, Speedrun...</string>
+    <string name="game_detail_playthrough_progress">Progress: %1$d%%</string>
+    <string name="game_detail_playthrough_start_label">Start (dd/MM/yyyy)</string>
+    <string name="game_detail_playthrough_end_label">End (dd/MM/yyyy)</string>
+    <string name="game_detail_playthrough_hours_label">Hours played</string>
+    <string name="game_detail_delete_playthrough">Delete playthrough</string>
+    <string name="game_detail_playthrough_not_started">Not started</string>
+    <string name="game_detail_trophies_unlocked">Trophies unlocked</string>
+    <string name="game_detail_achievements_unlocked">Achievements unlocked</string>
+    <string name="game_detail_percent_completed">%1$d%% completed</string>
+    <string name="game_detail_trophy_platinum">Platinum</string>
+    <string name="game_detail_trophy_gold">Gold</string>
+    <string name="game_detail_trophy_silver">Silver</string>
+    <string name="game_detail_no_trophies">No trophies recorded yet.</string>
+    <string name="game_detail_no_achievements">No achievements recorded yet.</string>
+
+    <!-- Films -->
+    <string name="films_title">Movies</string>
+    <string name="films_add_button">Add movie</string>
+    <string name="films_tab_all">All</string>
+    <string name="films_tab_watched">Watched</string>
+    <string name="films_tab_want_to_watch">Want to Watch</string>
+    <string name="films_tab_lists">Lists</string>
+    <string name="films_empty_all_title">No movies in your library</string>
+    <string name="films_empty_all_subtitle">Add a movie to get started</string>
+    <string name="films_empty_filtered_title">No movie matches this filter</string>
+    <string name="films_empty_filtered_subtitle">Try another filter</string>
+    <string name="films_empty_watched_title">No watched movies</string>
+    <string name="films_empty_watched_subtitle">Movies you\'ve watched will show up here</string>
+    <string name="films_empty_queued_title">No movies queued</string>
+    <string name="films_empty_queued_subtitle">Movies you want to watch will show up here</string>
+    <string name="films_empty_lists_title">No lists yet</string>
+    <string name="films_empty_lists_subtitle">Create lists to organize movies by theme or occasion</string>
+    <string name="films_new_list">New list</string>
+    <string name="films_empty_upcoming_title">No upcoming releases</string>
+    <string name="films_empty_upcoming_subtitle">Movies with a future release date will show up here</string>
+    <string name="films_no_date_header">No date set</string>
+    <string name="films_delete_list_title">Delete list</string>
+    <string name="films_delete_list_confirm">Delete \"%1$s\"? The movies won\'t be removed from your library.</string>
+    <string name="films_list_name_required">Name *</string>
+    <string name="films_sheet_no_films">No movies in your library yet.</string>
+    <string name="add_film_search_placeholder">Search movie via TMDB...</string>
+    <string name="add_film_add_manually">Add manually</string>
+    <string name="add_film_option_watched_subtitle">Already watched this movie</string>
+    <string name="add_film_option_queue_subtitle">Add to queue</string>
+    <string name="add_film_option_list_title">Add to a List</string>
+    <string name="add_film_option_list_subtitle">Organize into a themed list</string>
+    <string name="add_film_create_first_list">Create first list</string>
+    <string name="add_film_list_name_placeholder">List name</string>
+    <string name="film_detail_related_movies">Related Movies</string>
+    <string name="film_detail_add_to_list">Add to list</string>
+    <string name="film_detail_remove_film">Remove movie</string>
+    <string name="film_detail_remove_confirm">Remove \"%1$s\" from your library?</string>
+    <string name="label_genres">Genres</string>
+    <string name="film_detail_where_to_watch">Where to Watch</string>
+    <string name="film_detail_cast">Cast</string>
+    <string name="film_detail_crew">Crew</string>
+    <string name="film_detail_no_lists">No lists created yet</string>
+    <string name="film_detail_create_and_add">Create and add</string>
+    <string name="movie_preview_title_fallback">Movie</string>
+    <string name="movie_preview_load_error">Couldn\'t load this movie</string>
+    <string name="movie_preview_already_in_library">Already in your library</string>
+    <string name="movie_preview_view_in_library">View in library</string>
+    <string name="movie_preview_add_to_library">Add to library</string>
+
+    <!-- Series -->
+    <string name="series_title">Series</string>
+    <string name="series_add_button">Add series</string>
+    <string name="series_tab_watching">Watching</string>
+    <string name="series_tab_history">History</string>
+    <string name="series_empty_history_title">Empty history</string>
+    <string name="series_empty_history_subtitle">Episodes you mark as watched will show up here</string>
+    <string name="series_empty_all_title">No series in your library</string>
+    <string name="series_empty_all_subtitle">Add a series to get started</string>
+    <string name="series_empty_watching_title">No series in progress</string>
+    <string name="series_empty_watching_subtitle">Series you\'re watching will show up here</string>
+    <string name="series_empty_queued_title">No series queued</string>
+    <string name="series_empty_queued_subtitle">Series you want to watch will show up here</string>
+    <string name="series_empty_upcoming_title">No upcoming releases</string>
+    <string name="series_empty_upcoming_subtitle">Series awaiting premiere or a new season will show up here</string>
+    <string name="series_empty_filtered_title">No series matches this filter</string>
+    <string name="add_series_search_placeholder">Search series...</string>
+    <string name="add_series_status_watching_subtitle">Following the episodes</string>
+    <string name="add_series_status_rewatching_subtitle">Watching it all again</string>
+    <string name="add_series_status_queued_subtitle">Wants to start watching</string>
+    <string name="add_series_status_history_subtitle">Already watched, not following anymore</string>
+
+    <!-- Series detail -->
+    <string name="series_detail_hide_related">Hide related</string>
+    <string name="series_detail_show_related">Show related</string>
+    <string name="series_detail_remove_series">Remove series</string>
+    <string name="series_detail_remove_confirm">Remove \"%1$s\" from your library?</string>
+    <string name="series_detail_seasons_count">Seasons (%1$d)</string>
+    <string name="series_detail_related_series">Related Series</string>
+    <string name="series_detail_season_fallback">Season %1$d</string>
+    <string name="series_detail_episode_fallback">Episode %1$d</string>
+    <string name="series_detail_not_watched">Not watched</string>
+    <string name="series_detail_period_ongoing">%1$d – Present</string>
+    <plurals name="episode_count">
+        <item quantity="one">%d episode</item>
+        <item quantity="other">%d episodes</item>
+    </plurals>
+
+    <!-- Manga -->
+    <string name="manga_title">Manga</string>
+    <string name="manga_add_button">Add manga</string>
+    <string name="manga_tab_reading">Reading</string>
+    <string name="manga_tab_read">Read</string>
+    <string name="manga_tab_on_hold">On Hold</string>
+    <string name="manga_tab_want_to_read">Want to Read</string>
+    <string name="manga_empty_all_title">No manga in your library</string>
+    <string name="manga_empty_all_subtitle">Add a manga to get started</string>
+    <string name="manga_empty_reading_title">No manga in progress</string>
+    <string name="manga_empty_reading_subtitle">Manga you\'re reading will show up here</string>
+    <string name="manga_empty_read_title">No manga read</string>
+    <string name="manga_empty_read_subtitle">Manga you\'ve finished will show up here</string>
+    <string name="manga_empty_on_hold_title">No manga on hold</string>
+    <string name="manga_empty_on_hold_subtitle">Paused manga will show up here</string>
+    <string name="manga_empty_want_title">Empty reading list</string>
+    <string name="manga_empty_want_subtitle">Manga you want to read will show up here</string>
+    <string name="add_manga_search_placeholder">Search manga or webtoon...</string>
+    <string name="add_manga_status_reading_subtitle">Following the chapters</string>
+    <string name="add_manga_status_rereading_subtitle">Reading it all again</string>
+    <string name="add_manga_status_queued_subtitle">Wants to start reading</string>
+
+    <!-- Manga detail -->
+    <string name="manga_detail_edit_progress">Edit progress</string>
+    <string name="manga_detail_edit_start_date">Edit start date</string>
+    <string name="manga_detail_remove_manga">Remove manga</string>
+    <string name="manga_detail_remove_confirm">Remove \"%1$s\" from your library?</string>
+    <string name="manga_detail_progress">Progress</string>
+    <string name="manga_detail_chapter_current">Chapter %1$d</string>
+    <string name="manga_detail_chapter_of_total">Chapter %1$d of %2$d</string>
+    <string name="manga_detail_format">Format</string>
+    <string name="manga_detail_chapters_label">Chapters</string>
+    <string name="manga_detail_reading_start">Reading start</string>
+    <string name="manga_detail_publication_start">Publication start</string>
+    <string name="manga_detail_publication_end">Publication end</string>
+    <string name="manga_detail_reading_end">Reading finished</string>
+    <string name="manga_detail_rating">Rating</string>
+    <string name="manga_detail_no_rating">No rating yet</string>
+    <string name="manga_detail_review">Review</string>
+    <string name="manga_detail_review_title_placeholder">Title (optional)</string>
+    <string name="manga_detail_review_text_placeholder">Thoughts, spoilers…</string>
+    <string name="manga_detail_no_review">No review yet</string>
+    <string name="manga_detail_previous_readings">Previous readings</string>
+    <string name="manga_detail_characters">Characters</string>
+    <string name="manga_detail_synonyms">Synonyms</string>
+    <string name="manga_detail_error_invalid_number">Enter a valid number</string>
+    <string name="manga_detail_error_negative">Can\'t be negative</string>
+    <string name="manga_detail_error_max_chapters">Max: %1$d chapters</string>
+    <string name="manga_detail_current_chapter_title">Current chapter</string>
+    <string name="manga_detail_chapter_field_label">Chapter</string>
+    <string name="action_confirm">Confirm</string>
+
+    <!-- Books -->
+    <string name="books_title">Books</string>
+    <string name="books_add_button">Add book</string>
+    <string name="books_tab_read">Read</string>
+    <string name="books_empty_all_title">No books in your library</string>
+    <string name="books_empty_all_subtitle">Add a book to get started</string>
+    <string name="books_empty_reading_title">No books in progress</string>
+    <string name="books_empty_reading_subtitle">Books you\'re reading will show up here</string>
+    <string name="books_empty_read_title">No books read</string>
+    <string name="books_empty_read_subtitle">Books you\'ve finished will show up here</string>
+    <string name="books_empty_dropped_title">No dropped books</string>
+    <string name="books_empty_dropped_subtitle">Books you stopped reading will show up here</string>
+    <string name="books_empty_want_title">Empty reading list</string>
+    <string name="books_empty_want_subtitle">Books you want to read will show up here</string>
+    <string name="add_book_search_placeholder">Title, author or publisher...</string>
+    <string name="add_book_status_reading_subtitle">Currently reading</string>
+    <string name="add_book_status_rereading_subtitle">Reading it all again</string>
+    <string name="add_book_status_queued_subtitle">Wants to read soon</string>
+    <string name="add_quote_placeholder">Quote</string>
+    <string name="add_quote_comment_placeholder">Comment (optional)</string>
+
+    <!-- Book detail -->
+    <string name="book_detail_edit_end_date">Edit completion date</string>
+    <string name="book_detail_remove_book">Remove book</string>
+    <string name="book_detail_remove_confirm">Remove \"%1$s\" from your library?</string>
+    <string name="book_detail_author">Author</string>
+    <string name="book_detail_pages">Pages</string>
+    <string name="book_detail_reading_history">Reading History</string>
+    <string name="book_detail_page_current">Page %1$d</string>
+    <string name="book_detail_page_of_total">Page %1$d of %2$d</string>
+    <string name="book_detail_view_full_history">View full history</string>
+    <string name="book_detail_start">Start</string>
+    <string name="book_detail_completed">Completed</string>
+    <string name="book_detail_reread">Reread</string>
+    <string name="book_detail_edition_publication">This edition\'s publication</string>
+    <string name="book_detail_quotes">Quotes</string>
+    <string name="book_detail_add_quote">Add quote</string>
+    <string name="book_detail_no_quotes">No quotes yet</string>
+    <string name="book_detail_error_max_pages">Max: %1$d pages</string>
+    <string name="book_detail_current_page_title">Current page</string>
+    <string name="book_detail_page_field_label">Page</string>
+    <string name="book_detail_no_notes">No notes.</string>
+    <string name="book_detail_edit_note_title">Edit note</string>
+    <string name="book_detail_remove_note_title">Remove note</string>
+    <string name="book_detail_remove_note_confirm">Remove this note from the history?</string>
+
+    <!-- Home -->
+    <string name="home_nothing_yet_multiline">Nothing\nyet</string>
+    <string name="home_nothing_yet">Nothing yet</string>
+
+    <!-- Calendar -->
+    <string name="calendar_title">Releases</string>
+    <string name="calendar_empty_title">No releases in %1$s</string>
+    <string name="calendar_empty_subtitle">Add titles with \'Waiting Release\' status</string>
+    <string name="calendar_week_of">Week of %1$s</string>
+    <string name="calendar_released">Released</string>
+    <string name="calendar_today">Today</string>
+    <string name="calendar_tomorrow">Tomorrow</string>
+
+    <!-- History -->
+    <string name="history_title">History</string>
+    <string name="history_empty_title">No titles completed in %1$d</string>
+    <string name="history_empty_subtitle">Completed titles will show up here</string>
+    <string name="history_wrapped_title">Year in review</string>
+    <string name="history_wrapped_message">Your visual year recap will be available soon.</string>
+    <string name="action_ok">OK</string>
+
+    <!-- Search -->
+    <string name="search_placeholder_type">Search %1$s…</string>
+    <string name="search_library_placeholder">Search library…</string>
+    <string name="search_tab_library">Library</string>
+    <string name="search_tab_new">New search</string>
+    <string name="search_library_prompt">Search your library</string>
+    <string name="search_no_results">No results for \"%1$s\"</string>
+    <string name="search_in_library">In library</string>
+    <string name="search_via">Searching via %1$s</string>
+    <string name="search_error_title">Couldn\'t search</string>
+    <string name="search_no_results_found">No results found</string>
+    <string name="search_prompt_type">Search for a %1$s</string>
+    <string name="search_prompt_hint">Type the name and press Search</string>
+    <string name="add_sheet_platform_optional">Platform (optional)</string>
+    <string name="search_page_current_optional">Current page (optional)</string>
+    <string name="search_chapter_current_optional">Current chapter (optional)</string>
+    <string name="search_add_type">Add %1$s</string>
+
+    <!-- Stats -->
+    <string name="stats_games_finished">Games Finished</string>
+    <string name="stats_games_platinum">Games Platinum</string>
+    <string name="stats_movies_watched">Movies Watched</string>
+    <string name="stats_movies_want">Movies Want to Watch</string>
+    <string name="stats_episodes_watched">Episodes Watched</string>
+    <string name="stats_series_want">Series Want to Watch</string>
+    <string name="stats_chapters_read">Chapters Read</string>
+    <string name="stats_books_read">Books Read</string>
+    <string name="stats_view_details">View detailed statistics</string>
+    <string name="stats_general">General</string>
+    <string name="stats_details">Details</string>
+    <string name="stats_details_title">Details — %1$s</string>
+    <string name="stats_filtered_default_title">Items</string>
+    <string name="stats_filtered_empty">No items found</string>
+
+    <!-- Settings hub -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_search_placeholder">Search settings</string>
+    <string name="settings_no_results_title">No results</string>
+    <string name="settings_no_results_subtitle">Try searching for another term</string>
+    <string name="settings_appearance_subtitle">Themes, colors and display mode</string>
+    <string name="settings_notifications_title">Notifications</string>
+    <string name="settings_notifications_subtitle">Background updates</string>
+    <string name="settings_integrations_title">Integrations</string>
+    <string name="settings_integrations_subtitle">Status of connected APIs</string>
+    <string name="settings_platforms_title">Platforms</string>
+    <string name="settings_platforms_subtitle">Platform filters in Games</string>
+    <string name="settings_data_title">Data</string>
+    <string name="settings_data_subtitle">Cache and library</string>
+    <string name="settings_general_title">General</string>
+    <string name="settings_general_subtitle">Language and date format</string>
+
+    <!-- Appearance -->
+    <string name="appearance_title">Appearance</string>
+    <string name="appearance_app_theme">App theme</string>
+    <string name="appearance_light_theme">Light theme</string>
+    <string name="appearance_dark_theme">Dark theme</string>
+
+    <!-- Theme palette names — real Rokku display names, not fixed like MediaStatus/GameConsole
+         (those are business-logic keys; these are just decorative and Rokku itself translates them). -->
+    <string name="theme_white_theme">White Theme</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_spring_blossom">Spring Blossom</string>
+    <string name="theme_midnight_dusk">Midnight Dusk</string>
+    <string name="theme_strawberry_daiquiri">Strawberry Daiquiri</string>
+    <string name="theme_chocolate_strawberries">Chocolate Strawberries</string>
+    <string name="theme_teal_ocean">Teal Ocean</string>
+    <string name="theme_sapphire_dusk">Sapphire Dusk</string>
+    <string name="theme_lavender">Lavender</string>
+    <string name="theme_violet">Violet</string>
+    <string name="theme_tako">Tako</string>
+    <string name="theme_yang">Yang</string>
+    <string name="theme_yin">Yin</string>
+    <string name="theme_lime_time">Lime Time</string>
+    <string name="theme_flat_lime">Flat Lime</string>
+    <string name="theme_yotsuba">Yotsuba</string>
+    <string name="theme_doki">Doki</string>
+    <string name="appearance_pure_black">Pure black dark mode</string>
+    <string name="appearance_accent_color">Accent color</string>
+    <string name="appearance_use_theme_accent">Use theme color for categories</string>
+    <string name="appearance_use_theme_accent_subtitle">When on, games, manga, series, movies and books use the selected theme\'s primary color instead of each category\'s own color</string>
+    <string name="appearance_follow_system">Follow system theme</string>
+
+    <!-- Appearance > Details page ("Details page" is Rokku's exact section name, SettingsAppearanceController.kt) -->
+    <string name="appearance_details_page">Details page</string>
+    <string name="appearance_theme_based_on_cover">Theme buttons based on cover</string>
+    <string name="appearance_theme_based_on_cover_subtitle">Games, manga, series, movies and books detail pages pick their accent color from each item\'s own cover instead of the app theme</string>
+    <string name="appearance_cover_theme_style">Cover theme style</string>
+    <string name="cover_theme_style_legacy">Legacy theme</string>
+    <string name="cover_theme_style_tonal_spot">Tonal Spot</string>
+    <string name="cover_theme_style_neutral">Neutral</string>
+    <string name="cover_theme_style_vibrant">Vibrant</string>
+    <string name="cover_theme_style_expressive">Expressive</string>
+    <string name="cover_theme_style_rainbow">Rainbow</string>
+    <string name="cover_theme_style_fruit_salad">Fruit Salad</string>
+    <string name="cover_theme_style_monochrome">Monochrome</string>
+    <string name="cover_theme_style_fidelity">Fidelity</string>
+    <string name="cover_theme_style_content">Content</string>
+
+    <!-- General / Locale -->
+    <string name="general_title">General</string>
+    <string name="general_locale_section">Locale</string>
+    <string name="general_language">Language</string>
+    <string name="general_date_format">Date format</string>
+
+    <!-- Settings: Data -->
+    <string name="settings_data_update_all">Update all caches</string>
+    <string name="settings_data_updating">Updating…</string>
+    <string name="settings_data_update_success">Cache updated successfully</string>
+    <string name="settings_data_sync_subtitle">Sync metadata with the APIs</string>
+    <string name="settings_data_delete_all">Delete all data</string>
+    <string name="settings_data_delete_all_subtitle">Removes your entire library and history</string>
+    <string name="settings_data_delete_confirm_title">Delete all data?</string>
+    <string name="settings_data_delete_confirm_message">This action is irreversible. Your entire library, history and cache will be permanently removed.</string>
+    <string name="settings_data_delete_confirm_button">Delete everything</string>
+
+    <!-- Settings: Notifications -->
+    <string name="settings_notif_daily_update">Daily update</string>
+    <string name="settings_notif_daily_update_subtitle">Check for updates in the background</string>
+
+    <!-- Settings: Platforms -->
+    <string name="settings_platforms_description">Choose which platforms show up as filter options in the Games screen.</string>
+
+    <!-- About -->
+    <string name="about_title">About</string>
+    <string name="about_already_latest">You\'re already on the latest version</string>
+    <string name="about_check_error">Error checking for updates: %1$s</string>
+    <string name="about_downloading">Downloading update in the background</string>
+    <string name="about_no_installer">No installer found in this release</string>
+    <string name="about_whats_new">What\'s new in this release</string>
+    <string name="about_check_updates">Check for updates</string>
+    <string name="about_checking">Checking...</string>
+    <string name="about_version">Version</string>
+    <string name="about_copied">Copied to clipboard</string>
+    <string name="about_build_date">Build date</string>
+    <string name="about_help_translate">Help translate</string>
+    <string name="about_open_source_licenses">Open source licenses</string>
+    <string name="about_new_version_available">New version available: %1$s</string>
+    <string name="about_no_release_notes">No release notes.</string>
+    <string name="action_update">Update</string>
+    <string name="action_ignore">Ignore</string>
+    <string name="about_open_website">Open website</string>
+    <string name="about_no_license_text">No license text available.</string>
+    <string name="notes_placeholder">Write a free-form note about this item...</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_start">Get Started</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_welcome">Welcome!</string>
+    <string name="onboarding_intro">Let\'s set a few things up first. You can always change these settings later too.</string>
+    <string name="onboarding_apikeys_description">Optional — the app works with limited data without them. You can set all of this up later in Settings → Integrations.</string>
+    <string name="onboarding_permissions_title">Optional, but recommended</string>
+    <string name="onboarding_notif_subtitle">Alerts about news and library updates</string>
+    <string name="onboarding_battery_title">Ignore battery optimization</string>
+    <string name="onboarding_battery_subtitle">Prevents the system from delaying the daily background update</string>
+    <string name="onboarding_grant">Grant</string>
+    <string name="onboarding_storage_description">Choose a folder on your device for future use in backups. It can be set or changed later in Settings — this step is optional.</string>
+    <string name="onboarding_change_folder">Change folder</string>
+    <string name="onboarding_select_folder">Select folder</string>
+
+    <!-- Shared components -->
+    <string name="common_help">Help</string>
+    <string name="component_edit_note">Edit note</string>
+    <string name="rating_awful">Awful</string>
+    <string name="rating_very_bad">Very bad</string>
+    <string name="rating_bad">Bad</string>
+    <string name="rating_weak">Weak</string>
+    <string name="rating_average">Average</string>
+    <string name="rating_ok">Ok</string>
+    <string name="rating_good">Good</string>
+    <string name="rating_very_good">Very good</string>
+    <string name="rating_excellent">Excellent</string>
+    <string name="rating_masterpiece">Masterpiece</string>
+
+    <!-- Service credentials -->
+    <string name="service_tmdb_desc">Movies and series</string>
+    <string name="service_igdb_desc">Games (requires an app on the Twitch Developer Console)</string>
+    <string name="service_google_books_desc">Books (optional — search already works without a key)</string>
+    <string name="service_steam_desc">Library and achievements</string>
+    <string name="service_itad_desc">Prices and discount history (IsThereAnyDeal)</string>
+    <string name="service_anilist_note">AniList doesn\'t require its own key — manga and webtoon search already works with no setup.</string>
+    <string name="service_test_connection">Test connection</string>
+
+    <!-- Notifications -->
+    <string name="notif_channel_manga">Manga updates</string>
+    <string name="notif_channel_app_updates">App updates</string>
+    <string name="manga_notification_hiatus">Went on hiatus — moved to On Hold</string>
+    <string name="manga_notification_cancelled">Publication cancelled — moved to Read</string>
+    <string name="manga_notification_resumed">Resumed publication — moved to Reading</string>
 </resources>

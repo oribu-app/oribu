@@ -25,6 +25,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -65,13 +66,19 @@ fun AboutScreen(navController: NavController) {
     var checkingUpdate by remember { mutableStateOf(false) }
     var pendingUpdate by remember { mutableStateOf<GithubRelease?>(null) }
 
+    val alreadyLatestMessage = stringResource(R.string.about_already_latest)
+    val checkErrorMessage = stringResource(R.string.about_check_error)
+    val downloadingMessage = stringResource(R.string.about_downloading)
+    val noInstallerMessage = stringResource(R.string.about_no_installer)
+    val copiedMessage = stringResource(R.string.about_copied)
+
     fun checkForUpdate() {
         checkingUpdate = true
         scope.launch {
             when (val result = AppUpdateChecker.checkForUpdate(context, isUserPrompt = true)) {
                 is AppUpdateResult.NewUpdate -> pendingUpdate = result.release
-                is AppUpdateResult.NoUpdate -> snackbarHostState.showSnackbar("Você já está na versão mais recente")
-                is AppUpdateResult.Error -> snackbarHostState.showSnackbar("Erro ao checar atualizações: ${result.message}")
+                is AppUpdateResult.NoUpdate -> snackbarHostState.showSnackbar(alreadyLatestMessage)
+                is AppUpdateResult.Error -> snackbarHostState.showSnackbar(checkErrorMessage.format(result.message))
             }
             checkingUpdate = false
         }
@@ -85,9 +92,9 @@ fun AboutScreen(navController: NavController) {
                 val asset = AppUpdateChecker.findDownloadAsset(release)
                 if (asset != null) {
                     AppUpdateInstallWorker.enqueue(context, asset.downloadUrl, asset.name)
-                    scope.launch { snackbarHostState.showSnackbar("Baixando atualização em segundo plano") }
+                    scope.launch { snackbarHostState.showSnackbar(downloadingMessage) }
                 } else {
-                    scope.launch { snackbarHostState.showSnackbar("Nenhum instalador encontrado nessa release") }
+                    scope.launch { snackbarHostState.showSnackbar(noInstallerMessage) }
                 }
                 pendingUpdate = null
             },
@@ -97,7 +104,7 @@ fun AboutScreen(navController: NavController) {
     Scaffold(
         topBar = {
             LargeTopAppBar(
-                title = { Text("Sobre") },
+                title = { Text(stringResource(R.string.about_title)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
@@ -115,22 +122,22 @@ fun AboutScreen(navController: NavController) {
         LazyColumn(Modifier.padding(padding).fillMaxSize()) {
             item {
                 AboutRow(
-                    title = "O que há de novo neste lançamento",
+                    title = stringResource(R.string.about_whats_new),
                     onClick = { uriHandler.openUri(AppUpdateChecker.releasesUrl) },
                 )
             }
             if (AppUpdateChecker.updateCheckEnabled) {
                 item {
                     AboutRow(
-                        title = "Procurar por atualizações",
-                        subtitle = if (checkingUpdate) "Checando..." else null,
+                        title = stringResource(R.string.about_check_updates),
+                        subtitle = if (checkingUpdate) stringResource(R.string.about_checking) else null,
                         onClick = if (checkingUpdate) null else ::checkForUpdate,
                     )
                 }
             }
             item {
                 AboutRow(
-                    title = "Versão",
+                    title = stringResource(R.string.about_version),
                     subtitle = versionName ?: "—",
                     onClick = {
                         val debugInfo =
@@ -139,21 +146,21 @@ fun AboutScreen(navController: NavController) {
                                 "${Build.MANUFACTURER} ${Build.MODEL}"
                         clipboardManager.setText(AnnotatedString(debugInfo))
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-                            scope.launch { snackbarHostState.showSnackbar("Copiado para a área de transferência") }
+                            scope.launch { snackbarHostState.showSnackbar(copiedMessage) }
                         }
                     },
                 )
             }
-            item { AboutRow(title = "Data de compilação", subtitle = buildTimeLabel) }
+            item { AboutRow(title = stringResource(R.string.about_build_date), subtitle = buildTimeLabel) }
             item {
                 Column(Modifier.fillMaxWidth()) {
                     HorizontalDivider()
-                    AboutRow(title = "Ajude a traduzir")
+                    AboutRow(title = stringResource(R.string.about_help_translate))
                 }
             }
             item {
                 AboutRow(
-                    title = "Licenças de código aberto",
+                    title = stringResource(R.string.about_open_source_licenses),
                     onClick = { navController.navigate(Routes.ABOUT_LICENSES) },
                 )
             }
@@ -215,14 +222,14 @@ private fun UpdateAvailableDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Nova versão disponível: ${release.tagName}") },
+        title = { Text(stringResource(R.string.about_new_version_available, release.tagName)) },
         text = {
             Text(
-                release.body?.takeIf { it.isNotBlank() } ?: "Sem notas de versão.",
+                release.body?.takeIf { it.isNotBlank() } ?: stringResource(R.string.about_no_release_notes),
                 modifier = Modifier.padding(top = 4.dp),
             )
         },
-        confirmButton = { TextButton(onClick = onUpdate) { Text("Atualizar") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Ignorar") } },
+        confirmButton = { TextButton(onClick = onUpdate) { Text(stringResource(R.string.action_update)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_ignore)) } },
     )
 }

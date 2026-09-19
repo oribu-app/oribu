@@ -179,6 +179,10 @@ dependencies {
 
     // Images
     implementation(libs.coil)
+    implementation(libs.androidx.palette)
+
+    // Cover-based theme color extraction (Settings > Aparência > Página de detalhes)
+    implementation(libs.materialkolor)
 
     // DataStore
     implementation(libs.datastore)

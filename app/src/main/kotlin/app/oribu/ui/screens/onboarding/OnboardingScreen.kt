@@ -36,8 +36,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.data.OnboardingPreferences
 import app.oribu.ui.navigation.Routes
 import app.oribu.ui.screens.onboarding.steps.ApiKeysStep
@@ -84,7 +86,7 @@ fun OnboardingScreen(navController: NavController) {
                     onClick = { if (isLast) finish() else currentStep++ },
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                 ) {
-                    Text(if (isLast) "Começar" else "Próxima")
+                    Text(stringResource(if (isLast) R.string.onboarding_start else R.string.onboarding_next))
                 }
             }
         },
@@ -103,11 +105,10 @@ fun OnboardingScreen(navController: NavController) {
                 modifier = Modifier.size(40.dp),
             )
             Spacer(Modifier.height(12.dp))
-            Text("Bem Vindo(a)!", style = MaterialTheme.typography.headlineLarge)
+            Text(stringResource(R.string.onboarding_welcome), style = MaterialTheme.typography.headlineLarge)
             Spacer(Modifier.height(8.dp))
             Text(
-                "Vamos definir algumas coisas primeiro. Você sempre pode fazer alterações nas " +
-                    "configurações depois também.",
+                stringResource(R.string.onboarding_intro),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
             )

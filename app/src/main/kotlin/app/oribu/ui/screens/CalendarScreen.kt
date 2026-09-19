@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -25,6 +26,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.data.db.DB
 import app.oribu.model.MediaItem
 import app.oribu.model.MediaStatus
@@ -59,7 +61,22 @@ fun CalendarScreen(
     var selectedMonth by remember { mutableIntStateOf(now.get(Calendar.MONTH)) }
     var typeFilter by remember { mutableStateOf<MediaType?>(null) }
 
-    val dateFmt = remember { SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")) }
+    val dateFmt = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
+    val months =
+        listOf(
+            stringResource(R.string.month_january),
+            stringResource(R.string.month_february),
+            stringResource(R.string.month_march),
+            stringResource(R.string.month_april),
+            stringResource(R.string.month_may),
+            stringResource(R.string.month_june),
+            stringResource(R.string.month_july),
+            stringResource(R.string.month_august),
+            stringResource(R.string.month_september),
+            stringResource(R.string.month_october),
+            stringResource(R.string.month_november),
+            stringResource(R.string.month_december),
+        )
 
     fun prevMonth() {
         if (selectedMonth == 0) {
@@ -124,7 +141,7 @@ fun CalendarScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Lançamentos") },
+                title = { Text(stringResource(R.string.calendar_title)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
@@ -166,14 +183,14 @@ fun CalendarScreen(
                     FilterChip(
                         selected = typeFilter == null,
                         onClick = { typeFilter = null },
-                        label = { Text("Todos") },
+                        label = { Text(stringResource(R.string.films_tab_all)) },
                         shape = RoundedCornerShape(4.dp),
                     )
                     MediaType.entries.forEach { t ->
                         FilterChip(
                             selected = typeFilter == t,
                             onClick = { typeFilter = if (typeFilter == t) null else t },
-                            label = { Text(t.labelPt) },
+                            label = { Text(t.label) },
                             shape = RoundedCornerShape(4.dp),
                         )
                     }
@@ -184,10 +201,13 @@ fun CalendarScreen(
                 item {
                     Box(Modifier.fillParentMaxHeight(0.6f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("Nenhum lançamento em ${months[selectedMonth]}", style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                stringResource(R.string.calendar_empty_title, months[selectedMonth]),
+                                style = MaterialTheme.typography.titleMedium,
+                            )
                             Spacer(Modifier.height(4.dp))
                             Text(
-                                "Adicione títulos com status 'Aguardando lançamento'",
+                                stringResource(R.string.calendar_empty_subtitle),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                             )
@@ -198,7 +218,7 @@ fun CalendarScreen(
                 weekBuckets.forEach { (weekLabel, weekItems) ->
                     item {
                         Text(
-                            "Semana de $weekLabel",
+                            stringResource(R.string.calendar_week_of, weekLabel),
                             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
@@ -261,7 +281,7 @@ private fun ReleaseTile(
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(item.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
             Text(
-                item.type.labelPt,
+                item.type.label,
                 style = MaterialTheme.typography.bodySmall,
                 color = typeColor,
                 fontSize = 11.sp,
@@ -289,9 +309,9 @@ private fun ReleaseTile(
                 Text(
                     text =
                         when {
-                            isPast -> "Lançado"
-                            daysUntil == 0L -> "Hoje"
-                            daysUntil == 1L -> "Amanhã"
+                            isPast -> stringResource(R.string.calendar_released)
+                            daysUntil == 0L -> stringResource(R.string.calendar_today)
+                            daysUntil == 1L -> stringResource(R.string.calendar_tomorrow)
                             else -> "${daysUntil}d"
                         },
                     color =
@@ -325,19 +345,3 @@ private fun navigateToDetail(
         }
     navController.navigate(route)
 }
-
-private val months =
-    listOf(
-        "Janeiro",
-        "Fevereiro",
-        "Março",
-        "Abril",
-        "Maio",
-        "Junho",
-        "Julho",
-        "Agosto",
-        "Setembro",
-        "Outubro",
-        "Novembro",
-        "Dezembro",
-    )

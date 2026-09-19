@@ -10,9 +10,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.data.db.DB
 import app.oribu.ui.navigation.consumeAnotacoesItem
 import app.oribu.ui.navigation.returnAnotacoesResult
@@ -47,16 +49,16 @@ fun AnotacoesScreen(navController: NavController) {
                     .padding(horizontal = 8.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                TextButton(onClick = { save() }) { Text("Salvar") }
+                TextButton(onClick = { save() }) { Text(stringResource(R.string.action_save)) }
                 Text(
-                    item?.title ?: "Anotações",
+                    item?.title ?: stringResource(R.string.label_notes),
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
                 )
                 IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(Icons.Default.Close, contentDescription = "Fechar")
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.action_close))
                 }
             }
         },
@@ -64,7 +66,7 @@ fun AnotacoesScreen(navController: NavController) {
         OutlinedTextField(
             value = text,
             onValueChange = { text = it },
-            placeholder = { Text("Escreva uma anotação livre sobre este item...") },
+            placeholder = { Text(stringResource(R.string.notes_placeholder)) },
             modifier =
                 Modifier
                     .fillMaxSize()

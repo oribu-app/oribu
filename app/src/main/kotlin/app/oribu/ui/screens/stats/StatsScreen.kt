@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -19,6 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.data.db.DB
 import app.oribu.model.MediaStatus
 import app.oribu.model.MediaType
@@ -58,6 +60,15 @@ fun StatsScreen(
 ) {
     val allItems by vm.allItems.collectAsStateWithLifecycle()
 
+    val gamesFinishedLabel = stringResource(R.string.stats_games_finished)
+    val gamesPlatinumLabel = stringResource(R.string.stats_games_platinum)
+    val moviesWatchedLabel = stringResource(R.string.stats_movies_watched)
+    val moviesWantLabel = stringResource(R.string.stats_movies_want)
+    val episodesWatchedLabel = stringResource(R.string.stats_episodes_watched)
+    val seriesWantLabel = stringResource(R.string.stats_series_want)
+    val chaptersReadLabel = stringResource(R.string.stats_chapters_read)
+    val booksReadLabel = stringResource(R.string.stats_books_read)
+
     val generalStats =
         remember(allItems) {
             val games = allItems.filter { it.type == MediaType.GAME }
@@ -70,21 +81,21 @@ fun StatsScreen(
             val colors = categoricalColors(8)
 
             listOf(
-                GeneralStatItem(games.count { it.status == MediaStatus.FINISHED }, "Jogos Zerados", colors[0]),
-                GeneralStatItem(games.count { it.status == MediaStatus.PLATINUM }, "Jogos Platinados", colors[1]),
-                GeneralStatItem(movies.count { it.status == MediaStatus.WATCHED }, "Filmes Assistidos", colors[2]),
-                GeneralStatItem(movies.count { it.status == MediaStatus.QUEUED }, "Filmes em Quero Assistir", colors[3]),
-                GeneralStatItem(series.sumOf { it.currentProgress ?: 0 }, "Episódios Assistidos", colors[4]),
-                GeneralStatItem(series.count { it.status == MediaStatus.QUEUED }, "Séries em Quero Assistir", colors[5]),
-                GeneralStatItem(mangas.sumOf { it.currentProgress ?: 0 }, "Capítulos Lidos", colors[6]),
-                GeneralStatItem(books.count { it.status == MediaStatus.READ }, "Livros Lidos", colors[7]),
+                GeneralStatItem(games.count { it.status == MediaStatus.FINISHED }, gamesFinishedLabel, colors[0]),
+                GeneralStatItem(games.count { it.status == MediaStatus.PLATINUM }, gamesPlatinumLabel, colors[1]),
+                GeneralStatItem(movies.count { it.status == MediaStatus.WATCHED }, moviesWatchedLabel, colors[2]),
+                GeneralStatItem(movies.count { it.status == MediaStatus.QUEUED }, moviesWantLabel, colors[3]),
+                GeneralStatItem(series.sumOf { it.currentProgress ?: 0 }, episodesWatchedLabel, colors[4]),
+                GeneralStatItem(series.count { it.status == MediaStatus.QUEUED }, seriesWantLabel, colors[5]),
+                GeneralStatItem(mangas.sumOf { it.currentProgress ?: 0 }, chaptersReadLabel, colors[6]),
+                GeneralStatItem(books.count { it.status == MediaStatus.READ }, booksReadLabel, colors[7]),
             )
         }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Status") },
+                title = { Text(stringResource(R.string.label_status)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
@@ -104,11 +115,11 @@ fun StatsScreen(
                     OutlinedButton(onClick = { navigateToStatsDetails(navController) }) {
                         Icon(Icons.Default.Description, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Ver estatísticas detalhadas")
+                        Text(stringResource(R.string.stats_view_details))
                     }
                 }
                 Spacer(Modifier.height(16.dp))
-                Text("Geral", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.stats_general), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(16.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
                     generalStats.chunked(4).forEach { row ->

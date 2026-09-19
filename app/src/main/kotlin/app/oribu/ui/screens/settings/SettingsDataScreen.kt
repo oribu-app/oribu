@@ -1,10 +1,9 @@
 package app.oribu.ui.screens.settings
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DeleteForever
@@ -12,11 +11,13 @@ import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.data.db.DB
 import app.oribu.service.MediaCacheService
 import kotlinx.coroutines.Dispatchers
@@ -50,7 +51,6 @@ class SettingsDataViewModel : ViewModel() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsDataScreen(
     navController: NavController,
@@ -58,50 +58,35 @@ fun SettingsDataScreen(
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Dados") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
+    SettingsScaffold(stringResource(R.string.settings_data_title), navController) { padding ->
+        Column(Modifier.padding(padding).fillMaxSize()) {
+            SettingsClickRow(
+                title = stringResource(R.string.settings_data_update_all),
+                subtitle =
+                    when {
+                        vm.updatingCache -> stringResource(R.string.settings_data_updating)
+                        vm.updateDone -> stringResource(R.string.settings_data_update_success)
+                        else -> stringResource(R.string.settings_data_sync_subtitle)
+                    },
+                onClick = { vm.updateAllCache() },
+                trailing = {
+                    if (vm.updatingCache) {
+                        CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                    } else {
+                        IconButton(onClick = { vm.updateAllCache() }, enabled = !vm.updatingCache) {
+                            Icon(Icons.Default.Sync, null)
+                        }
                     }
                 },
             )
-        },
-    ) { padding ->
-        LazyColumn(Modifier.padding(padding).fillMaxSize()) {
-            item {
-                ListItem(
-                    headlineContent = { Text("Atualizar todos os caches") },
-                    supportingContent = {
-                        when {
-                            vm.updatingCache -> Text("Atualizando…")
-                            vm.updateDone -> Text("Cache atualizado com sucesso")
-                            else -> Text("Sincronizar metadados com as APIs")
-                        }
-                    },
-                    trailingContent = {
-                        if (vm.updatingCache) {
-                            CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
-                        } else {
-                            IconButton(onClick = { vm.updateAllCache() }, enabled = !vm.updatingCache) {
-                                Icon(Icons.Default.Sync, null)
-                            }
-                        }
-                    },
-                    modifier = Modifier.clickable(enabled = !vm.updatingCache) { vm.updateAllCache() },
-                )
-            }
 
-            item {
-                ListItem(
-                    headlineContent = { Text("Apagar todos os dados", color = MaterialTheme.colorScheme.error) },
-                    supportingContent = { Text("Remove toda a biblioteca e histórico") },
-                    trailingContent = { Icon(Icons.Default.DeleteForever, null, tint = MaterialTheme.colorScheme.error) },
-                    modifier = Modifier.clickable { showDeleteDialog = true },
-                )
-            }
+            SettingsClickRow(
+                title = stringResource(R.string.settings_data_delete_all),
+                subtitle = stringResource(R.string.settings_data_delete_all_subtitle),
+                onClick = { showDeleteDialog = true },
+                titleColor = MaterialTheme.colorScheme.error,
+                trailing = { Icon(Icons.Default.DeleteForever, null, tint = MaterialTheme.colorScheme.error) },
+            )
         }
     }
 
@@ -109,9 +94,9 @@ fun SettingsDataScreen(
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             icon = { Icon(Icons.Default.DeleteForever, null, tint = MaterialTheme.colorScheme.error) },
-            title = { Text("Apagar todos os dados?") },
+            title = { Text(stringResource(R.string.settings_data_delete_confirm_title)) },
             text = {
-                Text("Esta ação é irreversível. Toda a sua biblioteca, histórico e cache serão removidos permanentemente.")
+                Text(stringResource(R.string.settings_data_delete_confirm_message))
             },
             confirmButton = {
                 Button(
@@ -120,10 +105,10 @@ fun SettingsDataScreen(
                         vm.clearAllData { navController.popBackStack() }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                ) { Text("Apagar tudo") }
+                ) { Text(stringResource(R.string.settings_data_delete_confirm_button)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) { Text("Cancelar") }
+                TextButton(onClick = { showDeleteDialog = false }) { Text(stringResource(R.string.action_cancel)) }
             },
         )
     }
