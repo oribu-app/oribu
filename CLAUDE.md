@@ -335,6 +335,41 @@ ColorXbox        // #107C10
 
 ---
 
+## Settings design system
+
+`docs/design-system-settings.md` fixes the spacing/typography conventions every Settings screen
+follows (screen shell, section headers, switch/click rows), with the reusable Compose building
+blocks in `ui/screens/settings/SettingsComponents.kt`. Use those components instead of ad hoc
+`Scaffold`/`ListItem`/`Switch` when touching any Settings screen. Currently scoped to Settings
+only — other parts of the app aren't covered by this doc.
+
+---
+
+## Localization
+
+English is the project's primary language, to match the rest of the ecosystem (repo names,
+commits, PR descriptions, CHANGELOG, code comments, docs). Portuguese is a translation, not the
+source of truth, going forward.
+
+- **In-app language/date format**: `app/oribu/ui/locale/AppLocale.kt` (`AppLocaleController`)
+  exposes `languageMode` (System/English/Português, applied via
+  `AppCompatDelegate.setApplicationLocales` — persisted automatically by AppCompat, see the
+  `AppLocalesMetadataHolderService` entry in `AndroidManifest.xml`) and `dateFormatMode`
+  (System/Day-Month-Year/Month-Day-Year/ISO, persisted via `LocalePreferences` DataStore and
+  applied through the `formatDate()` helper in the same file). Configurable from Settings >
+  General > Locale (`SettingsGeneralScreen.kt`).
+- **Status of the conversion (in progress, not finished)**: most of the app's UI strings are
+  still hardcoded in Portuguese directly in the Composables — there is no `strings.xml` for them
+  yet. Only the Settings screens have been converted/translated to English so far. Don't assume
+  the rest of the app already follows this convention; when touching a screen, prefer converting
+  its hardcoded strings to English (extracting to `res/values/strings.xml` as the default,
+  `res/values-pt-rBR/strings.xml` for the Portuguese translation) rather than adding more
+  hardcoded Portuguese text.
+- **CHANGELOG, code comments, docs**: write these in English from now on, regardless of what
+  language a given conversation happens in.
+
+---
+
 ## Code conventions
 
 ### Naming and null-safety (Kotlin)
