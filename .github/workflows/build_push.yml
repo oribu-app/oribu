@@ -60,7 +60,7 @@ jobs:
         run: ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager "build-tools;36.1.0" "platforms;android-37.0"
 
       - name: Set up CHANGELOG parser
-        uses: taiki-e/install-action@3506c84fcd7e6987ace139e0939c59c79d2d4157 # parse-changelog
+        uses: taiki-e/install-action@7cce5e3d36ea56d956a6f3f3757f9c149dcbd396 # parse-changelog
 
       - name: Copy CI gradle.properties
         run: |
