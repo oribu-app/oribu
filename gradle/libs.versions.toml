@@ -16,6 +16,8 @@ vico            = "3.3.1"
 aboutlibraries  = "15.2.0"
 junit           = "4.13.2"
 kotlinter       = "5.7.0"
+androidx-palette = "1.0.0"
+materialkolor   = "5.0.1"
 
 [libraries]
 # Compose
@@ -49,6 +51,10 @@ okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor",
 
 # Images
 coil = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+androidx-palette = { group = "androidx.palette", name = "palette", version.ref = "androidx-palette" }
+
+# Cover-based theme color extraction (Settings > Aparência > Página de detalhes, Rokku's "Cover theme style")
+materialkolor = { group = "com.materialkolor", name = "material-kolor", version.ref = "materialkolor" }
 
 # DataStore (substitui SharedPreferences para preferências de tema)
 datastore = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }

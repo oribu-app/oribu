@@ -19,9 +19,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import app.oribu.R
 
 /**
  * Campo de credencial no molde do tonkatsu_box: valor mascarado por padrão, com toggle de
@@ -53,7 +55,7 @@ fun InlineKeyField(
                     Icon(if (visible) Icons.Default.VisibilityOff else Icons.Default.Visibility, contentDescription = null)
                 }
                 if (dirty) {
-                    TextButton(onClick = { onSave(draft) }) { Text("Salvar") }
+                    TextButton(onClick = { onSave(draft) }) { Text(stringResource(R.string.action_save)) }
                 }
             }
         },

@@ -15,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -24,6 +25,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.data.db.DB
 import app.oribu.data.db.entity.MovieListEntity
 import app.oribu.model.ApiSearchResult
@@ -83,7 +85,7 @@ class AddFilmViewModel : ViewModel() {
             loading = true
             _searchError.value = null
             if (!ApiServices.tmdbAvailable) {
-                _searchError.value = "TMDB não configurado — adicione tmdb_bearer_token ao secrets.json"
+                _searchError.value = "TMDB not configured — add tmdb_bearer_token to secrets.json"
                 _results.value = emptyList()
                 loading = false
                 return@launch
@@ -181,7 +183,7 @@ fun AddFilmScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Adicionar filme") },
+                title = { Text(stringResource(R.string.films_add_button)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
@@ -197,7 +199,7 @@ fun AddFilmScreen(
                     query = it
                     vm.onQueryChange(it)
                 },
-                placeholder = { Text("Buscar filme via TMDB...") },
+                placeholder = { Text(stringResource(R.string.add_film_search_placeholder)) },
                 leadingIcon = { Icon(Icons.Default.Search, null) },
                 trailingIcon = {
                     when {
@@ -236,7 +238,7 @@ fun AddFilmScreen(
                 TextButton(
                     onClick = { selectedResult = ApiSearchResult(externalId = "", title = query, apiSource = "manual") },
                     modifier = Modifier.padding(horizontal = 16.dp),
-                ) { Text("Adicionar manualmente") }
+                ) { Text(stringResource(R.string.add_film_add_manually)) }
             }
 
             LazyVerticalGrid(
@@ -323,8 +325,8 @@ private fun AddFilmeSheet(
 
             StatusOptionTile(
                 icon = Icons.Outlined.CheckCircle,
-                title = "Assistido",
-                subtitle = "Já vi este filme",
+                title = MediaStatus.WATCHED.label,
+                subtitle = stringResource(R.string.add_film_option_watched_subtitle),
                 selected = opcao == OpcaoFilme.ASSISTIDO,
                 color = accentColor,
                 onClick = {
@@ -336,8 +338,8 @@ private fun AddFilmeSheet(
 
             StatusOptionTile(
                 icon = Icons.Outlined.Bookmark,
-                title = "Quero Assistir",
-                subtitle = "Adicionar à fila",
+                title = stringResource(R.string.films_tab_want_to_watch),
+                subtitle = stringResource(R.string.add_film_option_queue_subtitle),
                 selected = opcao == OpcaoFilme.QUERO_ASSISTIR,
                 color = accentColor,
                 onClick = {
@@ -349,8 +351,8 @@ private fun AddFilmeSheet(
 
             StatusOptionTile(
                 icon = Icons.Outlined.PlaylistAdd,
-                title = "Adicionar a Lista",
-                subtitle = "Organizar em uma lista temática",
+                title = stringResource(R.string.add_film_option_list_title),
+                subtitle = stringResource(R.string.add_film_option_list_subtitle),
                 selected = opcao == OpcaoFilme.ADICIONAR_LISTA,
                 color = accentColor,
                 onClick = { opcao = OpcaoFilme.ADICIONAR_LISTA },
@@ -365,7 +367,7 @@ private fun AddFilmeSheet(
                     ) {
                         Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("Criar primeira lista", fontSize = 13.sp)
+                        Text(stringResource(R.string.add_film_create_first_list), fontSize = 13.sp)
                     }
                 } else {
                     @OptIn(ExperimentalLayoutApi::class)
@@ -384,7 +386,7 @@ private fun AddFilmeSheet(
                         }
                         AssistChip(
                             onClick = { showNewListDialog = true },
-                            label = { Text("Nova lista", fontSize = 12.sp) },
+                            label = { Text(stringResource(R.string.films_new_list), fontSize = 12.sp) },
                             leadingIcon = { Icon(Icons.Default.Add, null, modifier = Modifier.size(14.dp)) },
                         )
                     }
@@ -406,7 +408,7 @@ private fun AddFilmeSheet(
                 if (saving) {
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                 } else {
-                    Text("Adicionar")
+                    Text(stringResource(R.string.action_add))
                 }
             }
         }
@@ -416,12 +418,12 @@ private fun AddFilmeSheet(
         var newName by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showNewListDialog = false },
-            title = { Text("Nova lista") },
+            title = { Text(stringResource(R.string.films_new_list)) },
             text = {
                 OutlinedTextField(
                     value = newName,
                     onValueChange = { newName = it },
-                    placeholder = { Text("Nome da lista") },
+                    placeholder = { Text(stringResource(R.string.add_film_list_name_placeholder)) },
                     singleLine = true,
                 )
             },
@@ -438,10 +440,10 @@ private fun AddFilmeSheet(
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = accentColor),
-                ) { Text("Criar") }
+                ) { Text(stringResource(R.string.action_create)) }
             },
             dismissButton = {
-                TextButton(onClick = { showNewListDialog = false }) { Text("Cancelar") }
+                TextButton(onClick = { showNewListDialog = false }) { Text(stringResource(R.string.action_cancel)) }
             },
         )
     }

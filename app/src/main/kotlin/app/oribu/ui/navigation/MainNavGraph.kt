@@ -14,9 +14,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.*
+import app.oribu.R
 import app.oribu.model.MediaItem
 import app.oribu.ui.screens.AboutLibraryLicenseScreen
 import app.oribu.ui.screens.AboutLicenseScreen
@@ -46,6 +48,7 @@ import app.oribu.ui.screens.series.SeriesDetailScreen
 import app.oribu.ui.screens.series.SeriesScreen
 import app.oribu.ui.screens.settings.SettingsAppearanceScreen
 import app.oribu.ui.screens.settings.SettingsDataScreen
+import app.oribu.ui.screens.settings.SettingsGeneralScreen
 import app.oribu.ui.screens.settings.SettingsIntegrationsScreen
 import app.oribu.ui.screens.settings.SettingsNotificationsScreen
 import app.oribu.ui.screens.settings.SettingsPlatformsScreen
@@ -62,17 +65,16 @@ private data class BottomNavItem(
     val activeIcon: ImageVector,
 )
 
-private val bottomNavItems =
-    listOf(
-        BottomNavItem(Routes.GAMES, "Jogos", Icons.Outlined.SportsEsports, Icons.Filled.SportsEsports),
-        BottomNavItem(Routes.FILMS, "Filmes", Icons.Outlined.Movie, Icons.Filled.Movie),
-        BottomNavItem(Routes.SERIES, "Séries", Icons.Outlined.Tv, Icons.Filled.Tv),
-        BottomNavItem(Routes.MANGA, "Mangás", Icons.Outlined.MenuBook, Icons.Filled.MenuBook),
-        BottomNavItem(Routes.BOOKS, "Livros", Icons.Outlined.Book, Icons.Filled.Book),
-    )
-
 @Composable
 fun MainNavGraph(startDestination: String = Routes.HOME) {
+    val bottomNavItems =
+        listOf(
+            BottomNavItem(Routes.GAMES, stringResource(R.string.games_title), Icons.Outlined.SportsEsports, Icons.Filled.SportsEsports),
+            BottomNavItem(Routes.FILMS, stringResource(R.string.films_title), Icons.Outlined.Movie, Icons.Filled.Movie),
+            BottomNavItem(Routes.SERIES, stringResource(R.string.series_title), Icons.Outlined.Tv, Icons.Filled.Tv),
+            BottomNavItem(Routes.MANGA, stringResource(R.string.manga_title), Icons.Outlined.MenuBook, Icons.Filled.MenuBook),
+            BottomNavItem(Routes.BOOKS, stringResource(R.string.books_title), Icons.Outlined.Book, Icons.Filled.Book),
+        )
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -172,6 +174,7 @@ fun MainNavGraph(startDestination: String = Routes.HOME) {
 
             composable(Routes.SEARCH) { SearchScreen(navController) }
             composable(Routes.SETTINGS) { SettingsScreen(navController) }
+            composable(Routes.SETTINGS_GENERAL) { SettingsGeneralScreen(navController) }
             composable(Routes.SETTINGS_APPEARANCE) { SettingsAppearanceScreen(navController) }
             composable(Routes.SETTINGS_NOTIFICATIONS) { SettingsNotificationsScreen(navController) }
             composable(Routes.SETTINGS_INTEGRATIONS) { SettingsIntegrationsScreen(navController) }

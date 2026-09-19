@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -18,6 +19,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.data.db.DB
 import app.oribu.model.ApiSearchResult
 import app.oribu.model.MediaItem
@@ -93,7 +95,7 @@ fun AddMangaScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Adicionar Mangá") },
+                title = { Text(stringResource(R.string.manga_add_button)) },
                 navigationIcon = { IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.Default.ArrowBack, null) } },
             )
         },
@@ -102,7 +104,7 @@ fun AddMangaScreen(
             OutlinedTextField(
                 value = query,
                 onValueChange = { query = it },
-                label = { Text("Buscar mangá ou webtoon...") },
+                label = { Text(stringResource(R.string.add_manga_search_placeholder)) },
                 trailingIcon = {
                     if (query.isNotEmpty()) {
                         IconButton(onClick = {
@@ -155,10 +157,11 @@ fun AddMangaScreen(
     }
 }
 
+@Composable
 private fun mangaStatusInfo(status: MediaStatus): Pair<ImageVector, String> =
     when (status) {
-        MediaStatus.READING -> Icons.Default.MenuBook to "Acompanhando os capítulos"
-        MediaStatus.REREADING -> Icons.Default.Replay to "Lendo de novo"
-        MediaStatus.QUEUED -> Icons.Default.Bookmark to "Quer começar a ler"
+        MediaStatus.READING -> Icons.Default.MenuBook to stringResource(R.string.add_manga_status_reading_subtitle)
+        MediaStatus.REREADING -> Icons.Default.Replay to stringResource(R.string.add_manga_status_rereading_subtitle)
+        MediaStatus.QUEUED -> Icons.Default.Bookmark to stringResource(R.string.add_manga_status_queued_subtitle)
         else -> Icons.Default.Bookmark to ""
     }

@@ -1,6 +1,7 @@
 ﻿package app.oribu.service
 
 import android.util.Log
+import app.oribu.R
 import app.oribu.data.db.DB
 import app.oribu.model.MediaItem
 import app.oribu.model.MediaStatus
@@ -62,10 +63,11 @@ object MediaCacheService {
         }
     }
 
-    // ── Hiato tracking (mangás/webtoons) ────────────────────────────────────────
-    // AniList/MangaDex reportam status de publicação em PT-BR via 'serializationStatus'.
-    // Ao entrar em hiato movemos para Em Hiato; ao sair, para Lido (se cancelado) ou
-    // Lendo (se voltou a ser publicado) — nos dois casos avisando via notificação.
+    // ── Hiatus tracking (manga/webtoons) ────────────────────────────────────────
+    // AniList/MangaDex report publication status as a fixed English label via
+    // 'serializationStatus' (not translated — it doubles as a state-transition key here,
+    // not just display text). Going on hiatus moves the item to On Hold; coming out of it
+    // moves it to Read (if cancelled) or Reading (if publication resumed) — notifying either way.
     private suspend fun checkMangaSerializationStatus(
         item: MediaItem,
         data: Map<String, Any?>,
@@ -74,21 +76,21 @@ object MediaCacheService {
         val id = item.id ?: return
         Log.d("MediaCache", "checkMangaSerializationStatus: item=${item.title} localStatus=${item.status} remoteStatus=$status")
         when {
-            status == "Em hiato" && item.status !in listOf(MediaStatus.ON_HOLD, MediaStatus.READ, MediaStatus.DROPPED) -> {
+            status == "Hiatus" && item.status !in listOf(MediaStatus.ON_HOLD, MediaStatus.READ, MediaStatus.DROPPED) -> {
                 DB.repo.update(item.copy(status = MediaStatus.ON_HOLD))
-                NotificationHelper.notifyStatusChange(id, item.title, "Entrou em hiato — movido para Em Hiato")
+                NotificationHelper.notifyStatusChange(id, item.title, R.string.manga_notification_hiatus)
             }
 
-            status != "Em hiato" && item.status == MediaStatus.ON_HOLD -> {
+            status != "Hiatus" && item.status == MediaStatus.ON_HOLD -> {
                 when (status) {
-                    "Cancelado" -> {
+                    "Cancelled" -> {
                         DB.repo.update(item.copy(status = MediaStatus.READ, completionDate = item.completionDate ?: java.util.Date()))
-                        NotificationHelper.notifyStatusChange(id, item.title, "Publicação cancelada — movido para Lido")
+                        NotificationHelper.notifyStatusChange(id, item.title, R.string.manga_notification_cancelled)
                     }
 
-                    "Em andamento" -> {
+                    "Ongoing" -> {
                         DB.repo.update(item.copy(status = MediaStatus.READING))
-                        NotificationHelper.notifyStatusChange(id, item.title, "Voltou a ser publicado — movido para Lendo")
+                        NotificationHelper.notifyStatusChange(id, item.title, R.string.manga_notification_resumed)
                     }
 
                     else -> {}
@@ -380,19 +382,19 @@ object MediaCacheService {
                 runCatching { ApiServices.anilist.getDetailsById(id) }.getOrNull()
             } ?: return null
 
-        val statusPt =
+        val serializationStatus =
             when (raw["status"] as? String) {
-                "RELEASING" -> "Em andamento"
-                "FINISHED" -> "Finalizado"
-                "NOT_YET_RELEASED" -> "Em breve"
-                "CANCELLED" -> "Cancelado"
-                "HIATUS" -> "Em hiato"
+                "RELEASING" -> "Ongoing"
+                "FINISHED" -> "Finished"
+                "NOT_YET_RELEASED" -> "Coming Soon"
+                "CANCELLED" -> "Cancelled"
+                "HIATUS" -> "Hiatus"
                 else -> raw["status"] as? String
             }
 
-        val formatPt =
+        val mangaFormat =
             when (raw["format"] as? String) {
-                "MANGA" -> "Mangá"
+                "MANGA" -> "Manga"
                 "MANHWA" -> "Manhwa"
                 "MANHUA" -> "Manhua"
                 "ONE_SHOT" -> "One-shot"
@@ -426,14 +428,23 @@ object MediaCacheService {
         val genresPt =
             (raw["genres"] as? List<*>)
                 ?.filterIsInstance<String>()
-                ?.map { genreMap[it] ?: it }
+                ?.map {
+                    if (java.util.Locale
+                            .getDefault()
+                            .language == "pt"
+                    ) {
+                        genreMap[it] ?: it
+                    } else {
+                        it
+                    }
+                }
 
         val result =
             raw.toMutableMap().apply {
                 remove("status")
                 remove("format")
-                put("serializationStatus", statusPt)
-                put("format", formatPt)
+                put("serializationStatus", serializationStatus)
+                put("format", mangaFormat)
                 put("genres", genresPt)
             }
 
@@ -524,6 +535,12 @@ object MediaCacheService {
     }
 
     private fun translateBookGenre(genre: String): String {
+        if (java.util.Locale
+                .getDefault()
+                .language != "pt"
+        ) {
+            return genre
+        }
         val map =
             mapOf(
                 "Fiction" to "Ficção",
@@ -585,6 +602,12 @@ object MediaCacheService {
     }
 
     private fun translateGameGenres(genres: String): String {
+        if (java.util.Locale
+                .getDefault()
+                .language != "pt"
+        ) {
+            return genres
+        }
         val map =
             mapOf(
                 "Platform" to "Plataforma",

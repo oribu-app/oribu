@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -11,8 +12,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.ui.components.EmptyState
 import app.oribu.ui.navigation.Routes
 
@@ -27,18 +31,48 @@ private data class SettingsCategory(
     val route: String,
 )
 
-private val categories =
-    listOf(
-        SettingsCategory("Aparência", "Temas, cores e modo de exibição", Icons.Default.Palette, Routes.SETTINGS_APPEARANCE),
-        SettingsCategory("Notificações", "Atualizações em segundo plano", Icons.Default.Notifications, Routes.SETTINGS_NOTIFICATIONS),
-        SettingsCategory("Integrações", "Status das APIs conectadas", Icons.Default.Cable, Routes.SETTINGS_INTEGRATIONS),
-        SettingsCategory("Plataformas", "Filtros de plataforma em Jogos", Icons.Default.SportsEsports, Routes.SETTINGS_PLATFORMS),
-        SettingsCategory("Dados", "Cache e biblioteca", Icons.Default.Storage, Routes.SETTINGS_DATA),
-    )
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(navController: NavController) {
+    val categories =
+        listOf(
+            SettingsCategory(
+                stringResource(R.string.settings_general_title),
+                stringResource(R.string.settings_general_subtitle),
+                Icons.Default.Language,
+                Routes.SETTINGS_GENERAL,
+            ),
+            SettingsCategory(
+                stringResource(R.string.appearance_title),
+                stringResource(R.string.settings_appearance_subtitle),
+                Icons.Default.Palette,
+                Routes.SETTINGS_APPEARANCE,
+            ),
+            SettingsCategory(
+                stringResource(R.string.settings_notifications_title),
+                stringResource(R.string.settings_notifications_subtitle),
+                Icons.Default.Notifications,
+                Routes.SETTINGS_NOTIFICATIONS,
+            ),
+            SettingsCategory(
+                stringResource(R.string.settings_integrations_title),
+                stringResource(R.string.settings_integrations_subtitle),
+                Icons.Default.Cable,
+                Routes.SETTINGS_INTEGRATIONS,
+            ),
+            SettingsCategory(
+                stringResource(R.string.settings_platforms_title),
+                stringResource(R.string.settings_platforms_subtitle),
+                Icons.Default.SportsEsports,
+                Routes.SETTINGS_PLATFORMS,
+            ),
+            SettingsCategory(
+                stringResource(R.string.settings_data_title),
+                stringResource(R.string.settings_data_subtitle),
+                Icons.Default.Storage,
+                Routes.SETTINGS_DATA,
+            ),
+        )
     var query by remember { mutableStateOf("") }
     val filtered =
         remember(query) {
@@ -51,23 +85,12 @@ fun SettingsScreen(navController: NavController) {
             }
         }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Configurações") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
-                    }
-                },
-            )
-        },
-    ) { padding ->
+    SettingsScaffold(stringResource(R.string.settings_title), navController) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
-            OutlinedTextField(
+            TextField(
                 value = query,
                 onValueChange = { query = it },
-                placeholder = { Text("Buscar em Configurações…") },
+                placeholder = { Text(stringResource(R.string.settings_search_placeholder)) },
                 leadingIcon = { Icon(Icons.Default.Search, null) },
                 trailingIcon = {
                     if (query.isNotEmpty()) {
@@ -75,10 +98,17 @@ fun SettingsScreen(navController: NavController) {
                     }
                 },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors =
+                    TextFieldDefaults.colors(
+                        focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                        unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                        disabledIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                    ),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
             )
             if (filtered.isEmpty()) {
-                EmptyState("Nenhum resultado", "Tente buscar por outro termo")
+                EmptyState(stringResource(R.string.settings_no_results_title), stringResource(R.string.settings_no_results_subtitle))
             } else {
                 LazyColumn(Modifier.fillMaxSize()) {
                     items(filtered) { category ->
@@ -95,14 +125,10 @@ private fun SettingsCategoryRow(
     category: SettingsCategory,
     onClick: () -> Unit,
 ) {
-    ListItem(
-        headlineContent = { Text(category.label) },
-        supportingContent = { Text(category.subtitle) },
-        leadingContent = { Icon(category.icon, null, tint = MaterialTheme.colorScheme.primary) },
-        trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)) },
-        modifier =
-            Modifier
-                .clickable(onClick = onClick)
-                .heightIn(min = 56.dp),
+    SettingsClickRow(
+        title = category.label,
+        onClick = onClick,
+        minHeight = 64.dp,
+        leadingIcon = { Icon(category.icon, null, tint = MaterialTheme.colorScheme.primary) },
     )
 }

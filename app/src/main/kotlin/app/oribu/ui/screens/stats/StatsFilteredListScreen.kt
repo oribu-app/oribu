@@ -10,8 +10,10 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.model.MediaItem
 import app.oribu.model.MediaType
 import app.oribu.ui.components.EmptyState
@@ -38,9 +40,10 @@ private fun navigateToItemDetail(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatsFilteredListScreen(navController: NavController) {
+    val defaultTitle = stringResource(R.string.stats_filtered_default_title)
     val title =
         remember {
-            navController.previousBackStackEntry?.savedStateHandle?.get<String>("filteredTitle") ?: "Itens"
+            navController.previousBackStackEntry?.savedStateHandle?.get<String>("filteredTitle") ?: defaultTitle
         }
     val items =
         remember {
@@ -61,7 +64,7 @@ fun StatsFilteredListScreen(navController: NavController) {
     ) { padding ->
         if (items.isEmpty()) {
             EmptyState(
-                title = "Nenhum item encontrado",
+                title = stringResource(R.string.stats_filtered_empty),
                 modifier = Modifier.padding(padding).fillMaxSize(),
             )
         } else {

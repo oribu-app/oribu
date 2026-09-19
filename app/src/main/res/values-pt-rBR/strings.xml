@@ -1,0 +1,530 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Oribu</string>
+
+    <!-- Comuns -->
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_clear">Limpar</string>
+    <string name="action_close">Fechar</string>
+    <string name="action_edit">Editar</string>
+    <string name="action_save">Salvar</string>
+    <string name="action_remove">Remover</string>
+    <string name="action_refresh">Atualizar</string>
+    <string name="action_favorite">Favoritar</string>
+    <string name="action_remove_favorite">Remover dos favoritos</string>
+    <string name="action_see_more">Ver mais</string>
+    <string name="action_see_less">Ver menos</string>
+    <string name="label_platform">Plataforma</string>
+    <string name="label_status">Status</string>
+    <string name="label_others">Outros</string>
+    <string name="label_favorites">Favoritos</string>
+    <string name="label_coming_soon">Em Breve</string>
+    <string name="label_name">Nome</string>
+    <string name="label_description_optional">Descrição (opcional)</string>
+    <string name="action_delete">Excluir</string>
+    <string name="action_create">Criar</string>
+    <string name="action_add">Adicionar</string>
+    <string name="action_save_changes">Salvar alterações</string>
+    <plurals name="movie_count">
+        <item quantity="one">%d filme</item>
+        <item quantity="other">%d filmes</item>
+    </plurals>
+    <string name="label_notes">Anotações</string>
+    <string name="label_notes_optional">Notas (opcional)</string>
+    <string name="label_synopsis">Sinopse</string>
+    <string name="label_information">Informações</string>
+    <string name="label_genre">Gênero</string>
+    <string name="label_developer">Desenvolvedor</string>
+    <string name="label_publisher">Publicadora</string>
+    <string name="label_dates">Datas</string>
+    <string name="label_added">Adicionado</string>
+    <string name="label_release_date">Lançamento</string>
+    <string name="label_prices">Preços</string>
+    <string name="label_trophies">Troféus</string>
+    <string name="label_achievements">Conquistas</string>
+    <string name="label_recommendations">Recomendações</string>
+
+    <!-- Meses -->
+    <string name="month_january">Janeiro</string>
+    <string name="month_february">Fevereiro</string>
+    <string name="month_march">Março</string>
+    <string name="month_april">Abril</string>
+    <string name="month_may">Maio</string>
+    <string name="month_june">Junho</string>
+    <string name="month_july">Julho</string>
+    <string name="month_august">Agosto</string>
+    <string name="month_september">Setembro</string>
+    <string name="month_october">Outubro</string>
+    <string name="month_november">Novembro</string>
+    <string name="month_december">Dezembro</string>
+
+    <!-- Jogos -->
+    <string name="games_title">Jogos</string>
+    <string name="games_add_button">Adicionar jogo</string>
+    <string name="games_tab_playing">Jogando</string>
+    <string name="games_tab_finished">Zerado</string>
+    <string name="games_tab_platinum">Platinado</string>
+    <string name="games_tab_backlog">Backlog</string>
+    <string name="games_tab_upcoming">Em Breve</string>
+    <string name="games_empty_playing_title">Nenhum jogo em andamento</string>
+    <string name="games_empty_playing_subtitle">Adicione um jogo para começar</string>
+    <string name="games_empty_finished_title">Nenhum jogo zerado</string>
+    <string name="games_empty_finished_subtitle">Jogos que você terminou aparecerão aqui</string>
+    <string name="games_empty_platinum_title">Nenhum jogo platinado</string>
+    <string name="games_empty_platinum_subtitle">Jogos com conquistas completas aparecerão aqui</string>
+    <string name="games_empty_backlog_title">Backlog vazio</string>
+    <string name="games_empty_backlog_subtitle">Jogos que você quer jogar aparecerão aqui</string>
+    <string name="games_empty_upcoming_title">Nenhum lançamento pendente</string>
+    <string name="games_empty_upcoming_subtitle">Jogos com data de lançamento futura aparecerão aqui</string>
+    <string name="games_finish_dialog_title">Jogo finalizado!</string>
+    <string name="games_finish_dialog_message_achievements">Você vai buscar todas as conquistas ou mover para Zerado?</string>
+    <string name="games_finish_dialog_message_platinum">Você vai buscar a platina ou mover para Zerado?</string>
+    <string name="games_finish_dialog_message_generic">Deseja mover este jogo para Zerado?</string>
+    <string name="games_finish_action_achievements">Buscar conquistas</string>
+    <string name="games_finish_action_platinum">Buscar platina</string>
+    <string name="games_finish_action_move_finished">Mover para zerado</string>
+    <string name="games_filters_title">Filtros</string>
+    <string name="games_filters_apply">Aplicar filtros</string>
+    <string name="add_game_title">Adicionar Jogo</string>
+    <string name="add_game_search_placeholder">Buscar jogo...</string>
+    <string name="add_game_status_playing_subtitle">Jogando no momento</string>
+    <string name="add_game_status_replaying_subtitle">Recomeçando do zero</string>
+    <string name="add_game_status_queued_subtitle">Guardado para jogar depois</string>
+    <string name="add_game_status_finished_subtitle">Terminou a história principal</string>
+    <string name="add_game_status_completed_subtitle">Terminou tudo, incluindo extras</string>
+    <string name="add_game_status_platinum_subtitle">Conquistou todos os troféus</string>
+
+    <!-- Detalhe do jogo -->
+    <string name="game_detail_status_completed_story">Completado · História</string>
+    <string name="game_detail_status_completed_extras">Completado · Extras</string>
+    <string name="game_detail_status_completed_100">Completado · 100%</string>
+    <string name="game_detail_completed_menu">Completado</string>
+    <string name="game_detail_completed_story">História</string>
+    <string name="game_detail_change_platform">Alterar plataforma</string>
+    <string name="game_detail_remove_game">Remover jogo</string>
+    <string name="game_detail_available_on">Disponível em</string>
+    <string name="game_detail_dlcs_expansions">DLCs e Expansões</string>
+    <string name="game_detail_completed_story_date">Concluído (História)</string>
+    <string name="game_detail_completed_extras_date">Concluído (Extras)</string>
+    <string name="game_detail_completed_100_date">Concluído (100%)</string>
+    <string name="game_detail_playthroughs">Jogatinas</string>
+    <string name="game_detail_new_playthrough">Nova jogatina</string>
+    <string name="game_detail_no_playthroughs">Nenhuma jogatina registrada ainda</string>
+    <string name="game_detail_estimated_duration">Duração estimada</string>
+    <string name="game_detail_lowest_price_over_time">Menor preço ao longo do tempo</string>
+    <string name="game_detail_lowest_price">%1$s menor preço</string>
+    <string name="game_detail_view_all_achievements">Ver todas (%1$d)</string>
+    <string name="game_detail_remove_confirm">Remover \"%1$s\" da biblioteca?</string>
+    <string name="game_detail_playthrough_new_title">Nova jogatina</string>
+    <string name="game_detail_playthrough_edit_title">Editar jogatina</string>
+    <string name="game_detail_playthrough_title_placeholder">Ex.: Primeira zerada, Speedrun...</string>
+    <string name="game_detail_playthrough_progress">Progresso: %1$d%%</string>
+    <string name="game_detail_playthrough_start_label">Início (dd/MM/aaaa)</string>
+    <string name="game_detail_playthrough_end_label">Fim (dd/MM/aaaa)</string>
+    <string name="game_detail_playthrough_hours_label">Horas jogadas</string>
+    <string name="game_detail_delete_playthrough">Excluir jogatina</string>
+    <string name="game_detail_playthrough_not_started">Não iniciada</string>
+    <string name="game_detail_trophies_unlocked">Troféus desbloqueados</string>
+    <string name="game_detail_achievements_unlocked">Conquistas desbloqueadas</string>
+    <string name="game_detail_percent_completed">%1$d%% concluído</string>
+    <string name="game_detail_trophy_platinum">Platina</string>
+    <string name="game_detail_trophy_gold">Ouro</string>
+    <string name="game_detail_trophy_silver">Prata</string>
+    <string name="game_detail_no_trophies">Nenhum troféu registrado ainda.</string>
+    <string name="game_detail_no_achievements">Nenhuma conquista registrada ainda.</string>
+
+    <!-- Filmes -->
+    <string name="films_title">Filmes</string>
+    <string name="films_add_button">Adicionar filme</string>
+    <string name="films_tab_all">Todos</string>
+    <string name="films_tab_watched">Assistidos</string>
+    <string name="films_tab_want_to_watch">Quero Assistir</string>
+    <string name="films_tab_lists">Listas</string>
+    <string name="films_empty_all_title">Nenhum filme na biblioteca</string>
+    <string name="films_empty_all_subtitle">Adicione um filme para começar</string>
+    <string name="films_empty_filtered_title">Nenhum filme com esse filtro</string>
+    <string name="films_empty_filtered_subtitle">Tente outro filtro</string>
+    <string name="films_empty_watched_title">Nenhum filme assistido</string>
+    <string name="films_empty_watched_subtitle">Filmes que você assistiu aparecerão aqui</string>
+    <string name="films_empty_queued_title">Nenhum filme na fila</string>
+    <string name="films_empty_queued_subtitle">Filmes que você quer assistir aparecerão aqui</string>
+    <string name="films_empty_lists_title">Nenhuma lista ainda</string>
+    <string name="films_empty_lists_subtitle">Crie listas para organizar filmes por tema ou ocasião</string>
+    <string name="films_new_list">Nova lista</string>
+    <string name="films_empty_upcoming_title">Nenhum lançamento pendente</string>
+    <string name="films_empty_upcoming_subtitle">Filmes com data futura aparecerão aqui</string>
+    <string name="films_no_date_header">Sem data definida</string>
+    <string name="films_delete_list_title">Excluir lista</string>
+    <string name="films_delete_list_confirm">Excluir \"%1$s\"? Os filmes não serão removidos da biblioteca.</string>
+    <string name="films_list_name_required">Nome *</string>
+    <string name="films_sheet_no_films">Nenhum filme na biblioteca ainda.</string>
+    <string name="add_film_search_placeholder">Buscar filme via TMDB...</string>
+    <string name="add_film_add_manually">Adicionar manualmente</string>
+    <string name="add_film_option_watched_subtitle">Já vi este filme</string>
+    <string name="add_film_option_queue_subtitle">Adicionar à fila</string>
+    <string name="add_film_option_list_title">Adicionar a Lista</string>
+    <string name="add_film_option_list_subtitle">Organizar em uma lista temática</string>
+    <string name="add_film_create_first_list">Criar primeira lista</string>
+    <string name="add_film_list_name_placeholder">Nome da lista</string>
+    <string name="film_detail_related_movies">Filmes Relacionados</string>
+    <string name="film_detail_add_to_list">Adicionar à lista</string>
+    <string name="film_detail_remove_film">Remover filme</string>
+    <string name="film_detail_remove_confirm">Remover \"%1$s\" da sua biblioteca?</string>
+    <string name="label_genres">Gêneros</string>
+    <string name="film_detail_where_to_watch">Onde Assistir</string>
+    <string name="film_detail_cast">Elenco</string>
+    <string name="film_detail_crew">Equipe Técnica</string>
+    <string name="film_detail_no_lists">Nenhuma lista criada ainda</string>
+    <string name="film_detail_create_and_add">Criar e adicionar</string>
+    <string name="movie_preview_title_fallback">Filme</string>
+    <string name="movie_preview_load_error">Não foi possível carregar este filme</string>
+    <string name="movie_preview_already_in_library">Já está na sua biblioteca</string>
+    <string name="movie_preview_view_in_library">Ver na biblioteca</string>
+    <string name="movie_preview_add_to_library">Adicionar à biblioteca</string>
+
+    <!-- Séries -->
+    <string name="series_title">Séries</string>
+    <string name="series_add_button">Adicionar série</string>
+    <string name="series_tab_watching">Assistindo</string>
+    <string name="series_tab_history">Histórico</string>
+    <string name="series_empty_history_title">Histórico vazio</string>
+    <string name="series_empty_history_subtitle">Episódios que você marcar como assistidos aparecerão aqui</string>
+    <string name="series_empty_all_title">Nenhuma série na biblioteca</string>
+    <string name="series_empty_all_subtitle">Adicione uma série para começar</string>
+    <string name="series_empty_watching_title">Nenhuma série em andamento</string>
+    <string name="series_empty_watching_subtitle">Séries que você está assistindo aparecerão aqui</string>
+    <string name="series_empty_queued_title">Nenhuma série na fila</string>
+    <string name="series_empty_queued_subtitle">Séries que você quer assistir aparecerão aqui</string>
+    <string name="series_empty_upcoming_title">Nenhum lançamento pendente</string>
+    <string name="series_empty_upcoming_subtitle">Séries aguardando estreia ou nova temporada aparecerão aqui</string>
+    <string name="series_empty_filtered_title">Nenhuma série com esse filtro</string>
+    <string name="add_series_search_placeholder">Buscar série...</string>
+    <string name="add_series_status_watching_subtitle">Acompanhando os episódios</string>
+    <string name="add_series_status_rewatching_subtitle">Vendo tudo de novo</string>
+    <string name="add_series_status_queued_subtitle">Quer começar a assistir</string>
+    <string name="add_series_status_history_subtitle">Já assistiu, sem acompanhar mais</string>
+
+    <!-- Detalhe da série -->
+    <string name="series_detail_hide_related">Ocultar relacionadas</string>
+    <string name="series_detail_show_related">Mostrar relacionadas</string>
+    <string name="series_detail_remove_series">Remover série</string>
+    <string name="series_detail_remove_confirm">Remover \"%1$s\" da sua biblioteca?</string>
+    <string name="series_detail_seasons_count">Temporadas (%1$d)</string>
+    <string name="series_detail_related_series">Séries relacionadas</string>
+    <string name="series_detail_season_fallback">Temporada %1$d</string>
+    <string name="series_detail_episode_fallback">Episódio %1$d</string>
+    <string name="series_detail_not_watched">Não assistido</string>
+    <string name="series_detail_period_ongoing">%1$d – presente</string>
+    <plurals name="episode_count">
+        <item quantity="one">%d episódio</item>
+        <item quantity="other">%d episódios</item>
+    </plurals>
+
+    <!-- Mangás -->
+    <string name="manga_title">Mangás</string>
+    <string name="manga_add_button">Adicionar mangá</string>
+    <string name="manga_tab_reading">Lendo</string>
+    <string name="manga_tab_read">Lidos</string>
+    <string name="manga_tab_on_hold">Em Hiato</string>
+    <string name="manga_tab_want_to_read">Quero Ler</string>
+    <string name="manga_empty_all_title">Nenhum mangá na biblioteca</string>
+    <string name="manga_empty_all_subtitle">Adicione um mangá para começar</string>
+    <string name="manga_empty_reading_title">Nenhum mangá em leitura</string>
+    <string name="manga_empty_reading_subtitle">Mangás que você está lendo aparecerão aqui</string>
+    <string name="manga_empty_read_title">Nenhum mangá lido</string>
+    <string name="manga_empty_read_subtitle">Mangás que você concluiu aparecerão aqui</string>
+    <string name="manga_empty_on_hold_title">Nenhum mangá em hiato</string>
+    <string name="manga_empty_on_hold_subtitle">Mangás pausados aparecerão aqui</string>
+    <string name="manga_empty_want_title">Lista de leitura vazia</string>
+    <string name="manga_empty_want_subtitle">Mangás que você quer ler aparecerão aqui</string>
+    <string name="add_manga_search_placeholder">Buscar mangá ou webtoon...</string>
+    <string name="add_manga_status_reading_subtitle">Acompanhando os capítulos</string>
+    <string name="add_manga_status_rereading_subtitle">Lendo de novo</string>
+    <string name="add_manga_status_queued_subtitle">Quer começar a ler</string>
+
+    <!-- Detalhe do mangá -->
+    <string name="manga_detail_edit_progress">Editar progresso</string>
+    <string name="manga_detail_edit_start_date">Editar data de início</string>
+    <string name="manga_detail_remove_manga">Remover mangá</string>
+    <string name="manga_detail_remove_confirm">Remover \"%1$s\" da sua biblioteca?</string>
+    <string name="manga_detail_progress">Progresso</string>
+    <string name="manga_detail_chapter_current">Capítulo %1$d</string>
+    <string name="manga_detail_chapter_of_total">Capítulo %1$d de %2$d</string>
+    <string name="manga_detail_format">Formato</string>
+    <string name="manga_detail_chapters_label">Capítulos</string>
+    <string name="manga_detail_reading_start">Início da leitura</string>
+    <string name="manga_detail_publication_start">Início da publicação</string>
+    <string name="manga_detail_publication_end">Fim da publicação</string>
+    <string name="manga_detail_reading_end">Finalização da leitura</string>
+    <string name="manga_detail_rating">Avaliação</string>
+    <string name="manga_detail_no_rating">Nenhuma avaliação ainda</string>
+    <string name="manga_detail_review">Resenha</string>
+    <string name="manga_detail_review_title_placeholder">Título (opcional)</string>
+    <string name="manga_detail_review_text_placeholder">Impressões, spoilers…</string>
+    <string name="manga_detail_no_review">Nenhuma resenha ainda</string>
+    <string name="manga_detail_previous_readings">Leituras anteriores</string>
+    <string name="manga_detail_characters">Personagens</string>
+    <string name="manga_detail_synonyms">Sinônimos</string>
+    <string name="manga_detail_error_invalid_number">Digite um número válido</string>
+    <string name="manga_detail_error_negative">Não pode ser negativo</string>
+    <string name="manga_detail_error_max_chapters">Máximo: %1$d capítulos</string>
+    <string name="manga_detail_current_chapter_title">Capítulo atual</string>
+    <string name="manga_detail_chapter_field_label">Capítulo</string>
+    <string name="action_confirm">Confirmar</string>
+
+    <!-- Livros -->
+    <string name="books_title">Livros</string>
+    <string name="books_add_button">Adicionar livro</string>
+    <string name="books_tab_read">Lido</string>
+    <string name="books_empty_all_title">Nenhum livro na biblioteca</string>
+    <string name="books_empty_all_subtitle">Adicione um livro para começar</string>
+    <string name="books_empty_reading_title">Nenhum livro em leitura</string>
+    <string name="books_empty_reading_subtitle">Livros que você está lendo aparecerão aqui</string>
+    <string name="books_empty_read_title">Nenhum livro lido</string>
+    <string name="books_empty_read_subtitle">Livros que você concluiu aparecerão aqui</string>
+    <string name="books_empty_dropped_title">Nenhum livro abandonado</string>
+    <string name="books_empty_dropped_subtitle">Livros que você parou de ler aparecerão aqui</string>
+    <string name="books_empty_want_title">Lista de leitura vazia</string>
+    <string name="books_empty_want_subtitle">Livros que você quer ler aparecerão aqui</string>
+    <string name="add_book_search_placeholder">Título, autor ou editora...</string>
+    <string name="add_book_status_reading_subtitle">Lendo atualmente</string>
+    <string name="add_book_status_rereading_subtitle">Lendo de novo</string>
+    <string name="add_book_status_queued_subtitle">Quer ler em breve</string>
+    <string name="add_quote_placeholder">Citação</string>
+    <string name="add_quote_comment_placeholder">Comentário (opcional)</string>
+
+    <!-- Detalhe do livro -->
+    <string name="book_detail_edit_end_date">Editar data de conclusão</string>
+    <string name="book_detail_remove_book">Remover livro</string>
+    <string name="book_detail_remove_confirm">Remover \"%1$s\" da sua biblioteca?</string>
+    <string name="book_detail_author">Autor</string>
+    <string name="book_detail_pages">Páginas</string>
+    <string name="book_detail_reading_history">Histórico de Leitura</string>
+    <string name="book_detail_page_current">Página %1$d</string>
+    <string name="book_detail_page_of_total">Página %1$d de %2$d</string>
+    <string name="book_detail_view_full_history">Ver histórico completo</string>
+    <string name="book_detail_start">Início</string>
+    <string name="book_detail_completed">Concluído</string>
+    <string name="book_detail_reread">Releitura</string>
+    <string name="book_detail_edition_publication">Publicação desta edição</string>
+    <string name="book_detail_quotes">Citações</string>
+    <string name="book_detail_add_quote">Adicionar citação</string>
+    <string name="book_detail_no_quotes">Nenhuma citação ainda</string>
+    <string name="book_detail_error_max_pages">Máximo: %1$d páginas</string>
+    <string name="book_detail_current_page_title">Página atual</string>
+    <string name="book_detail_page_field_label">Página</string>
+    <string name="book_detail_no_notes">Nenhuma anotação.</string>
+    <string name="book_detail_edit_note_title">Editar anotação</string>
+    <string name="book_detail_remove_note_title">Remover anotação</string>
+    <string name="book_detail_remove_note_confirm">Remover esta anotação do histórico?</string>
+
+    <!-- Home -->
+    <string name="home_nothing_yet_multiline">Nada\nainda</string>
+    <string name="home_nothing_yet">Nada ainda</string>
+
+    <!-- Calendário -->
+    <string name="calendar_title">Lançamentos</string>
+    <string name="calendar_empty_title">Nenhum lançamento em %1$s</string>
+    <string name="calendar_empty_subtitle">Adicione títulos com status \'Aguardando lançamento\'</string>
+    <string name="calendar_week_of">Semana de %1$s</string>
+    <string name="calendar_released">Lançado</string>
+    <string name="calendar_today">Hoje</string>
+    <string name="calendar_tomorrow">Amanhã</string>
+
+    <!-- Histórico -->
+    <string name="history_title">Histórico</string>
+    <string name="history_empty_title">Nenhum título concluído em %1$d</string>
+    <string name="history_empty_subtitle">Títulos concluídos aparecem aqui</string>
+    <string name="history_wrapped_title">Resumo do ano</string>
+    <string name="history_wrapped_message">O resumo visual do seu ano estará disponível em breve.</string>
+    <string name="action_ok">Ok</string>
+
+    <!-- Busca -->
+    <string name="search_placeholder_type">Buscar %1$s…</string>
+    <string name="search_library_placeholder">Buscar na biblioteca…</string>
+    <string name="search_tab_library">Biblioteca</string>
+    <string name="search_tab_new">Nova busca</string>
+    <string name="search_library_prompt">Busque na sua biblioteca</string>
+    <string name="search_no_results">Nenhum resultado para \"%1$s\"</string>
+    <string name="search_in_library">Na biblioteca</string>
+    <string name="search_via">Buscando via %1$s</string>
+    <string name="search_error_title">Não foi possível buscar</string>
+    <string name="search_no_results_found">Nenhum resultado encontrado</string>
+    <string name="search_prompt_type">Busque um %1$s</string>
+    <string name="search_prompt_hint">Digite o nome e pressione Buscar</string>
+    <string name="add_sheet_platform_optional">Plataforma (opcional)</string>
+    <string name="search_page_current_optional">Página atual (opcional)</string>
+    <string name="search_chapter_current_optional">Capítulo atual (opcional)</string>
+    <string name="search_add_type">Adicionar %1$s</string>
+
+    <!-- Estatísticas -->
+    <string name="stats_games_finished">Jogos Zerados</string>
+    <string name="stats_games_platinum">Jogos Platinados</string>
+    <string name="stats_movies_watched">Filmes Assistidos</string>
+    <string name="stats_movies_want">Filmes em Quero Assistir</string>
+    <string name="stats_episodes_watched">Episódios Assistidos</string>
+    <string name="stats_series_want">Séries em Quero Assistir</string>
+    <string name="stats_chapters_read">Capítulos Lidos</string>
+    <string name="stats_books_read">Livros Lidos</string>
+    <string name="stats_view_details">Ver estatísticas detalhadas</string>
+    <string name="stats_general">Geral</string>
+    <string name="stats_details">Detalhes</string>
+    <string name="stats_details_title">Detalhes — %1$s</string>
+    <string name="stats_filtered_default_title">Itens</string>
+    <string name="stats_filtered_empty">Nenhum item encontrado</string>
+
+    <!-- Hub de configurações -->
+    <string name="settings_title">Configurações</string>
+    <string name="settings_search_placeholder">Pesquisar configurações</string>
+    <string name="settings_no_results_title">Nenhum resultado</string>
+    <string name="settings_no_results_subtitle">Tente buscar por outro termo</string>
+    <string name="settings_appearance_subtitle">Temas, cores e modo de exibição</string>
+    <string name="settings_notifications_title">Notificações</string>
+    <string name="settings_notifications_subtitle">Atualizações em segundo plano</string>
+    <string name="settings_integrations_title">Integrações</string>
+    <string name="settings_integrations_subtitle">Status das APIs conectadas</string>
+    <string name="settings_platforms_title">Plataformas</string>
+    <string name="settings_platforms_subtitle">Filtros de plataforma em Jogos</string>
+    <string name="settings_data_title">Dados</string>
+    <string name="settings_data_subtitle">Cache e biblioteca</string>
+    <string name="settings_general_title">Geral</string>
+    <string name="settings_general_subtitle">Idioma e formato de data</string>
+
+    <!-- Aparência -->
+    <string name="appearance_title">Aparência</string>
+    <string name="appearance_app_theme">Tema do aplicativo</string>
+    <string name="appearance_light_theme">Tema claro</string>
+    <string name="appearance_dark_theme">Tema escuro</string>
+
+    <!-- Nomes dos temas — tradução real do Rokku (values-pt-rBR/values-pt-rBR.xml), não uma
+         tradução literal do inglês (ex: "flat_lime" vira "Neko" no Rokku, não "Cal Chapado"). -->
+    <string name="theme_white_theme">Branco Puro</string>
+    <string name="theme_dark">Escuro</string>
+    <string name="theme_spring_blossom">Flor da Primavera</string>
+    <string name="theme_midnight_dusk">Aurora-da-noite</string>
+    <string name="theme_strawberry_daiquiri">Coquetel de Morango</string>
+    <string name="theme_chocolate_strawberries">Morango Chocolate</string>
+    <string name="theme_teal_ocean">Verde Azulado Oceânico</string>
+    <string name="theme_sapphire_dusk">Safira Sombreado</string>
+    <string name="theme_lavender">Lavanda</string>
+    <string name="theme_violet">Violeta</string>
+    <string name="theme_tako">Tako</string>
+    <string name="theme_yang">Yang</string>
+    <string name="theme_yin">Yin</string>
+    <string name="theme_lime_time">Tempo de Limão</string>
+    <string name="theme_flat_lime">Neko</string>
+    <string name="theme_yotsuba">Yotsuba</string>
+    <string name="theme_doki">Doki</string>
+    <string name="appearance_pure_black">Modo Escuro com preto absoluto</string>
+    <string name="appearance_accent_color">Cor de destaque</string>
+    <string name="appearance_use_theme_accent">Usar cor do tema nas categorias</string>
+    <string name="appearance_use_theme_accent_subtitle">Quando ligado, jogos, mangás, séries, filmes e livros usam a cor primária do tema selecionado em vez da cor própria de cada categoria</string>
+    <string name="appearance_follow_system">Seguir tema do sistema</string>
+
+    <!-- Aparência > Página de detalhes (nome exato em inglês no Rokku: "Details page") -->
+    <string name="appearance_details_page">Página de detalhes</string>
+    <string name="appearance_theme_based_on_cover">Cores baseadas na capa</string>
+    <string name="appearance_theme_based_on_cover_subtitle">As telas de detalhes de jogos, mangás, séries, filmes e livros passam a usar a cor da própria capa de cada item como destaque, em vez da cor do tema do app</string>
+    <string name="appearance_cover_theme_style">Estilo de cor da capa</string>
+    <string name="cover_theme_style_legacy">Tema legado</string>
+    <string name="cover_theme_style_tonal_spot">Tonal Spot</string>
+    <string name="cover_theme_style_neutral">Neutro</string>
+    <string name="cover_theme_style_vibrant">Vibrante</string>
+    <string name="cover_theme_style_expressive">Expressivo</string>
+    <string name="cover_theme_style_rainbow">Arco-íris</string>
+    <string name="cover_theme_style_fruit_salad">Salada de Frutas</string>
+    <string name="cover_theme_style_monochrome">Monocromático</string>
+    <string name="cover_theme_style_fidelity">Fidelidade</string>
+    <string name="cover_theme_style_content">Conteúdo</string>
+
+    <!-- Geral / Localidade -->
+    <string name="general_title">Geral</string>
+    <string name="general_locale_section">Localidade</string>
+    <string name="general_language">Idioma</string>
+    <string name="general_date_format">Formato de data</string>
+
+    <!-- Configurações: Dados -->
+    <string name="settings_data_update_all">Atualizar todos os caches</string>
+    <string name="settings_data_updating">Atualizando…</string>
+    <string name="settings_data_update_success">Cache atualizado com sucesso</string>
+    <string name="settings_data_sync_subtitle">Sincronizar metadados com as APIs</string>
+    <string name="settings_data_delete_all">Apagar todos os dados</string>
+    <string name="settings_data_delete_all_subtitle">Remove toda a biblioteca e histórico</string>
+    <string name="settings_data_delete_confirm_title">Apagar todos os dados?</string>
+    <string name="settings_data_delete_confirm_message">Esta ação é irreversível. Toda a sua biblioteca, histórico e cache serão removidos permanentemente.</string>
+    <string name="settings_data_delete_confirm_button">Apagar tudo</string>
+
+    <!-- Configurações: Notificações -->
+    <string name="settings_notif_daily_update">Atualização diária</string>
+    <string name="settings_notif_daily_update_subtitle">Verificar novidades em segundo plano</string>
+
+    <!-- Configurações: Plataformas -->
+    <string name="settings_platforms_description">Escolha quais plataformas aparecem como opção de filtro na tela de Jogos.</string>
+
+    <!-- Sobre -->
+    <string name="about_title">Sobre</string>
+    <string name="about_already_latest">Você já está na versão mais recente</string>
+    <string name="about_check_error">Erro ao checar atualizações: %1$s</string>
+    <string name="about_downloading">Baixando atualização em segundo plano</string>
+    <string name="about_no_installer">Nenhum instalador encontrado nessa release</string>
+    <string name="about_whats_new">O que há de novo neste lançamento</string>
+    <string name="about_check_updates">Procurar por atualizações</string>
+    <string name="about_checking">Checando...</string>
+    <string name="about_version">Versão</string>
+    <string name="about_copied">Copiado para a área de transferência</string>
+    <string name="about_build_date">Data de compilação</string>
+    <string name="about_help_translate">Ajude a traduzir</string>
+    <string name="about_open_source_licenses">Licenças de código aberto</string>
+    <string name="about_new_version_available">Nova versão disponível: %1$s</string>
+    <string name="about_no_release_notes">Sem notas de versão.</string>
+    <string name="action_update">Atualizar</string>
+    <string name="action_ignore">Ignorar</string>
+    <string name="about_open_website">Abrir site</string>
+    <string name="about_no_license_text">Sem texto de licença disponível.</string>
+    <string name="notes_placeholder">Escreva uma anotação livre sobre este item...</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_start">Começar</string>
+    <string name="onboarding_next">Próxima</string>
+    <string name="onboarding_welcome">Bem Vindo(a)!</string>
+    <string name="onboarding_intro">Vamos definir algumas coisas primeiro. Você sempre pode fazer alterações nas configurações depois também.</string>
+    <string name="onboarding_apikeys_description">Opcional — sem elas o app funciona com dados limitados. Você pode configurar tudo isso depois em Configurações → Integrações.</string>
+    <string name="onboarding_permissions_title">Opcional, mas recomendado</string>
+    <string name="onboarding_notif_subtitle">Avisos de novidades e atualizações da biblioteca</string>
+    <string name="onboarding_battery_title">Ignorar otimização de bateria</string>
+    <string name="onboarding_battery_subtitle">Evita que o sistema atrase a atualização diária em segundo plano</string>
+    <string name="onboarding_grant">Conceder</string>
+    <string name="onboarding_storage_description">Escolha uma pasta no seu dispositivo para uso futuro em backups. Pode ser configurada ou trocada depois em Configurações — esse passo é opcional.</string>
+    <string name="onboarding_change_folder">Trocar pasta</string>
+    <string name="onboarding_select_folder">Selecionar pasta</string>
+
+    <!-- Componentes compartilhados -->
+    <string name="common_help">Ajuda</string>
+    <string name="component_edit_note">Editar anotação</string>
+    <string name="rating_awful">Péssimo</string>
+    <string name="rating_very_bad">Muito ruim</string>
+    <string name="rating_bad">Ruim</string>
+    <string name="rating_weak">Fraco</string>
+    <string name="rating_average">Mediano</string>
+    <string name="rating_ok">Ok</string>
+    <string name="rating_good">Bom</string>
+    <string name="rating_very_good">Muito bom</string>
+    <string name="rating_excellent">Excelente</string>
+    <string name="rating_masterpiece">Obra-prima</string>
+
+    <!-- Credenciais de serviço -->
+    <string name="service_tmdb_desc">Filmes e séries</string>
+    <string name="service_igdb_desc">Jogos (requer app no Twitch Developer Console)</string>
+    <string name="service_google_books_desc">Livros (opcional — a busca já funciona sem chave)</string>
+    <string name="service_steam_desc">Biblioteca e conquistas</string>
+    <string name="service_itad_desc">Preços e histórico de descontos (IsThereAnyDeal)</string>
+    <string name="service_anilist_note">AniList não exige chave própria — a busca de mangás e webtoons já funciona sem configuração.</string>
+    <string name="service_test_connection">Testar conexão</string>
+
+    <!-- Notificações -->
+    <string name="notif_channel_manga">Atualizações de mangás</string>
+    <string name="notif_channel_app_updates">Atualizações do app</string>
+    <string name="manga_notification_hiatus">Entrou em hiato — movido para Em Hiato</string>
+    <string name="manga_notification_cancelled">Publicação cancelada — movido para Lido</string>
+    <string name="manga_notification_resumed">Voltou a ser publicado — movido para Lendo</string>
+</resources>

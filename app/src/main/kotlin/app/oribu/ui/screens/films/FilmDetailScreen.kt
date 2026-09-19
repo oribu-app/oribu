@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -35,6 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.data.db.DB
 import app.oribu.data.db.entity.MovieListEntity
 import app.oribu.model.MediaItem
@@ -45,6 +47,7 @@ import app.oribu.ui.navigation.Routes
 import app.oribu.ui.navigation.navigateToAnotacoes
 import app.oribu.ui.navigation.rememberAnotacoesResult
 import app.oribu.ui.theme.ColorFilme
+import app.oribu.ui.theme.CoverThemedSurface
 import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -145,10 +148,10 @@ fun FilmDetailScreen(
 
     val statusLabel =
         when (mediaItem.status) {
-            MediaStatus.WATCHED -> "Assistido"
-            MediaStatus.REWATCHING -> "Reassistindo"
-            MediaStatus.WAITING_RELEASE -> "Aguardando Lançamento"
-            else -> "Quero Assistir"
+            MediaStatus.WATCHED -> MediaStatus.WATCHED.label
+            MediaStatus.REWATCHING -> MediaStatus.REWATCHING.label
+            MediaStatus.WAITING_RELEASE -> MediaStatus.WAITING_RELEASE.label
+            else -> stringResource(R.string.films_tab_want_to_watch)
         }
     val synopsis = cache?.get("synopsis") as? String
     val posterUrl = cache?.get("posterUrl") as? String ?: mediaItem.coverUrl
@@ -184,7 +187,7 @@ fun FilmDetailScreen(
             }
         }
 
-    val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")) }
+    val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
 
     val dataLabel =
         releaseDateMs?.let {
@@ -208,428 +211,440 @@ fun FilmDetailScreen(
     val coverHeight = coverWidth / 0.714f
     val bgUrl = backdropUrl ?: posterUrl
 
-    Scaffold { _ ->
-        Box(Modifier.fillMaxSize()) {
-            LazyColumn(Modifier.fillMaxSize()) {
-                // ── Header: capa centralizada + título (formato jogos) ─────────
-                item {
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(coverHeight + 160.dp),
-                    ) {
-                        // Blurred background
-                        AsyncImage(
-                            model = bgUrl,
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize().blur(28.dp),
-                        )
-                        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)))
-
-                        // Centered cover + title (below status bar area)
-                        Column(
-                            Modifier
-                                .fillMaxWidth()
-                                .align(Alignment.Center)
-                                .padding(top = 56.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                        ) {
-                            // Cover with shadow
-                            Box(
-                                Modifier
-                                    .shadow(30.dp, RoundedCornerShape(8.dp))
-                                    .clip(RoundedCornerShape(8.dp)),
-                            ) {
-                                AsyncImage(
-                                    model = posterUrl,
-                                    contentDescription = null,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier.width(coverWidth).height(coverHeight),
-                                )
-                            }
-                            Spacer(Modifier.height(28.dp))
-                            // Title
-                            Text(
-                                mediaItem.title,
-                                color = Color.White,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                textAlign = TextAlign.Center,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.padding(horizontal = 28.dp),
-                                lineHeight = 26.sp,
-                            )
-                        }
-
-                        // Bottom gradient fade
+    CoverThemedSurface(posterUrl) {
+        Scaffold { _ ->
+            Box(Modifier.fillMaxSize()) {
+                LazyColumn(Modifier.fillMaxSize()) {
+                    // ── Header: capa centralizada + título (formato jogos) ─────────
+                    item {
                         Box(
                             Modifier
                                 .fillMaxWidth()
-                                .height(60.dp)
-                                .align(Alignment.BottomCenter)
-                                .background(
-                                    androidx.compose.ui.graphics.Brush.verticalGradient(
-                                        listOf(Color.Transparent, Color.Black.copy(alpha = 0.45f)),
-                                    ),
-                                ),
-                        )
-                    }
-                }
+                                .height(coverHeight + 160.dp),
+                        ) {
+                            // Blurred background
+                            AsyncImage(
+                                model = bgUrl,
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize().blur(28.dp),
+                            )
+                            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)))
 
-                // ── Status button row (centered) ──────────────────────────────
-                item {
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 20.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        // Status button
-                        Box {
-                            Surface(
-                                color = ColorFilme,
-                                shape = RoundedCornerShape(10.dp),
-                                modifier =
-                                    Modifier
-                                        .widthIn(min = 150.dp, max = 260.dp)
-                                        .clickable { showStatusMenu = true },
+                            // Centered cover + title (below status bar area)
+                            Column(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .align(Alignment.Center)
+                                    .padding(top = 56.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
                             ) {
-                                Row(
-                                    Modifier.padding(horizontal = 20.dp, vertical = 13.dp),
-                                    horizontalArrangement = Arrangement.Center,
-                                    verticalAlignment = Alignment.CenterVertically,
+                                // Cover with shadow
+                                Box(
+                                    Modifier
+                                        .shadow(30.dp, RoundedCornerShape(8.dp))
+                                        .clip(RoundedCornerShape(8.dp)),
                                 ) {
-                                    Icon(Icons.Default.UnfoldMore, null, tint = Color.White, modifier = Modifier.size(18.dp))
-                                    Spacer(Modifier.width(8.dp))
-                                    Text(
-                                        statusLabel,
-                                        color = Color.White,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 14.sp,
+                                    AsyncImage(
+                                        model = posterUrl,
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.width(coverWidth).height(coverHeight),
                                     )
                                 }
+                                Spacer(Modifier.height(28.dp))
+                                // Title
+                                Text(
+                                    mediaItem.title,
+                                    color = Color.White,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.padding(horizontal = 28.dp),
+                                    lineHeight = 26.sp,
+                                )
                             }
-                            DropdownMenu(expanded = showStatusMenu, onDismissRequest = { showStatusMenu = false }) {
-                                FilmStatusMenuItem(
-                                    Icons.Default.CheckCircle,
-                                    "Assistido",
-                                    mediaItem.status == MediaStatus.WATCHED,
-                                    ColorFilme,
-                                ) {
-                                    vm.setStatus(MediaStatus.WATCHED)
-                                    showStatusMenu =
-                                        false
-                                }
-                                FilmStatusMenuItem(
-                                    Icons.Default.Replay,
-                                    "Reassistindo",
-                                    mediaItem.status == MediaStatus.REWATCHING,
-                                    ColorFilme,
-                                ) {
-                                    vm.setStatus(MediaStatus.REWATCHING)
-                                    showStatusMenu =
-                                        false
-                                }
-                                FilmStatusMenuItem(
-                                    Icons.Default.Queue,
-                                    "Quero Assistir",
-                                    mediaItem.status == MediaStatus.QUEUED,
-                                    ColorFilme,
-                                ) {
-                                    vm.setStatus(MediaStatus.QUEUED)
-                                    showStatusMenu =
-                                        false
-                                }
-                            }
-                        }
-                        Spacer(Modifier.width(8.dp))
-                        // "..." button
-                        Box {
-                            IconButton(onClick = { showMoreMenu = true }) {
-                                Icon(Icons.Default.MoreHoriz, null)
-                            }
-                            DropdownMenu(expanded = showMoreMenu, onDismissRequest = { showMoreMenu = false }) {
-                                DropdownMenuItem(text = {
-                                    Text(
-                                        "Atualizar",
-                                    )
-                                }, leadingIcon = { Icon(Icons.Default.Refresh, null) }, onClick = {
-                                    vm.refreshCache()
-                                    showMoreMenu =
-                                        false
-                                })
-                                DropdownMenuItem(text = {
-                                    Text(
-                                        "Anotações",
-                                    )
-                                }, leadingIcon = { Icon(Icons.AutoMirrored.Filled.Notes, null) }, onClick = {
-                                    navController.navigateToAnotacoes(mediaItem)
-                                    showMoreMenu =
-                                        false
-                                })
-                                DropdownMenuItem(text = {
-                                    Text(
-                                        "Filmes Relacionados",
-                                    )
-                                }, leadingIcon = { Icon(Icons.Default.MovieCreation, null) }, onClick = {
-                                    showRelated =
-                                        !showRelated
-                                    ; showMoreMenu = false
-                                })
-                                DropdownMenuItem(text = {
-                                    Text(
-                                        "Adicionar à lista",
-                                    )
-                                }, leadingIcon = { Icon(Icons.Default.PlaylistAdd, null) }, onClick = {
-                                    showAddToList =
-                                        true
-                                    ; showMoreMenu = false
-                                })
-                                DropdownMenuItem(text = {
-                                    Text(if (mediaItem.favorite) "Remover dos favoritos" else "Favoritar")
-                                }, leadingIcon = {
-                                    Icon(
-                                        if (mediaItem.favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                        null,
-                                    )
-                                }, onClick = {
-                                    vm.toggleFavorite()
-                                    showMoreMenu =
-                                        false
-                                })
-                                HorizontalDivider()
-                                DropdownMenuItem(text = {
-                                    Text("Remover filme", color = MaterialTheme.colorScheme.error)
-                                }, leadingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) }, onClick = {
-                                    showDelete =
-                                        true
-                                    ; showMoreMenu = false
-                                })
-                            }
+
+                            // Bottom gradient fade
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(60.dp)
+                                    .align(Alignment.BottomCenter)
+                                    .background(
+                                        androidx.compose.ui.graphics.Brush.verticalGradient(
+                                            listOf(Color.Transparent, Color.Black.copy(alpha = 0.45f)),
+                                        ),
+                                    ),
+                            )
                         }
                     }
-                }
 
-                // ── Meta row: data + duração ──────────────────────────────────
-                if (dataLabel.isNotEmpty() || duracaoLabel.isNotEmpty()) {
+                    // ── Status button row (centered) ──────────────────────────────
                     item {
                         Row(
-                            Modifier.padding(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 20.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            if (dataLabel.isNotEmpty()) {
-                                FilmMetaItem(Icons.Default.CalendarToday, dataLabel)
-                            }
-                            if (duracaoLabel.isNotEmpty()) {
-                                FilmMetaItem(Icons.Default.Schedule, duracaoLabel)
-                            }
-                        }
-                        Spacer(Modifier.height(20.dp))
-                    }
-                }
-
-                // ── Sinopse ──────────────────────────────────────────────────
-                if (synopsis != null) {
-                    item {
-                        Column(Modifier.padding(horizontal = 16.dp)) {
-                            FilmSectionTitle("Sinopse")
-                            Spacer(Modifier.height(8.dp))
-                            Text(
-                                synopsis,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                                lineHeight = 22.sp,
-                                maxLines = if (synopsisExpanded) Int.MAX_VALUE else 4,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            Spacer(Modifier.height(4.dp))
-                            Text(
-                                if (synopsisExpanded) "Ver menos" else "Ver mais",
-                                color = ColorFilme,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.clickable { synopsisExpanded = !synopsisExpanded },
-                            )
-                            Spacer(Modifier.height(24.dp))
-                        }
-                    }
-                }
-
-                // ── Gêneros ──────────────────────────────────────────────────
-                if (!genres.isNullOrEmpty()) {
-                    item {
-                        Column(Modifier.padding(horizontal = 16.dp)) {
-                            FilmSectionTitle("Gêneros")
-                            Spacer(Modifier.height(6.dp))
-                            Text(
-                                genres.joinToString(", "),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
-                            )
-                            Spacer(Modifier.height(16.dp))
-                        }
-                    }
-                }
-
-                if (vm.loadingCache) {
-                    item {
-                        Box(Modifier.fillMaxWidth().padding(vertical = 24.dp), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = ColorFilme)
-                        }
-                    }
-                } else {
-                    // ── Onde Assistir ─────────────────────────────────────────
-                    if (providers.isNotEmpty()) {
-                        item {
-                            Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                                FilmSectionTitle("Onde Assistir")
-                                Spacer(Modifier.height(12.dp))
-                                if (providers.size > 2) {
-                                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                        providers.chunked(2).forEach { row ->
-                                            Row(
-                                                Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                            ) {
-                                                row.forEach { p ->
-                                                    FilmProviderRow(p, modifier = Modifier.weight(1f))
-                                                }
-                                                if (row.size == 1) Spacer(Modifier.weight(1f))
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                        providers.forEach { p -> FilmProviderRow(p) }
+                            // Status button
+                            Box {
+                                Surface(
+                                    color = ColorFilme,
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier =
+                                        Modifier
+                                            .widthIn(min = 150.dp, max = 260.dp)
+                                            .clickable { showStatusMenu = true },
+                                ) {
+                                    Row(
+                                        Modifier.padding(horizontal = 20.dp, vertical = 13.dp),
+                                        horizontalArrangement = Arrangement.Center,
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        Icon(Icons.Default.UnfoldMore, null, tint = Color.White, modifier = Modifier.size(18.dp))
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(
+                                            statusLabel,
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 14.sp,
+                                        )
                                     }
                                 }
+                                DropdownMenu(expanded = showStatusMenu, onDismissRequest = { showStatusMenu = false }) {
+                                    FilmStatusMenuItem(
+                                        Icons.Default.CheckCircle,
+                                        MediaStatus.WATCHED.label,
+                                        mediaItem.status == MediaStatus.WATCHED,
+                                        ColorFilme,
+                                    ) {
+                                        vm.setStatus(MediaStatus.WATCHED)
+                                        showStatusMenu =
+                                            false
+                                    }
+                                    FilmStatusMenuItem(
+                                        Icons.Default.Replay,
+                                        MediaStatus.REWATCHING.label,
+                                        mediaItem.status == MediaStatus.REWATCHING,
+                                        ColorFilme,
+                                    ) {
+                                        vm.setStatus(MediaStatus.REWATCHING)
+                                        showStatusMenu =
+                                            false
+                                    }
+                                    FilmStatusMenuItem(
+                                        Icons.Default.Queue,
+                                        stringResource(R.string.films_tab_want_to_watch),
+                                        mediaItem.status == MediaStatus.QUEUED,
+                                        ColorFilme,
+                                    ) {
+                                        vm.setStatus(MediaStatus.QUEUED)
+                                        showStatusMenu =
+                                            false
+                                    }
+                                }
+                            }
+                            Spacer(Modifier.width(8.dp))
+                            // "..." button
+                            Box {
+                                IconButton(onClick = { showMoreMenu = true }) {
+                                    Icon(Icons.Default.MoreHoriz, null)
+                                }
+                                DropdownMenu(expanded = showMoreMenu, onDismissRequest = { showMoreMenu = false }) {
+                                    DropdownMenuItem(text = {
+                                        Text(
+                                            stringResource(R.string.action_refresh),
+                                        )
+                                    }, leadingIcon = { Icon(Icons.Default.Refresh, null) }, onClick = {
+                                        vm.refreshCache()
+                                        showMoreMenu =
+                                            false
+                                    })
+                                    DropdownMenuItem(text = {
+                                        Text(
+                                            stringResource(R.string.label_notes),
+                                        )
+                                    }, leadingIcon = { Icon(Icons.AutoMirrored.Filled.Notes, null) }, onClick = {
+                                        navController.navigateToAnotacoes(mediaItem)
+                                        showMoreMenu =
+                                            false
+                                    })
+                                    DropdownMenuItem(text = {
+                                        Text(
+                                            stringResource(R.string.film_detail_related_movies),
+                                        )
+                                    }, leadingIcon = { Icon(Icons.Default.MovieCreation, null) }, onClick = {
+                                        showRelated =
+                                            !showRelated
+                                        ; showMoreMenu = false
+                                    })
+                                    DropdownMenuItem(text = {
+                                        Text(
+                                            stringResource(R.string.film_detail_add_to_list),
+                                        )
+                                    }, leadingIcon = { Icon(Icons.Default.PlaylistAdd, null) }, onClick = {
+                                        showAddToList =
+                                            true
+                                        ; showMoreMenu = false
+                                    })
+                                    DropdownMenuItem(text = {
+                                        Text(
+                                            stringResource(
+                                                if (mediaItem.favorite) R.string.action_remove_favorite else R.string.action_favorite,
+                                            ),
+                                        )
+                                    }, leadingIcon = {
+                                        Icon(
+                                            if (mediaItem.favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                            null,
+                                        )
+                                    }, onClick = {
+                                        vm.toggleFavorite()
+                                        showMoreMenu =
+                                            false
+                                    })
+                                    HorizontalDivider()
+                                    DropdownMenuItem(text = {
+                                        Text(stringResource(R.string.film_detail_remove_film), color = MaterialTheme.colorScheme.error)
+                                    }, leadingIcon = {
+                                        Icon(
+                                            Icons.Default.Delete,
+                                            null,
+                                            tint = MaterialTheme.colorScheme.error,
+                                        )
+                                    }, onClick = {
+                                        showDelete =
+                                            true
+                                        ; showMoreMenu = false
+                                    })
+                                }
+                            }
+                        }
+                    }
+
+                    // ── Meta row: data + duração ──────────────────────────────────
+                    if (dataLabel.isNotEmpty() || duracaoLabel.isNotEmpty()) {
+                        item {
+                            Row(
+                                Modifier.padding(horizontal = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            ) {
+                                if (dataLabel.isNotEmpty()) {
+                                    FilmMetaItem(Icons.Default.CalendarToday, dataLabel)
+                                }
+                                if (duracaoLabel.isNotEmpty()) {
+                                    FilmMetaItem(Icons.Default.Schedule, duracaoLabel)
+                                }
+                            }
+                            Spacer(Modifier.height(20.dp))
+                        }
+                    }
+
+                    // ── Sinopse ──────────────────────────────────────────────────
+                    if (synopsis != null) {
+                        item {
+                            Column(Modifier.padding(horizontal = 16.dp)) {
+                                FilmSectionTitle(stringResource(R.string.label_synopsis))
+                                Spacer(Modifier.height(8.dp))
+                                Text(
+                                    synopsis,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                                    lineHeight = 22.sp,
+                                    maxLines = if (synopsisExpanded) Int.MAX_VALUE else 4,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    stringResource(if (synopsisExpanded) R.string.action_see_less else R.string.action_see_more),
+                                    color = ColorFilme,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.clickable { synopsisExpanded = !synopsisExpanded },
+                                )
                                 Spacer(Modifier.height(24.dp))
                             }
                         }
                     }
 
-                    // ── Elenco ───────────────────────────────────────────────
-                    if (!cast.isNullOrEmpty()) {
+                    // ── Gêneros ──────────────────────────────────────────────────
+                    if (!genres.isNullOrEmpty()) {
                         item {
-                            Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                                FilmSectionTitle("Elenco")
-                                Spacer(Modifier.height(12.dp))
-                                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                    items(cast) { p ->
-                                        FilmPersonAvatar(
-                                            name = p["name"] as? String ?: p["nome"] as? String ?: "",
-                                            sub = p["character"] as? String ?: p["personagem"] as? String ?: "",
-                                            photoUrl = p["photoUrl"] as? String ?: p["fotoUrl"] as? String,
-                                        )
-                                    }
-                                }
-                                Spacer(Modifier.height(12.dp))
+                            Column(Modifier.padding(horizontal = 16.dp)) {
+                                FilmSectionTitle(stringResource(R.string.label_genres))
+                                Spacer(Modifier.height(6.dp))
+                                Text(
+                                    genres.joinToString(", "),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+                                )
+                                Spacer(Modifier.height(16.dp))
                             }
                         }
                     }
 
-                    // ── Equipe Técnica ────────────────────────────────────────
-                    if (!crew.isNullOrEmpty()) {
+                    if (vm.loadingCache) {
                         item {
-                            Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                                FilmSectionTitle("Equipe Técnica")
-                                Spacer(Modifier.height(12.dp))
-                                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                    items(crew) { p ->
-                                        FilmPersonAvatar(
-                                            name = p["name"] as? String ?: p["nome"] as? String ?: "",
-                                            sub = p["role"] as? String ?: p["funcao"] as? String ?: "",
-                                            photoUrl = p["photoUrl"] as? String ?: p["fotoUrl"] as? String,
-                                        )
-                                    }
-                                }
-                                Spacer(Modifier.height(12.dp))
+                            Box(Modifier.fillMaxWidth().padding(vertical = 24.dp), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(color = ColorFilme)
                             }
                         }
-                    }
-                }
+                    } else {
+                        // ── Onde Assistir ─────────────────────────────────────────
+                        if (providers.isNotEmpty()) {
+                            item {
+                                Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                                    FilmSectionTitle(stringResource(R.string.film_detail_where_to_watch))
+                                    Spacer(Modifier.height(12.dp))
+                                    if (providers.size > 2) {
+                                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                            providers.chunked(2).forEach { row ->
+                                                Row(
+                                                    Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                                ) {
+                                                    row.forEach { p ->
+                                                        FilmProviderRow(p, modifier = Modifier.weight(1f))
+                                                    }
+                                                    if (row.size == 1) Spacer(Modifier.weight(1f))
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                            providers.forEach { p -> FilmProviderRow(p) }
+                                        }
+                                    }
+                                    Spacer(Modifier.height(24.dp))
+                                }
+                            }
+                        }
 
-                item {
-                    AnotacoesSection(mediaItem.personalNotes) { navController.navigateToAnotacoes(mediaItem) }
-                }
-
-                // ── Filmes Relacionados (toggle) ──────────────────────────────
-                if (showRelated && !related.isNullOrEmpty()) {
-                    item {
-                        Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                            FilmSectionTitle("Filmes Relacionados")
-                            Spacer(Modifier.height(10.dp))
-                            Row(
-                                Modifier.horizontalScroll(rememberScrollState()),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                related.forEach { rel ->
-                                    val title = rel["title"] as? String ?: rel["titulo"] as? String ?: ""
-                                    val relPoster = rel["posterUrl"] as? String
-                                    val year = (rel["year"] as? Double)?.toInt() ?: (rel["ano"] as? Double)?.toInt()
-                                    val relId = (rel["id"] as? Double)?.toInt()
-                                    Column(
-                                        Modifier
-                                            .width(90.dp)
-                                            .clickable(enabled = relId != null) {
-                                                navController.currentBackStackEntry?.savedStateHandle?.set("tmdbId", relId)
-                                                navController.navigate(Routes.FILMS_PREVIEW)
-                                            },
-                                    ) {
-                                        AsyncImage(
-                                            model = relPoster,
-                                            contentDescription = title,
-                                            contentScale = ContentScale.Crop,
-                                            modifier =
-                                                Modifier
-                                                    .width(90.dp)
-                                                    .height(130.dp)
-                                                    .clip(RoundedCornerShape(4.dp)),
-                                        )
-                                        Spacer(Modifier.height(5.dp))
-                                        Text(
-                                            title,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            fontWeight = FontWeight.SemiBold,
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis,
-                                        )
-                                        if (year !=
-                                            null
-                                        ) {
-                                            Text(
-                                                "$year",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                                                fontSize = 11.sp,
+                        // ── Elenco ───────────────────────────────────────────────
+                        if (!cast.isNullOrEmpty()) {
+                            item {
+                                Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                                    FilmSectionTitle(stringResource(R.string.film_detail_cast))
+                                    Spacer(Modifier.height(12.dp))
+                                    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                        items(cast) { p ->
+                                            FilmPersonAvatar(
+                                                name = p["name"] as? String ?: p["nome"] as? String ?: "",
+                                                sub = p["character"] as? String ?: p["personagem"] as? String ?: "",
+                                                photoUrl = p["photoUrl"] as? String ?: p["fotoUrl"] as? String,
                                             )
                                         }
                                     }
+                                    Spacer(Modifier.height(12.dp))
                                 }
                             }
-                            Spacer(Modifier.height(16.dp))
+                        }
+
+                        // ── Equipe Técnica ────────────────────────────────────────
+                        if (!crew.isNullOrEmpty()) {
+                            item {
+                                Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                                    FilmSectionTitle(stringResource(R.string.film_detail_crew))
+                                    Spacer(Modifier.height(12.dp))
+                                    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                        items(crew) { p ->
+                                            FilmPersonAvatar(
+                                                name = p["name"] as? String ?: p["nome"] as? String ?: "",
+                                                sub = p["role"] as? String ?: p["funcao"] as? String ?: "",
+                                                photoUrl = p["photoUrl"] as? String ?: p["fotoUrl"] as? String,
+                                            )
+                                        }
+                                    }
+                                    Spacer(Modifier.height(12.dp))
+                                }
+                            }
                         }
                     }
+
+                    item {
+                        AnotacoesSection(mediaItem.personalNotes) { navController.navigateToAnotacoes(mediaItem) }
+                    }
+
+                    // ── Filmes Relacionados (toggle) ──────────────────────────────
+                    if (showRelated && !related.isNullOrEmpty()) {
+                        item {
+                            Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                                FilmSectionTitle(stringResource(R.string.film_detail_related_movies))
+                                Spacer(Modifier.height(10.dp))
+                                Row(
+                                    Modifier.horizontalScroll(rememberScrollState()),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    related.forEach { rel ->
+                                        val title = rel["title"] as? String ?: rel["titulo"] as? String ?: ""
+                                        val relPoster = rel["posterUrl"] as? String
+                                        val year = (rel["year"] as? Double)?.toInt() ?: (rel["ano"] as? Double)?.toInt()
+                                        val relId = (rel["id"] as? Double)?.toInt()
+                                        Column(
+                                            Modifier
+                                                .width(90.dp)
+                                                .clickable(enabled = relId != null) {
+                                                    navController.currentBackStackEntry?.savedStateHandle?.set("tmdbId", relId)
+                                                    navController.navigate(Routes.FILMS_PREVIEW)
+                                                },
+                                        ) {
+                                            AsyncImage(
+                                                model = relPoster,
+                                                contentDescription = title,
+                                                contentScale = ContentScale.Crop,
+                                                modifier =
+                                                    Modifier
+                                                        .width(90.dp)
+                                                        .height(130.dp)
+                                                        .clip(RoundedCornerShape(4.dp)),
+                                            )
+                                            Spacer(Modifier.height(5.dp))
+                                            Text(
+                                                title,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                fontWeight = FontWeight.SemiBold,
+                                                maxLines = 2,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                            if (year !=
+                                                null
+                                            ) {
+                                                Text(
+                                                    "$year",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                                                    fontSize = 11.sp,
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                                Spacer(Modifier.height(16.dp))
+                            }
+                        }
+                    }
+
+                    item { Spacer(Modifier.height(80.dp)) }
                 }
 
-                item { Spacer(Modifier.height(80.dp)) }
-            }
-
-            // Floating back button — circular, black-54 background
-            IconButton(
-                onClick = { navController.popBackStack() },
-                modifier = Modifier.statusBarsPadding().padding(4.dp),
-            ) {
-                Box(
-                    Modifier
-                        .size(34.dp)
-                        .background(Color.Black.copy(alpha = 0.54f), CircleShape),
-                    contentAlignment = Alignment.Center,
+                // Floating back button — circular, black-54 background
+                IconButton(
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier.statusBarsPadding().padding(4.dp),
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White, modifier = Modifier.size(18.dp))
+                    Box(
+                        Modifier
+                            .size(34.dp)
+                            .background(Color.Black.copy(alpha = 0.54f), CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White, modifier = Modifier.size(18.dp))
+                    }
                 }
             }
         }
@@ -642,15 +657,15 @@ fun FilmDetailScreen(
     if (showDelete) {
         AlertDialog(
             onDismissRequest = { showDelete = false },
-            title = { Text("Remover filme") },
-            text = { Text("Remover \"${mediaItem.title}\" da sua biblioteca?") },
+            title = { Text(stringResource(R.string.film_detail_remove_film)) },
+            text = { Text(stringResource(R.string.film_detail_remove_confirm, mediaItem.title)) },
             confirmButton = {
                 Button(
                     onClick = { vm.delete { navController.popBackStack() } },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                ) { Text("Remover") }
+                ) { Text(stringResource(R.string.action_remove)) }
             },
-            dismissButton = { TextButton(onClick = { showDelete = false }) { Text("Cancelar") } },
+            dismissButton = { TextButton(onClick = { showDelete = false }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
 }
@@ -731,11 +746,15 @@ private fun AddToListSheet(
 
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.padding(horizontal = 20.dp, vertical = 8.dp).padding(bottom = 32.dp)) {
-            Text("Adicionar à lista", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(
+                stringResource(R.string.film_detail_add_to_list),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
             Spacer(Modifier.height(12.dp))
             if (lists.isEmpty() && !showCreate) {
                 Text(
-                    "Nenhuma lista criada ainda",
+                    stringResource(R.string.film_detail_no_lists),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                 )
@@ -757,7 +776,7 @@ private fun AddToListSheet(
                 OutlinedTextField(
                     value = newListName,
                     onValueChange = { newListName = it },
-                    label = { Text("Nome da lista") },
+                    label = { Text(stringResource(R.string.add_film_list_name_placeholder)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -766,7 +785,7 @@ private fun AddToListSheet(
                     OutlinedButton(onClick = {
                         showCreate = false
                         newListName = ""
-                    }) { Text("Cancelar") }
+                    }) { Text(stringResource(R.string.action_cancel)) }
                     Button(
                         enabled = newListName.isNotBlank(),
                         onClick = {
@@ -784,13 +803,13 @@ private fun AddToListSheet(
                                 showCreate = false
                             }
                         },
-                    ) { Text("Criar e adicionar") }
+                    ) { Text(stringResource(R.string.film_detail_create_and_add)) }
                 }
             } else {
                 TextButton(onClick = { showCreate = true }) {
                     Icon(Icons.Default.Add, null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("Nova lista")
+                    Text(stringResource(R.string.films_new_list))
                 }
             }
         }

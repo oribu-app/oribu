@@ -10,9 +10,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.data.db.DB
 import app.oribu.model.MediaItem
 import kotlinx.coroutines.launch
@@ -49,7 +51,7 @@ fun AddQuoteScreen(
                     .padding(horizontal = 8.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                TextButton(onClick = { save() }, enabled = quote.isNotBlank()) { Text("Salvar") }
+                TextButton(onClick = { save() }, enabled = quote.isNotBlank()) { Text(stringResource(R.string.action_save)) }
                 Text(
                     book.title,
                     style = MaterialTheme.typography.titleMedium,
@@ -58,7 +60,7 @@ fun AddQuoteScreen(
                     modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
                 )
                 IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(Icons.Default.Close, contentDescription = "Fechar")
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.action_close))
                 }
             }
         },
@@ -73,7 +75,7 @@ fun AddQuoteScreen(
             OutlinedTextField(
                 value = quote,
                 onValueChange = { quote = it },
-                placeholder = { Text("Citação") },
+                placeholder = { Text(stringResource(R.string.add_quote_placeholder)) },
                 minLines = 4,
                 maxLines = 10,
                 modifier = Modifier.fillMaxWidth(),
@@ -81,7 +83,7 @@ fun AddQuoteScreen(
             OutlinedTextField(
                 value = comment,
                 onValueChange = { comment = it },
-                placeholder = { Text("Comentário (opcional)") },
+                placeholder = { Text(stringResource(R.string.add_quote_comment_placeholder)) },
                 modifier = Modifier.fillMaxWidth(),
             )
         }

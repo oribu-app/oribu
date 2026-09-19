@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -35,6 +36,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.data.db.DB
 import app.oribu.model.MangaReview
 import app.oribu.model.MediaItem
@@ -46,6 +48,7 @@ import app.oribu.ui.components.StarRatingPicker
 import app.oribu.ui.navigation.navigateToAnotacoes
 import app.oribu.ui.navigation.rememberAnotacoesResult
 import app.oribu.ui.theme.ColorManga
+import app.oribu.ui.theme.CoverThemedSurface
 import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -216,7 +219,7 @@ fun MangaDetailScreen(
     var pendingRating by remember { mutableStateOf(0) }
     var pendingReviewTitle by remember { mutableStateOf("") }
     var pendingNotes by remember { mutableStateOf("") }
-    val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")) }
+    val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
 
     val coverUrl = cache?.get("coverUrl") as? String ?: mediaItem.coverUrl
     val synopsis = cache?.get("synopsis") as? String
@@ -243,572 +246,620 @@ fun MangaDetailScreen(
     val coverWidth = (screenWidth * 0.58f).coerceIn(160.dp, 230.dp)
     val coverHeight = coverWidth / 0.7f
 
-    Scaffold { _ ->
-        Box(Modifier.fillMaxSize()) {
-            LazyColumn(Modifier.fillMaxSize()) {
-                // ── Header: blurred bg + centered cover + title ───────────────
-                item {
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(coverHeight + 160.dp),
-                    ) {
-                        AsyncImage(
-                            model = coverUrl,
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .blur(28.dp),
-                        )
-                        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)))
-                        Column(
+    CoverThemedSurface(coverUrl) {
+        Scaffold { _ ->
+            Box(Modifier.fillMaxSize()) {
+                LazyColumn(Modifier.fillMaxSize()) {
+                    // ── Header: blurred bg + centered cover + title ───────────────
+                    item {
+                        Box(
                             Modifier
-                                .align(Alignment.Center)
-                                .padding(horizontal = 24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
+                                .fillMaxWidth()
+                                .height(coverHeight + 160.dp),
                         ) {
-                            Box(
-                                Modifier
-                                    .shadow(30.dp, RoundedCornerShape(8.dp))
-                                    .clip(RoundedCornerShape(8.dp)),
-                            ) {
-                                AsyncImage(
-                                    model = coverUrl,
-                                    contentDescription = null,
-                                    contentScale = ContentScale.Fit,
-                                    modifier = Modifier.width(coverWidth).height(coverHeight),
-                                )
-                            }
-                            Spacer(Modifier.height(12.dp))
-                            Text(
-                                mediaItem.title,
-                                color = Color.White,
-                                fontSize = 19.sp,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                lineHeight = 25.sp,
-                                maxLines = 3,
-                                overflow = TextOverflow.Ellipsis,
+                            AsyncImage(
+                                model = coverUrl,
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier =
+                                    Modifier
+                                        .fillMaxSize()
+                                        .blur(28.dp),
                             )
-                            if (!authors.isNullOrEmpty()) {
-                                Spacer(Modifier.height(4.dp))
+                            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)))
+                            Column(
+                                Modifier
+                                    .align(Alignment.Center)
+                                    .padding(horizontal = 24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                Box(
+                                    Modifier
+                                        .shadow(30.dp, RoundedCornerShape(8.dp))
+                                        .clip(RoundedCornerShape(8.dp)),
+                                ) {
+                                    AsyncImage(
+                                        model = coverUrl,
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Fit,
+                                        modifier = Modifier.width(coverWidth).height(coverHeight),
+                                    )
+                                }
+                                Spacer(Modifier.height(12.dp))
                                 Text(
-                                    authors.joinToString(", "),
-                                    color = Color.White.copy(alpha = 0.7f),
-                                    fontSize = 13.sp,
+                                    mediaItem.title,
+                                    color = Color.White,
+                                    fontSize = 19.sp,
+                                    fontWeight = FontWeight.Bold,
                                     textAlign = TextAlign.Center,
-                                    maxLines = 2,
+                                    lineHeight = 25.sp,
+                                    maxLines = 3,
                                     overflow = TextOverflow.Ellipsis,
                                 )
+                                if (!authors.isNullOrEmpty()) {
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(
+                                        authors.joinToString(", "),
+                                        color = Color.White.copy(alpha = 0.7f),
+                                        fontSize = 13.sp,
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
                             }
                         }
                     }
-                }
 
-                // ── Status button + "..." button (centered) ───────────────────
-                item {
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp, vertical = 20.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Box {
-                            Button(
-                                onClick = { showStatusMenu = true },
-                                colors = ButtonDefaults.buttonColors(containerColor = ColorManga),
-                                shape = RoundedCornerShape(4.dp),
-                                border = BorderStroke(1.5.dp, Color.White.copy(alpha = 0.24f)),
-                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
-                            ) {
-                                Icon(Icons.Default.UnfoldMore, null, modifier = Modifier.size(16.dp))
-                                Spacer(Modifier.width(4.dp))
-                                Text(mangaStatusLabel(mediaItem.status), fontSize = 13.sp)
-                            }
-                            DropdownMenu(expanded = showStatusMenu, onDismissRequest = { showStatusMenu = false }) {
-                                MediaStatus
-                                    .forManga()
-                                    .filter { it != MediaStatus.READ || serializationStatus != "Em andamento" }
-                                    .forEach { s ->
-                                        val selected = s == mediaItem.status
-                                        DropdownMenuItem(
-                                            text = { Text(mangaStatusLabel(s)) },
-                                            trailingIcon = {
-                                                if (selected) {
-                                                    Icon(
-                                                        Icons.Default.Check,
-                                                        null,
-                                                        tint = ColorManga,
-                                                        modifier = Modifier.size(16.dp),
-                                                    )
-                                                }
-                                            },
-                                            onClick = {
-                                                vm.setStatus(s)
-                                                showStatusMenu = false
-                                            },
-                                        )
-                                    }
-                            }
-                        }
-                        Spacer(Modifier.width(12.dp))
-                        Box {
-                            IconButton(onClick = { showMoreMenu = true }) {
-                                Icon(Icons.Default.MoreHoriz, null)
-                            }
-                            DropdownMenu(expanded = showMoreMenu, onDismissRequest = { showMoreMenu = false }) {
-                                DropdownMenuItem(
-                                    text = { Text("Atualizar") },
-                                    leadingIcon = { Icon(Icons.Default.Refresh, null) },
-                                    onClick = {
-                                        vm.refreshCache()
-                                        showMoreMenu = false
-                                    },
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Editar progresso") },
-                                    leadingIcon = { Icon(Icons.Default.Bookmark, null) },
-                                    onClick = {
-                                        chapterInput = (mediaItem.currentProgress ?: 0).toString()
-                                        showChapterDialog = true
-                                        showMoreMenu =
-                                            false
-                                    },
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Editar data de início") },
-                                    leadingIcon = { Icon(Icons.Default.CalendarMonth, null) },
-                                    onClick = {
-                                        showStartDatePicker = true
-                                        showMoreMenu = false
-                                    },
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Anotações") },
-                                    leadingIcon = { Icon(Icons.AutoMirrored.Filled.Notes, null) },
-                                    onClick = {
-                                        navController.navigateToAnotacoes(mediaItem)
-                                        showMoreMenu = false
-                                    },
-                                )
-                                DropdownMenuItem(
-                                    text = { Text(if (mediaItem.favorite) "Remover dos favoritos" else "Favoritar") },
-                                    leadingIcon = {
-                                        Icon(
-                                            if (mediaItem.favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                            null,
-                                        )
-                                    },
-                                    onClick = {
-                                        vm.toggleFavorite()
-                                        showMoreMenu = false
-                                    },
-                                )
-                                HorizontalDivider()
-                                DropdownMenuItem(
-                                    text = { Text("Remover mangá", color = MaterialTheme.colorScheme.error) },
-                                    leadingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) },
-                                    onClick = {
-                                        showDelete = true
-                                        showMoreMenu = false
-                                    },
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // ── Sinopse ──────────────────────────────────────────────────
-                if (synopsis != null) {
+                    // ── Status button + "..." button (centered) ───────────────────
                     item {
-                        Column(Modifier.padding(horizontal = 16.dp)) {
-                            MangaSectionTitle("Sinopse")
-                            Spacer(Modifier.height(8.dp))
-                            Text(
-                                synopsis,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                                lineHeight = 22.sp,
-                                maxLines = if (synopsisExpanded) Int.MAX_VALUE else 5,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            Spacer(Modifier.height(4.dp))
-                            Text(
-                                if (synopsisExpanded) "Ver menos" else "Ver mais",
-                                color = ColorManga,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.clickable { synopsisExpanded = !synopsisExpanded },
-                            )
-                            Spacer(Modifier.height(24.dp))
-                        }
-                    }
-                }
-
-                // ── Progresso de capítulos ────────────────────────────────────
-                item {
-                    Column(Modifier.padding(horizontal = 16.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp, vertical = 20.dp),
+                            horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            MangaSectionTitle("Progresso")
-                            IconButton(
-                                onClick = {
-                                    chapterInput = (mediaItem.currentProgress ?: 0).toString()
-                                    showChapterDialog = true
-                                },
-                                modifier = Modifier.size(32.dp),
-                            ) {
-                                Icon(Icons.Default.Edit, contentDescription = "Editar", tint = ColorManga, modifier = Modifier.size(18.dp))
+                            Box {
+                                Button(
+                                    onClick = { showStatusMenu = true },
+                                    colors = ButtonDefaults.buttonColors(containerColor = ColorManga),
+                                    shape = RoundedCornerShape(4.dp),
+                                    border = BorderStroke(1.5.dp, Color.White.copy(alpha = 0.24f)),
+                                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+                                ) {
+                                    Icon(Icons.Default.UnfoldMore, null, modifier = Modifier.size(16.dp))
+                                    Spacer(Modifier.width(4.dp))
+                                    Text(mangaStatusLabel(mediaItem.status), fontSize = 13.sp)
+                                }
+                                DropdownMenu(expanded = showStatusMenu, onDismissRequest = { showStatusMenu = false }) {
+                                    MediaStatus
+                                        .forManga()
+                                        .filter { it != MediaStatus.READ || serializationStatus != "Ongoing" }
+                                        .forEach { s ->
+                                            val selected = s == mediaItem.status
+                                            DropdownMenuItem(
+                                                text = { Text(mangaStatusLabel(s)) },
+                                                trailingIcon = {
+                                                    if (selected) {
+                                                        Icon(
+                                                            Icons.Default.Check,
+                                                            null,
+                                                            tint = ColorManga,
+                                                            modifier = Modifier.size(16.dp),
+                                                        )
+                                                    }
+                                                },
+                                                onClick = {
+                                                    vm.setStatus(s)
+                                                    showStatusMenu = false
+                                                },
+                                            )
+                                        }
+                                }
+                            }
+                            Spacer(Modifier.width(12.dp))
+                            Box {
+                                IconButton(onClick = { showMoreMenu = true }) {
+                                    Icon(Icons.Default.MoreHoriz, null)
+                                }
+                                DropdownMenu(expanded = showMoreMenu, onDismissRequest = { showMoreMenu = false }) {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.action_refresh)) },
+                                        leadingIcon = { Icon(Icons.Default.Refresh, null) },
+                                        onClick = {
+                                            vm.refreshCache()
+                                            showMoreMenu = false
+                                        },
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.manga_detail_edit_progress)) },
+                                        leadingIcon = { Icon(Icons.Default.Bookmark, null) },
+                                        onClick = {
+                                            chapterInput = (mediaItem.currentProgress ?: 0).toString()
+                                            showChapterDialog = true
+                                            showMoreMenu =
+                                                false
+                                        },
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.manga_detail_edit_start_date)) },
+                                        leadingIcon = { Icon(Icons.Default.CalendarMonth, null) },
+                                        onClick = {
+                                            showStartDatePicker = true
+                                            showMoreMenu = false
+                                        },
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.label_notes)) },
+                                        leadingIcon = { Icon(Icons.AutoMirrored.Filled.Notes, null) },
+                                        onClick = {
+                                            navController.navigateToAnotacoes(mediaItem)
+                                            showMoreMenu = false
+                                        },
+                                    )
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                stringResource(
+                                                    if (mediaItem.favorite) R.string.action_remove_favorite else R.string.action_favorite,
+                                                ),
+                                            )
+                                        },
+                                        leadingIcon = {
+                                            Icon(
+                                                if (mediaItem.favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                                null,
+                                            )
+                                        },
+                                        onClick = {
+                                            vm.toggleFavorite()
+                                            showMoreMenu = false
+                                        },
+                                    )
+                                    HorizontalDivider()
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                stringResource(R.string.manga_detail_remove_manga),
+                                                color = MaterialTheme.colorScheme.error,
+                                            )
+                                        },
+                                        leadingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) },
+                                        onClick = {
+                                            showDelete = true
+                                            showMoreMenu = false
+                                        },
+                                    )
+                                }
                             }
                         }
-                        val displayedProgress =
-                            (mediaItem.currentProgress ?: 0).let { p ->
-                                if (chapters != null) p.coerceIn(0, chapters) else p
-                            }
-                        if (chapters != null && chapters > 0) {
-                            LinearProgressIndicator(
-                                progress = { (displayedProgress.toFloat() / chapters.toFloat()).coerceIn(0f, 1f) },
-                                modifier = Modifier.fillMaxWidth(),
-                                color = ColorManga,
-                                trackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
-                                strokeCap = StrokeCap.Butt,
-                            )
-                        }
-                        Text(
-                            "Capítulo $displayedProgress" + (chapters?.let { " de $it" } ?: ""),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        )
                     }
-                    Spacer(Modifier.height(16.dp))
-                }
 
-                // ── Informações ───────────────────────────────────────────────
-                item {
-                    Column(Modifier.padding(horizontal = 16.dp)) {
-                        MangaSectionTitle("Informações")
-                        Spacer(Modifier.height(10.dp))
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            if (format != null) MangaInfoCard("Formato", format)
-                            if (!genres.isNullOrEmpty()) MangaInfoCard("Gênero", genres.take(3).joinToString(", "))
-                            if (volumes != null) MangaInfoCard("Volumes", "$volumes")
-                            if (chapters != null) MangaInfoCard("Capítulos", "$chapters")
-                            if (serializationStatus != null) MangaInfoCard("Status", serializationStatus)
-                        }
-                    }
-                    Spacer(Modifier.height(16.dp))
-                }
-
-                // ── Datas ─────────────────────────────────────────────────────
-                item {
-                    Column(Modifier.padding(horizontal = 16.dp)) {
-                        MangaSectionTitle("Datas")
-                        Spacer(Modifier.height(10.dp))
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            MangaInfoCard("Inclusão", dateFormatter.format(mediaItem.addedDate))
-                            if (mediaItem.readingStartDate != null) {
-                                MangaInfoCard("Início da leitura", dateFormatter.format(mediaItem.readingStartDate))
-                            }
-                            if (startDateMs !=
-                                null
-                            ) {
-                                MangaInfoCard("Início da publicação", dateFormatter.format(java.util.Date(startDateMs)))
-                            }
-                            if (endDateMs != null) MangaInfoCard("Fim da publicação", dateFormatter.format(java.util.Date(endDateMs)))
-                            if (mediaItem.completionDate != null) {
-                                MangaInfoCard("Finalização da leitura", dateFormatter.format(mediaItem.completionDate))
+                    // ── Sinopse ──────────────────────────────────────────────────
+                    if (synopsis != null) {
+                        item {
+                            Column(Modifier.padding(horizontal = 16.dp)) {
+                                MangaSectionTitle(stringResource(R.string.label_synopsis))
+                                Spacer(Modifier.height(8.dp))
+                                Text(
+                                    synopsis,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                                    lineHeight = 22.sp,
+                                    maxLines = if (synopsisExpanded) Int.MAX_VALUE else 5,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    stringResource(if (synopsisExpanded) R.string.action_see_less else R.string.action_see_more),
+                                    color = ColorManga,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.clickable { synopsisExpanded = !synopsisExpanded },
+                                )
+                                Spacer(Modifier.height(24.dp))
                             }
                         }
                     }
-                    Spacer(Modifier.height(16.dp))
-                }
 
-                // ── Avaliação (só disponível quando Lido) ─────────────────────
-                if (mediaItem.status == MediaStatus.READ) {
+                    // ── Progresso de capítulos ────────────────────────────────────
                     item {
-                        Column(Modifier.padding(horizontal = 16.dp)) {
+                        Column(Modifier.padding(horizontal = 16.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Row(
                                 Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                MangaSectionTitle("Avaliação")
-                                if (!editingPersonal) {
-                                    TextButton(
-                                        onClick = {
-                                            pendingRating = (mediaItem.rating ?: 0.0).toInt()
-                                            pendingReviewTitle = mediaItem.reviewTitle ?: ""
-                                            pendingNotes = mediaItem.notes ?: ""
-                                            editingPersonal = true
-                                        },
-                                        contentPadding = PaddingValues(0.dp),
-                                    ) {
-                                        Icon(Icons.Default.Edit, null, modifier = Modifier.size(14.dp))
-                                        Spacer(Modifier.width(4.dp))
-                                        Text("Editar", style = MaterialTheme.typography.bodySmall)
-                                    }
+                                MangaSectionTitle(stringResource(R.string.manga_detail_progress))
+                                IconButton(
+                                    onClick = {
+                                        chapterInput = (mediaItem.currentProgress ?: 0).toString()
+                                        showChapterDialog = true
+                                    },
+                                    modifier = Modifier.size(32.dp),
+                                ) {
+                                    Icon(
+                                        Icons.Default.Edit,
+                                        contentDescription = stringResource(R.string.action_edit),
+                                        tint = ColorManga,
+                                        modifier = Modifier.size(18.dp),
+                                    )
                                 }
                             }
+                            val displayedProgress =
+                                (mediaItem.currentProgress ?: 0).let { p ->
+                                    if (chapters != null) p.coerceIn(0, chapters) else p
+                                }
+                            if (chapters != null && chapters > 0) {
+                                LinearProgressIndicator(
+                                    progress = { (displayedProgress.toFloat() / chapters.toFloat()).coerceIn(0f, 1f) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    color = ColorManga,
+                                    trackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                                    strokeCap = StrokeCap.Butt,
+                                )
+                            }
+                            Text(
+                                if (chapters != null) {
+                                    stringResource(R.string.manga_detail_chapter_of_total, displayedProgress, chapters)
+                                } else {
+                                    stringResource(R.string.manga_detail_chapter_current, displayedProgress)
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            )
+                        }
+                        Spacer(Modifier.height(16.dp))
+                    }
+
+                    // ── Informações ───────────────────────────────────────────────
+                    item {
+                        Column(Modifier.padding(horizontal = 16.dp)) {
+                            MangaSectionTitle(stringResource(R.string.label_information))
                             Spacer(Modifier.height(10.dp))
-                            Card(shape = RoundedCornerShape(12.dp)) {
-                                Column(Modifier.padding(16.dp)) {
-                                    if (editingPersonal) {
-                                        StarRatingPicker(rating = pendingRating, onRatingChange = { pendingRating = it })
-                                    } else if (mediaItem.rating != null) {
-                                        StarRatingDisplay(rating = mediaItem.rating.toInt())
-                                    } else {
-                                        Text(
-                                            "Nenhuma avaliação ainda",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                                        )
-                                    }
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                if (format != null) MangaInfoCard(stringResource(R.string.manga_detail_format), format)
+                                if (!genres.isNullOrEmpty()) {
+                                    MangaInfoCard(stringResource(R.string.label_genre), genres.take(3).joinToString(", "))
+                                }
+                                if (volumes != null) MangaInfoCard("Volumes", "$volumes")
+                                if (chapters != null) MangaInfoCard(stringResource(R.string.manga_detail_chapters_label), "$chapters")
+                                if (serializationStatus != null) MangaInfoCard(stringResource(R.string.label_status), serializationStatus)
+                            }
+                        }
+                        Spacer(Modifier.height(16.dp))
+                    }
+
+                    // ── Datas ─────────────────────────────────────────────────────
+                    item {
+                        Column(Modifier.padding(horizontal = 16.dp)) {
+                            MangaSectionTitle(stringResource(R.string.label_dates))
+                            Spacer(Modifier.height(10.dp))
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                MangaInfoCard(stringResource(R.string.label_added), dateFormatter.format(mediaItem.addedDate))
+                                if (mediaItem.readingStartDate != null) {
+                                    MangaInfoCard(
+                                        stringResource(R.string.manga_detail_reading_start),
+                                        dateFormatter.format(mediaItem.readingStartDate),
+                                    )
+                                }
+                                if (startDateMs !=
+                                    null
+                                ) {
+                                    MangaInfoCard(
+                                        stringResource(R.string.manga_detail_publication_start),
+                                        dateFormatter.format(java.util.Date(startDateMs)),
+                                    )
+                                }
+                                if (endDateMs != null) {
+                                    MangaInfoCard(
+                                        stringResource(R.string.manga_detail_publication_end),
+                                        dateFormatter.format(java.util.Date(endDateMs)),
+                                    )
+                                }
+                                if (mediaItem.completionDate != null) {
+                                    MangaInfoCard(
+                                        stringResource(R.string.manga_detail_reading_end),
+                                        dateFormatter.format(mediaItem.completionDate),
+                                    )
                                 }
                             }
                         }
                         Spacer(Modifier.height(16.dp))
                     }
 
-                    // ── Resenha ────────────────────────────────────────────────
-                    item {
-                        Column(Modifier.padding(horizontal = 16.dp)) {
-                            MangaSectionTitle("Resenha")
-                            Spacer(Modifier.height(10.dp))
-                            Card(shape = RoundedCornerShape(12.dp)) {
-                                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                    if (editingPersonal) {
-                                        OutlinedTextField(
-                                            value = pendingReviewTitle,
-                                            onValueChange = { pendingReviewTitle = it },
-                                            placeholder = { Text("Título (opcional)", style = MaterialTheme.typography.bodySmall) },
-                                            singleLine = true,
-                                            modifier = Modifier.fillMaxWidth(),
-                                        )
-                                        OutlinedTextField(
-                                            value = pendingNotes,
-                                            onValueChange = { pendingNotes = it },
-                                            placeholder = { Text("Impressões, spoilers…", style = MaterialTheme.typography.bodySmall) },
-                                            minLines = 3,
-                                            maxLines = 6,
-                                            modifier = Modifier.fillMaxWidth(),
-                                        )
-                                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                            OutlinedButton(
-                                                onClick = { editingPersonal = false },
-                                                modifier = Modifier.weight(1f),
-                                                shape = RoundedCornerShape(12.dp),
-                                            ) { Text("Cancelar") }
-                                            Button(
-                                                onClick = {
-                                                    vm.savePersonal(
-                                                        rating = if (pendingRating > 0) pendingRating.toDouble() else null,
-                                                        reviewTitle = pendingReviewTitle,
-                                                        notes = pendingNotes,
+                    // ── Avaliação (só disponível quando Lido) ─────────────────────
+                    if (mediaItem.status == MediaStatus.READ) {
+                        item {
+                            Column(Modifier.padding(horizontal = 16.dp)) {
+                                Row(
+                                    Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    MangaSectionTitle(stringResource(R.string.manga_detail_rating))
+                                    if (!editingPersonal) {
+                                        TextButton(
+                                            onClick = {
+                                                pendingRating = (mediaItem.rating ?: 0.0).toInt()
+                                                pendingReviewTitle = mediaItem.reviewTitle ?: ""
+                                                pendingNotes = mediaItem.notes ?: ""
+                                                editingPersonal = true
+                                            },
+                                            contentPadding = PaddingValues(0.dp),
+                                        ) {
+                                            Icon(Icons.Default.Edit, null, modifier = Modifier.size(14.dp))
+                                            Spacer(Modifier.width(4.dp))
+                                            Text(stringResource(R.string.action_edit), style = MaterialTheme.typography.bodySmall)
+                                        }
+                                    }
+                                }
+                                Spacer(Modifier.height(10.dp))
+                                Card(shape = RoundedCornerShape(12.dp)) {
+                                    Column(Modifier.padding(16.dp)) {
+                                        if (editingPersonal) {
+                                            StarRatingPicker(rating = pendingRating, onRatingChange = { pendingRating = it })
+                                        } else if (mediaItem.rating != null) {
+                                            StarRatingDisplay(rating = mediaItem.rating.toInt())
+                                        } else {
+                                            Text(
+                                                stringResource(R.string.manga_detail_no_rating),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                            Spacer(Modifier.height(16.dp))
+                        }
+
+                        // ── Resenha ────────────────────────────────────────────────
+                        item {
+                            Column(Modifier.padding(horizontal = 16.dp)) {
+                                MangaSectionTitle(stringResource(R.string.manga_detail_review))
+                                Spacer(Modifier.height(10.dp))
+                                Card(shape = RoundedCornerShape(12.dp)) {
+                                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                        if (editingPersonal) {
+                                            OutlinedTextField(
+                                                value = pendingReviewTitle,
+                                                onValueChange = { pendingReviewTitle = it },
+                                                placeholder = {
+                                                    Text(
+                                                        stringResource(R.string.manga_detail_review_title_placeholder),
+                                                        style = MaterialTheme.typography.bodySmall,
                                                     )
-                                                    editingPersonal = false
                                                 },
-                                                modifier = Modifier.weight(1f),
-                                                shape = RoundedCornerShape(12.dp),
-                                                colors = ButtonDefaults.buttonColors(containerColor = ColorManga),
-                                            ) { Text("Salvar") }
-                                        }
-                                    } else {
-                                        if (!mediaItem.reviewTitle.isNullOrBlank()) {
-                                            Text(
-                                                mediaItem.reviewTitle!!,
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                fontWeight = FontWeight.Bold,
+                                                singleLine = true,
+                                                modifier = Modifier.fillMaxWidth(),
                                             )
-                                        }
-                                        if (!mediaItem.notes.isNullOrBlank()) {
-                                            Text(
-                                                mediaItem.notes!!,
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
-                                                fontStyle = FontStyle.Italic,
+                                            OutlinedTextField(
+                                                value = pendingNotes,
+                                                onValueChange = { pendingNotes = it },
+                                                placeholder = {
+                                                    Text(
+                                                        stringResource(R.string.manga_detail_review_text_placeholder),
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                    )
+                                                },
+                                                minLines = 3,
+                                                maxLines = 6,
+                                                modifier = Modifier.fillMaxWidth(),
                                             )
-                                        }
-                                        if (mediaItem.reviewTitle.isNullOrBlank() && mediaItem.notes.isNullOrBlank()) {
-                                            Text(
-                                                "Nenhuma resenha ainda",
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        Spacer(Modifier.height(16.dp))
-                    }
-                }
-
-                // ── Leituras anteriores (histórico de releituras) ─────────────
-                if (vm.reviewHistory.isNotEmpty()) {
-                    item {
-                        Column(Modifier.padding(horizontal = 16.dp)) {
-                            MangaSectionTitle("Leituras anteriores")
-                            Spacer(Modifier.height(10.dp))
-                            Card(shape = RoundedCornerShape(12.dp)) {
-                                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                                    vm.reviewHistory.forEachIndexed { index, review ->
-                                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                            Text(
-                                                dateFormatter.format(review.completedAt),
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                                            )
-                                            if (review.rating != null) {
-                                                StarRatingDisplay(rating = review.rating.toInt())
+                                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                                OutlinedButton(
+                                                    onClick = { editingPersonal = false },
+                                                    modifier = Modifier.weight(1f),
+                                                    shape = RoundedCornerShape(12.dp),
+                                                ) { Text(stringResource(R.string.action_cancel)) }
+                                                Button(
+                                                    onClick = {
+                                                        vm.savePersonal(
+                                                            rating = if (pendingRating > 0) pendingRating.toDouble() else null,
+                                                            reviewTitle = pendingReviewTitle,
+                                                            notes = pendingNotes,
+                                                        )
+                                                        editingPersonal = false
+                                                    },
+                                                    modifier = Modifier.weight(1f),
+                                                    shape = RoundedCornerShape(12.dp),
+                                                    colors = ButtonDefaults.buttonColors(containerColor = ColorManga),
+                                                ) { Text(stringResource(R.string.action_save)) }
                                             }
-                                            if (!review.reviewTitle.isNullOrBlank()) {
+                                        } else {
+                                            if (!mediaItem.reviewTitle.isNullOrBlank()) {
                                                 Text(
-                                                    review.reviewTitle,
+                                                    mediaItem.reviewTitle!!,
                                                     style = MaterialTheme.typography.bodyMedium,
                                                     fontWeight = FontWeight.Bold,
                                                 )
                                             }
-                                            if (!review.reviewText.isNullOrBlank()) {
+                                            if (!mediaItem.notes.isNullOrBlank()) {
                                                 Text(
-                                                    review.reviewText,
+                                                    mediaItem.notes!!,
                                                     style = MaterialTheme.typography.bodyMedium,
                                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
                                                     fontStyle = FontStyle.Italic,
                                                 )
                                             }
+                                            if (mediaItem.reviewTitle.isNullOrBlank() && mediaItem.notes.isNullOrBlank()) {
+                                                Text(
+                                                    stringResource(R.string.manga_detail_no_review),
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                                )
+                                            }
                                         }
-                                        if (index != vm.reviewHistory.lastIndex) HorizontalDivider()
                                     }
                                 }
                             }
+                            Spacer(Modifier.height(16.dp))
                         }
-                        Spacer(Modifier.height(16.dp))
                     }
-                }
 
-                // ── Personagens ───────────────────────────────────────────────
-                if (!characters.isNullOrEmpty()) {
-                    item {
-                        Column(Modifier.padding(horizontal = 16.dp)) {
-                            MangaSectionTitle("Personagens")
-                            Spacer(Modifier.height(12.dp))
-                            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                items(characters) { char ->
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        modifier = Modifier.width(72.dp),
-                                    ) {
-                                        AsyncImage(
-                                            model = char["photoUrl"] as? String,
-                                            contentDescription = null,
-                                            contentScale = ContentScale.Crop,
-                                            modifier =
-                                                Modifier
-                                                    .size(64.dp)
-                                                    .clip(CircleShape),
-                                        )
-                                        Spacer(Modifier.height(4.dp))
-                                        Text(
-                                            char["name"] as? String ?: "",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            textAlign = TextAlign.Center,
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis,
-                                        )
+                    // ── Leituras anteriores (histórico de releituras) ─────────────
+                    if (vm.reviewHistory.isNotEmpty()) {
+                        item {
+                            Column(Modifier.padding(horizontal = 16.dp)) {
+                                MangaSectionTitle(stringResource(R.string.manga_detail_previous_readings))
+                                Spacer(Modifier.height(10.dp))
+                                Card(shape = RoundedCornerShape(12.dp)) {
+                                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                                        vm.reviewHistory.forEachIndexed { index, review ->
+                                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                                Text(
+                                                    dateFormatter.format(review.completedAt),
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                                )
+                                                if (review.rating != null) {
+                                                    StarRatingDisplay(rating = review.rating.toInt())
+                                                }
+                                                if (!review.reviewTitle.isNullOrBlank()) {
+                                                    Text(
+                                                        review.reviewTitle,
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        fontWeight = FontWeight.Bold,
+                                                    )
+                                                }
+                                                if (!review.reviewText.isNullOrBlank()) {
+                                                    Text(
+                                                        review.reviewText,
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+                                                        fontStyle = FontStyle.Italic,
+                                                    )
+                                                }
+                                            }
+                                            if (index != vm.reviewHistory.lastIndex) HorizontalDivider()
+                                        }
                                     }
                                 }
                             }
-                            Spacer(Modifier.height(24.dp))
+                            Spacer(Modifier.height(16.dp))
                         }
                     }
-                }
 
-                // ── Staff ─────────────────────────────────────────────────────
-                if (!staffList.isNullOrEmpty()) {
-                    item {
-                        Column(Modifier.padding(horizontal = 16.dp)) {
-                            MangaSectionTitle("Staff")
-                            Spacer(Modifier.height(12.dp))
-                            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                items(staffList) { member ->
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        modifier = Modifier.width(72.dp),
-                                    ) {
-                                        AsyncImage(
-                                            model = member["photoUrl"] as? String,
-                                            contentDescription = null,
-                                            contentScale = ContentScale.Crop,
-                                            modifier =
-                                                Modifier
-                                                    .size(64.dp)
-                                                    .clip(CircleShape),
-                                        )
-                                        Spacer(Modifier.height(4.dp))
-                                        Text(
-                                            member["name"] as? String ?: "",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            textAlign = TextAlign.Center,
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis,
-                                        )
-                                        Text(
-                                            member["role"] as? String ?: "",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                        )
+                    // ── Personagens ───────────────────────────────────────────────
+                    if (!characters.isNullOrEmpty()) {
+                        item {
+                            Column(Modifier.padding(horizontal = 16.dp)) {
+                                MangaSectionTitle(stringResource(R.string.manga_detail_characters))
+                                Spacer(Modifier.height(12.dp))
+                                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    items(characters) { char ->
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            modifier = Modifier.width(72.dp),
+                                        ) {
+                                            AsyncImage(
+                                                model = char["photoUrl"] as? String,
+                                                contentDescription = null,
+                                                contentScale = ContentScale.Crop,
+                                                modifier =
+                                                    Modifier
+                                                        .size(64.dp)
+                                                        .clip(CircleShape),
+                                            )
+                                            Spacer(Modifier.height(4.dp))
+                                            Text(
+                                                char["name"] as? String ?: "",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                textAlign = TextAlign.Center,
+                                                maxLines = 2,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                        }
                                     }
                                 }
+                                Spacer(Modifier.height(24.dp))
                             }
-                            Spacer(Modifier.height(24.dp))
                         }
                     }
-                }
 
-                // ── Sinônimos (sempre por último) ───────────────────────────────
-                if (!synonyms.isNullOrEmpty()) {
+                    // ── Staff ─────────────────────────────────────────────────────
+                    if (!staffList.isNullOrEmpty()) {
+                        item {
+                            Column(Modifier.padding(horizontal = 16.dp)) {
+                                MangaSectionTitle("Staff")
+                                Spacer(Modifier.height(12.dp))
+                                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    items(staffList) { member ->
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            modifier = Modifier.width(72.dp),
+                                        ) {
+                                            AsyncImage(
+                                                model = member["photoUrl"] as? String,
+                                                contentDescription = null,
+                                                contentScale = ContentScale.Crop,
+                                                modifier =
+                                                    Modifier
+                                                        .size(64.dp)
+                                                        .clip(CircleShape),
+                                            )
+                                            Spacer(Modifier.height(4.dp))
+                                            Text(
+                                                member["name"] as? String ?: "",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                textAlign = TextAlign.Center,
+                                                maxLines = 2,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                            Text(
+                                                member["role"] as? String ?: "",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                        }
+                                    }
+                                }
+                                Spacer(Modifier.height(24.dp))
+                            }
+                        }
+                    }
+
+                    // ── Sinônimos (sempre por último) ───────────────────────────────
+                    if (!synonyms.isNullOrEmpty()) {
+                        item {
+                            Column(Modifier.padding(horizontal = 16.dp)) {
+                                MangaSectionTitle(stringResource(R.string.manga_detail_synonyms))
+                                Spacer(Modifier.height(8.dp))
+                                Text(
+                                    synonyms.joinToString(", "),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                                    lineHeight = 20.sp,
+                                )
+                                Spacer(Modifier.height(24.dp))
+                            }
+                        }
+                    }
+
                     item {
-                        Column(Modifier.padding(horizontal = 16.dp)) {
-                            MangaSectionTitle("Sinônimos")
-                            Spacer(Modifier.height(8.dp))
-                            Text(
-                                synonyms.joinToString(", "),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                                lineHeight = 20.sp,
-                            )
-                            Spacer(Modifier.height(24.dp))
-                        }
+                        AnotacoesSection(mediaItem.personalNotes) { navController.navigateToAnotacoes(mediaItem) }
                     }
+
+                    item { Spacer(Modifier.height(80.dp)) }
                 }
 
-                item {
-                    AnotacoesSection(mediaItem.personalNotes) { navController.navigateToAnotacoes(mediaItem) }
-                }
-
-                item { Spacer(Modifier.height(80.dp)) }
-            }
-
-            // ── Floating nav: back ────────────────────────────────────────────
-            IconButton(
-                onClick = { navController.popBackStack() },
-                modifier = Modifier.statusBarsPadding().padding(4.dp),
-            ) {
-                Box(
-                    Modifier
-                        .size(34.dp)
-                        .background(Color.Black.copy(alpha = 0.54f), CircleShape),
-                    contentAlignment = Alignment.Center,
+                // ── Floating nav: back ────────────────────────────────────────────
+                IconButton(
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier.statusBarsPadding().padding(4.dp),
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White, modifier = Modifier.size(18.dp))
+                    Box(
+                        Modifier
+                            .size(34.dp)
+                            .background(Color.Black.copy(alpha = 0.54f), CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = Color.White, modifier = Modifier.size(18.dp))
+                    }
                 }
             }
         }
@@ -819,20 +870,20 @@ fun MangaDetailScreen(
         val chapterError =
             when {
                 chapterInput.isBlank() -> null
-                chapterNum == null -> "Digite um número válido"
-                chapterNum < 0 -> "Não pode ser negativo"
-                chapters != null && chapterNum > chapters -> "Máximo: $chapters capítulos"
+                chapterNum == null -> stringResource(R.string.manga_detail_error_invalid_number)
+                chapterNum < 0 -> stringResource(R.string.manga_detail_error_negative)
+                chapters != null && chapterNum > chapters -> stringResource(R.string.manga_detail_error_max_chapters, chapters)
                 else -> null
             }
         val canSaveChapter = chapterError == null && chapterInput.isNotBlank()
         AlertDialog(
             onDismissRequest = { showChapterDialog = false },
-            title = { Text("Capítulo atual") },
+            title = { Text(stringResource(R.string.manga_detail_current_chapter_title)) },
             text = {
                 OutlinedTextField(
                     value = chapterInput,
                     onValueChange = { chapterInput = it },
-                    label = { Text("Capítulo") },
+                    label = { Text(stringResource(R.string.manga_detail_chapter_field_label)) },
                     isError = chapterError != null,
                     supportingText = chapterError?.let { { Text(it) } },
                     singleLine = true,
@@ -845,9 +896,9 @@ fun MangaDetailScreen(
                         chapterNum?.let { vm.setProgress(it, chapters) }
                         showChapterDialog = false
                     },
-                ) { Text("Salvar") }
+                ) { Text(stringResource(R.string.action_save)) }
             },
-            dismissButton = { TextButton(onClick = { showChapterDialog = false }) { Text("Cancelar") } },
+            dismissButton = { TextButton(onClick = { showChapterDialog = false }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
 
@@ -865,25 +916,26 @@ fun MangaDetailScreen(
     if (showDelete) {
         AlertDialog(
             onDismissRequest = { showDelete = false },
-            title = { Text("Remover mangá") },
-            text = { Text("Remover \"${mediaItem.title}\" da sua biblioteca?") },
+            title = { Text(stringResource(R.string.manga_detail_remove_manga)) },
+            text = { Text(stringResource(R.string.manga_detail_remove_confirm, mediaItem.title)) },
             confirmButton = {
                 Button(
                     onClick = { vm.delete { navController.popBackStack() } },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                ) { Text("Remover") }
+                ) { Text(stringResource(R.string.action_remove)) }
             },
-            dismissButton = { TextButton(onClick = { showDelete = false }) { Text("Cancelar") } },
+            dismissButton = { TextButton(onClick = { showDelete = false }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
 }
 
 // ── Sub-composables ────────────────────────────────────────────────────────────
 
+@Composable
 fun mangaStatusLabel(status: MediaStatus): String =
     when (status) {
-        MediaStatus.QUEUED -> "Quero Ler"
-        MediaStatus.ON_HOLD -> "Em Hiato"
+        MediaStatus.QUEUED -> stringResource(R.string.manga_tab_want_to_read)
+        MediaStatus.ON_HOLD -> stringResource(R.string.manga_tab_on_hold)
         else -> status.label
     }
 
@@ -931,9 +983,11 @@ private fun MangaDatePickerDialog(
     DatePickerDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            TextButton(onClick = { state.selectedDateMillis?.let { onConfirm(it) } ?: onDismiss() }) { Text("Confirmar") }
+            TextButton(onClick = { state.selectedDateMillis?.let { onConfirm(it) } ?: onDismiss() }) {
+                Text(stringResource(R.string.action_confirm))
+            }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     ) {
         DatePicker(state = state)
     }

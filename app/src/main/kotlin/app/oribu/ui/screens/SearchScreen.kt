@@ -24,6 +24,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -33,6 +34,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.data.db.DB
 import app.oribu.model.*
 import app.oribu.service.ApiServices
@@ -208,7 +210,7 @@ private val streamingPlatforms =
         "Apple TV+",
         "HBO Max",
         "Crunchyroll",
-        "Outro",
+        "Other",
     )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -240,7 +242,9 @@ fun SearchScreen(
                         OutlinedTextField(
                             value = apiQuery,
                             onValueChange = { apiQuery = it },
-                            placeholder = { Text("Buscar ${vm.selectedType.labelPt.lowercase()}…") },
+                            placeholder = {
+                                Text(stringResource(R.string.search_placeholder_type, vm.selectedType.label.lowercase()))
+                            },
                             singleLine = true,
                             trailingIcon = {
                                 if (apiQuery.isNotEmpty()) {
@@ -265,7 +269,7 @@ fun SearchScreen(
                         OutlinedTextField(
                             value = query,
                             onValueChange = { vm.setQuery(it) },
-                            placeholder = { Text("Buscar na biblioteca…") },
+                            placeholder = { Text(stringResource(R.string.search_library_placeholder)) },
                             leadingIcon = { Icon(Icons.Default.Search, null) },
                             trailingIcon = {
                                 if (query.isNotEmpty()) {
@@ -299,7 +303,7 @@ fun SearchScreen(
                         apiMode = false
                         vm.setQuery("")
                     },
-                    label = { Text("Biblioteca") },
+                    label = { Text(stringResource(R.string.search_tab_library)) },
                     leadingIcon = { Icon(Icons.Outlined.LibraryBooks, null, modifier = Modifier.size(16.dp)) },
                     shape = RoundedCornerShape(4.dp),
                 )
@@ -309,7 +313,7 @@ fun SearchScreen(
                         apiMode = true
                         vm.setQuery("")
                     },
-                    label = { Text("Nova busca") },
+                    label = { Text(stringResource(R.string.search_tab_new)) },
                     leadingIcon = { Icon(Icons.Outlined.TravelExplore, null, modifier = Modifier.size(16.dp)) },
                     shape = RoundedCornerShape(4.dp),
                 )
@@ -368,7 +372,7 @@ private fun LibrarySearchContent(
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "Busque na sua biblioteca",
+                    stringResource(R.string.search_library_prompt),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                 )
@@ -379,7 +383,7 @@ private fun LibrarySearchContent(
     if (results.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(
-                "Nenhum resultado para \"$query\"",
+                stringResource(R.string.search_no_results, query),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
             )
@@ -412,7 +416,7 @@ private fun LibrarySearchContent(
                 Column(Modifier.weight(1f)) {
                     Text(item.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
                     Text(
-                        "${item.type.labelPt} · ${item.status.label}",
+                        "${item.type.label} · ${item.status.label}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
                     )
@@ -452,7 +456,7 @@ private fun ApiSearchContent(
                     modifier = Modifier.clickable { vm.setType(t) },
                 ) {
                     Text(
-                        t.labelPt,
+                        t.label,
                         color = if (selected) Color.White else t.color,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -493,7 +497,7 @@ private fun ApiSearchContent(
                     modifier = Modifier.size(14.dp),
                 )
                 Text(
-                    serviceWarning ?: "Buscando via ${apiLabelFor(vm.selectedType)}",
+                    serviceWarning ?: stringResource(R.string.search_via, apiLabelFor(vm.selectedType)),
                     style = MaterialTheme.typography.bodySmall,
                     color = bannerContentColor,
                 )
@@ -530,7 +534,7 @@ private fun ApiSearchContent(
                                     modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(),
                                 ) {
                                     Text(
-                                        "Na biblioteca",
+                                        stringResource(R.string.search_in_library),
                                         color = Color.White,
                                         fontSize = 9.sp,
                                         modifier = Modifier.padding(horizontal = 4.dp, vertical = 3.dp),
@@ -557,7 +561,7 @@ private fun ApiSearchContent(
                                 tint = MaterialTheme.colorScheme.error,
                             )
                             Text(
-                                "Não foi possível buscar",
+                                stringResource(R.string.search_error_title),
                                 style = MaterialTheme.typography.titleSmall,
                                 color = MaterialTheme.colorScheme.error,
                             )
@@ -569,7 +573,7 @@ private fun ApiSearchContent(
                             )
                         } else {
                             Text(
-                                "Nenhum resultado encontrado",
+                                stringResource(R.string.search_no_results_found),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                             )
@@ -589,13 +593,13 @@ private fun ApiSearchContent(
                         )
                         Spacer(Modifier.height(8.dp))
                         Text(
-                            "Busque um ${vm.selectedType.labelPt.lowercase()}",
+                            stringResource(R.string.search_prompt_type, vm.selectedType.label.lowercase()),
                             style = MaterialTheme.typography.titleSmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                         )
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            "Digite o nome e pressione Buscar",
+                            stringResource(R.string.search_prompt_hint),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f),
                         )
@@ -666,9 +670,9 @@ private fun AddSheet(
 
             // Console picker (games only)
             if (type == MediaType.GAME) {
-                SheetSection("Plataforma") {
-                    // PC e Steam contam como a mesma plataforma (sem suporte a lojas
-                    // separadas como Epic Games) — apenas STEAM é oferecido aqui.
+                SheetSection(stringResource(R.string.label_platform)) {
+                    // PC and Steam count as the same platform (no support for separate
+                    // stores like Epic Games) — only STEAM is offered here.
                     val mainConsoles =
                         listOf(
                             GameConsole.STEAM,
@@ -689,7 +693,7 @@ private fun AddSheet(
 
             // Streaming platform (film/series only)
             if (type == MediaType.MOVIE || type == MediaType.SERIES) {
-                SheetSection("Plataforma (opcional)") {
+                SheetSection(stringResource(R.string.add_sheet_platform_optional)) {
                     FlowChips(streamingPlatforms.map { it to typeColor }) { idx ->
                         val p = streamingPlatforms[idx]
                         selectedPlatform = if (selectedPlatform == p) null else p
@@ -698,7 +702,7 @@ private fun AddSheet(
             }
 
             // Status chips
-            SheetSection("Status") {
+            SheetSection(stringResource(R.string.label_status)) {
                 FlowChips(statuses.map { it.label to it.color }) { idx ->
                     selectedStatus = if (selectedStatus == statuses[idx]) null else statuses[idx]
                 }
@@ -709,8 +713,8 @@ private fun AddSheet(
             if (showProgress) {
                 val progressLabel =
                     when (type) {
-                        MediaType.BOOK -> "Página atual (opcional)"
-                        MediaType.MANGA, MediaType.WEBTOON -> "Capítulo atual (opcional)"
+                        MediaType.BOOK -> stringResource(R.string.search_page_current_optional)
+                        MediaType.MANGA, MediaType.WEBTOON -> stringResource(R.string.search_chapter_current_optional)
                         else -> null
                     }
                 if (progressLabel != null) {
@@ -739,7 +743,7 @@ private fun AddSheet(
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("Adicionar ${type.labelPt.lowercase()}", color = Color.White)
+                Text(stringResource(R.string.search_add_type, type.label.lowercase()), color = Color.White)
             }
         }
     }

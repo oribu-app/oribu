@@ -31,7 +31,7 @@ enum class GameConsole(
     XSX("XSX", "xsx"),
     PC("PC", "pc"),
     MOBILE("Mobile", "mobile"),
-    OUTRO("Outro", "outro"),
+    OUTRO("Other", "outro"),
     ;
 
     val isSteam get() = this == STEAM
@@ -56,7 +56,7 @@ enum class GameConsole(
             isXbox -> "Xbox"
             this == PC -> "PC"
             this == MOBILE -> "Mobile"
-            else -> "Outro"
+            else -> "Other"
         }
 
     companion object {

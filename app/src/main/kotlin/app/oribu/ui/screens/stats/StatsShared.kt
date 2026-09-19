@@ -26,7 +26,7 @@ enum class StatDimension(
     val label: String,
 ) {
     STATUS("Status"),
-    RATING("Nota"),
+    RATING("Rating"),
 }
 
 data class StatGroup(

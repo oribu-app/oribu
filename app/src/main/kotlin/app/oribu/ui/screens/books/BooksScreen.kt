@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -23,6 +24,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.data.db.DB
 import app.oribu.model.MediaItem
 import app.oribu.model.MediaStatus
@@ -51,7 +53,14 @@ fun BooksScreen(
 ) {
     val allItems by vm.allItems.collectAsStateWithLifecycle()
 
-    val tabs = listOf("Todos", "Lendo", "Lido", "Abandonado", "Quero Ler")
+    val tabs =
+        listOf(
+            stringResource(R.string.films_tab_all),
+            stringResource(R.string.manga_tab_reading),
+            stringResource(R.string.books_tab_read),
+            MediaStatus.DROPPED.label,
+            stringResource(R.string.manga_tab_want_to_read),
+        )
     var selectedTab by remember { mutableIntStateOf(0) }
     var showMenu by remember { mutableStateOf(false) }
 
@@ -92,7 +101,7 @@ fun BooksScreen(
         topBar = {
             Column {
                 TopAppBar(
-                    title = { Text("Livros") },
+                    title = { Text(stringResource(R.string.books_title)) },
                     navigationIcon = {
                         IconButton(onClick = {
                             navController.navigate(Routes.HOME) { launchSingleTop = true }
@@ -124,21 +133,38 @@ fun BooksScreen(
                 containerColor = ColorLivro,
                 contentColor = Color.White,
                 icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                text = { Text("Adicionar livro") },
+                text = { Text(stringResource(R.string.books_add_button)) },
             )
         },
     ) { padding ->
+        val addBookLabel = stringResource(R.string.books_add_button)
         Box(Modifier.padding(padding).fillMaxSize()) {
             if (filtered.isEmpty()) {
                 val (title, subtitle) =
                     when (selectedTab) {
-                        0 -> "Nenhum livro na biblioteca" to "Adicione um livro para começar"
-                        1 -> "Nenhum livro em leitura" to "Livros que você está lendo aparecerão aqui"
-                        2 -> "Nenhum livro lido" to "Livros que você concluiu aparecerão aqui"
-                        3 -> "Nenhum livro abandonado" to "Livros que você parou de ler aparecerão aqui"
-                        else -> "Lista de leitura vazia" to "Livros que você quer ler aparecerão aqui"
+                        0 -> {
+                            stringResource(R.string.books_empty_all_title) to stringResource(R.string.books_empty_all_subtitle)
+                        }
+
+                        1 -> {
+                            stringResource(R.string.books_empty_reading_title) to
+                                stringResource(R.string.books_empty_reading_subtitle)
+                        }
+
+                        2 -> {
+                            stringResource(R.string.books_empty_read_title) to stringResource(R.string.books_empty_read_subtitle)
+                        }
+
+                        3 -> {
+                            stringResource(R.string.books_empty_dropped_title) to
+                                stringResource(R.string.books_empty_dropped_subtitle)
+                        }
+
+                        else -> {
+                            stringResource(R.string.books_empty_want_title) to stringResource(R.string.books_empty_want_subtitle)
+                        }
                     }
-                EmptyState(title, subtitle, "Adicionar livro", onButton = { navController.navigate(Routes.BOOKS_ADD) })
+                EmptyState(title, subtitle, addBookLabel, onButton = { navController.navigate(Routes.BOOKS_ADD) })
             } else {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(3),

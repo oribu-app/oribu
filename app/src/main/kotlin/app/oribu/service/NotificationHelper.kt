@@ -6,6 +6,8 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import androidx.annotation.StringRes
+import app.oribu.R
 
 object NotificationHelper {
     private const val CHANNEL_ID = "manga_status_changes"
@@ -24,13 +26,28 @@ object NotificationHelper {
 
     fun init(context: Context) {
         appContext = context.applicationContext
-        manager.createNotificationChannel(NotificationChannel(CHANNEL_ID, "Atualizações de mangás", NotificationManager.IMPORTANCE_DEFAULT))
         manager.createNotificationChannel(
-            NotificationChannel(UPDATE_CHANNEL_ID, "Atualizações do app", NotificationManager.IMPORTANCE_DEFAULT),
+            NotificationChannel(CHANNEL_ID, appContext.getString(R.string.notif_channel_manga), NotificationManager.IMPORTANCE_DEFAULT),
+        )
+        manager.createNotificationChannel(
+            NotificationChannel(
+                UPDATE_CHANNEL_ID,
+                appContext.getString(R.string.notif_channel_app_updates),
+                NotificationManager.IMPORTANCE_DEFAULT,
+            ),
         )
     }
 
     private val manager get() = appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+    fun notifyStatusChange(
+        itemId: Int,
+        title: String,
+        @StringRes messageRes: Int,
+    ) {
+        if (!::appContext.isInitialized) return
+        notifyStatusChange(itemId, title, appContext.getString(messageRes))
+    }
 
     fun notifyStatusChange(
         itemId: Int,

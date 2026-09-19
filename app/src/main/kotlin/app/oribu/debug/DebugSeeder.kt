@@ -803,7 +803,7 @@ object DebugSeeder {
                 jjkId,
                 mapOf(
                     "chapters" to 271,
-                    "serializationStatus" to "Em andamento",
+                    "serializationStatus" to "Ongoing",
                     "genres" to listOf("Ação", "Sobrenatural", "Escola"),
                     "format" to "Mangá",
                 ),
@@ -815,7 +815,7 @@ object DebugSeeder {
                 vinlandId,
                 mapOf(
                     "chapters" to 210,
-                    "serializationStatus" to "Em andamento",
+                    "serializationStatus" to "Ongoing",
                     "genres" to listOf("Ação", "Histórico", "Drama"),
                     "format" to "Mangá",
                 ),

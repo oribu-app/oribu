@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -18,6 +19,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.data.db.DB
 import app.oribu.model.ApiSearchResult
 import app.oribu.model.MediaItem
@@ -91,7 +93,7 @@ fun AddBookScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Adicionar Livro") },
+                title = { Text(stringResource(R.string.books_add_button)) },
                 navigationIcon = { IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.Default.ArrowBack, null) } },
             )
         },
@@ -100,7 +102,7 @@ fun AddBookScreen(
             OutlinedTextField(
                 value = query,
                 onValueChange = { query = it },
-                label = { Text("Título, autor ou editora...") },
+                label = { Text(stringResource(R.string.add_book_search_placeholder)) },
                 trailingIcon = {
                     if (query.isNotEmpty()) {
                         IconButton(onClick = {
@@ -153,10 +155,11 @@ fun AddBookScreen(
     }
 }
 
+@Composable
 private fun bookStatusInfo(status: MediaStatus): Pair<ImageVector, String> =
     when (status) {
-        MediaStatus.READING -> Icons.Default.MenuBook to "Lendo atualmente"
-        MediaStatus.REREADING -> Icons.Default.Replay to "Lendo de novo"
-        MediaStatus.QUEUED -> Icons.Default.Bookmark to "Quer ler em breve"
+        MediaStatus.READING -> Icons.Default.MenuBook to stringResource(R.string.add_book_status_reading_subtitle)
+        MediaStatus.REREADING -> Icons.Default.Replay to stringResource(R.string.add_book_status_rereading_subtitle)
+        MediaStatus.QUEUED -> Icons.Default.Bookmark to stringResource(R.string.add_book_status_queued_subtitle)
         else -> Icons.Default.Bookmark to ""
     }

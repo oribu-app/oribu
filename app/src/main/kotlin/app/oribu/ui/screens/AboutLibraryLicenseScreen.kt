@@ -20,11 +20,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.text.HtmlCompat
 import androidx.navigation.NavController
+import app.oribu.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,7 +49,7 @@ fun AboutLibraryLicenseScreen(navController: NavController) {
                 actions = {
                     if (!website.isNullOrBlank()) {
                         IconButton(onClick = { uriHandler.openUri(website) }) {
-                            Icon(Icons.Outlined.OpenInNew, contentDescription = "Abrir site")
+                            Icon(Icons.Outlined.OpenInNew, contentDescription = stringResource(R.string.about_open_website))
                         }
                     }
                 },
@@ -56,7 +58,7 @@ fun AboutLibraryLicenseScreen(navController: NavController) {
     ) { padding ->
         if (licenseHtml.isBlank()) {
             Text(
-                "Sem texto de licença disponível.",
+                stringResource(R.string.about_no_license_text),
                 modifier = Modifier.padding(padding).padding(16.dp),
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
             )

@@ -72,10 +72,10 @@ class MangaDexService {
 
         val serializationStatus =
             when (attrs["status"] as? String) {
-                "ongoing" -> "Em andamento"
-                "completed" -> "Finalizado"
-                "hiatus" -> "Em hiato"
-                "cancelled" -> "Cancelado"
+                "ongoing" -> "Ongoing"
+                "completed" -> "Finished"
+                "hiatus" -> "Hiatus"
+                "cancelled" -> "Cancelled"
                 else -> attrs["status"] as? String
             }
 

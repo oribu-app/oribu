@@ -14,12 +14,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import app.oribu.R
 import app.oribu.data.db.DB
 import app.oribu.model.MediaItem
 import app.oribu.model.MediaStatus
@@ -97,7 +99,7 @@ fun MoviePreviewScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(details?.title ?: "Filme") },
+                title = { Text(details?.title ?: stringResource(R.string.movie_preview_title_fallback)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
@@ -116,7 +118,10 @@ fun MoviePreviewScreen(
 
                 details == null -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Não foi possível carregar este filme", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                        Text(
+                            stringResource(R.string.movie_preview_load_error),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        )
                     }
                 }
 
@@ -161,7 +166,11 @@ fun MoviePreviewScreen(
 
                         if (!details.synopsis.isNullOrBlank()) {
                             Spacer(Modifier.height(16.dp))
-                            Text("Sinopse", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                            Text(
+                                stringResource(R.string.label_synopsis),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                            )
                             Spacer(Modifier.height(4.dp))
                             Text(details.synopsis, style = MaterialTheme.typography.bodyMedium)
                         }
@@ -171,7 +180,7 @@ fun MoviePreviewScreen(
                         val existing = vm.existingItem
                         if (existing != null) {
                             Text(
-                                "Já está na sua biblioteca",
+                                stringResource(R.string.movie_preview_already_in_library),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                             )
@@ -183,23 +192,27 @@ fun MoviePreviewScreen(
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = ColorFilme),
                                 modifier = Modifier.fillMaxWidth(),
-                            ) { Text("Ver na biblioteca", color = Color.White) }
+                            ) { Text(stringResource(R.string.movie_preview_view_in_library), color = Color.White) }
                         } else if (showAdd) {
-                            Text("Status", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                            Text(
+                                stringResource(R.string.label_status),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                            )
                             Spacer(Modifier.height(8.dp))
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 StatusOptionTile(
                                     icon = Icons.Default.CheckCircle,
-                                    title = "Assistido",
-                                    subtitle = "Já assisti este filme",
+                                    title = MediaStatus.WATCHED.label,
+                                    subtitle = stringResource(R.string.add_film_option_watched_subtitle),
                                     selected = false,
                                     color = ColorFilme,
                                     onClick = { vm.add(MediaStatus.WATCHED) { navController.popBackStack() } },
                                 )
                                 StatusOptionTile(
                                     icon = Icons.Default.Queue,
-                                    title = "Quero Assistir",
-                                    subtitle = "Adicionar à fila",
+                                    title = stringResource(R.string.films_tab_want_to_watch),
+                                    subtitle = stringResource(R.string.add_film_option_queue_subtitle),
                                     selected = false,
                                     color = ColorFilme,
                                     onClick = {
@@ -221,7 +234,7 @@ fun MoviePreviewScreen(
                                 enabled = !vm.saving,
                                 colors = ButtonDefaults.buttonColors(containerColor = ColorFilme),
                                 modifier = Modifier.fillMaxWidth(),
-                            ) { Text("Adicionar à biblioteca", color = Color.White) }
+                            ) { Text(stringResource(R.string.movie_preview_add_to_library), color = Color.White) }
                         }
                     }
                 }

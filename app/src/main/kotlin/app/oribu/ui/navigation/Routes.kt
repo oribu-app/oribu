@@ -22,6 +22,7 @@ object Routes {
     const val BOOKS_ADD_QUOTE = "books/quote"
     const val SEARCH = "search"
     const val SETTINGS = "settings"
+    const val SETTINGS_GENERAL = "settings/general"
     const val SETTINGS_APPEARANCE = "settings/appearance"
     const val SETTINGS_NOTIFICATIONS = "settings/notifications"
     const val SETTINGS_INTEGRATIONS = "settings/integrations"
