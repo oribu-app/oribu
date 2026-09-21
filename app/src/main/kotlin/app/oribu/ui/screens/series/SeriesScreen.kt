@@ -38,12 +38,12 @@ import app.oribu.ui.components.AppOverflowMenu
 import app.oribu.ui.components.EmptyState
 import app.oribu.ui.components.GenreFilterRow
 import app.oribu.ui.components.ProportionalTabRow
+import app.oribu.ui.locale.formatDate
 import app.oribu.ui.navigation.Routes
 import app.oribu.ui.theme.ColorSerie
 import coil.compose.AsyncImage
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
-import java.text.SimpleDateFormat
 import java.util.*
 import androidx.compose.foundation.lazy.items as lazyItems
 
@@ -180,8 +180,6 @@ fun SeriesScreen(
                         onButton = { navController.navigate(Routes.SERIES_ADD) },
                     )
                 } else {
-                    val dateFmt = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
-
                     LazyColumn(
                         Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(bottom = 88.dp),
@@ -193,7 +191,6 @@ fun SeriesScreen(
                             EpisodeHistoryFlatRow(
                                 ep = ep,
                                 series = series,
-                                dateFmt = dateFmt,
                                 onClick = { navigateToDetail(navController, series) },
                             )
                         }
@@ -284,7 +281,6 @@ fun SeriesScreen(
 private fun EpisodeHistoryFlatRow(
     ep: SeriesEpisodeEntity,
     series: MediaItem,
-    dateFmt: SimpleDateFormat,
     onClick: () -> Unit,
 ) {
     Row(
@@ -315,7 +311,7 @@ private fun EpisodeHistoryFlatRow(
         }
         Column(Modifier.weight(1f)) {
             Text(
-                dateFmt.format(Date(ep.watchedAtMs)),
+                formatDate(ep.watchedAtMs),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
             )

@@ -30,14 +30,13 @@ import app.oribu.data.db.DB
 import app.oribu.model.MediaItem
 import app.oribu.model.MediaStatus
 import app.oribu.model.MediaType
+import app.oribu.ui.locale.formatDate
 import app.oribu.ui.navigation.Routes
 import coil.compose.AsyncImage
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Locale
 
 private val concludedStatuses =
     setOf(
@@ -121,8 +120,6 @@ fun HistoryScreen(
             map
         }
 
-    val dateFmt = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -187,7 +184,6 @@ fun HistoryScreen(
                         items(monthItems, key = { it.id ?: it.title }) { mediaItem ->
                             HistoryItemRow(
                                 item = mediaItem,
-                                dateFmt = dateFmt,
                                 onClick = { navigateToDetail(navController, mediaItem) },
                             )
                             HorizontalDivider(Modifier.padding(start = 76.dp))
@@ -212,7 +208,6 @@ fun HistoryScreen(
 @Composable
 private fun HistoryItemRow(
     item: MediaItem,
-    dateFmt: SimpleDateFormat,
     onClick: () -> Unit,
 ) {
     val typeColor = item.type.color
@@ -251,7 +246,7 @@ private fun HistoryItemRow(
         }
         if (item.completionDate != null) {
             Text(
-                dateFmt.format(item.completionDate),
+                formatDate(item.completionDate.time),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                 fontSize = 11.sp,

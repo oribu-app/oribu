@@ -130,7 +130,7 @@ private suspend fun extractCoverSeedColor(
  * faixa de matiz escolhida empiricamente na PR #83 do Rokku, não é uma recomendação documentada
  * da lib) — sem isso, algumas cores geram esquemas com contraste ruim num dos dois specs.
  */
-private fun specFor(seed: Color): ColorSpec.SpecVersion {
+internal fun specFor(seed: Color): ColorSpec.SpecVersion {
     val hue = Hct.fromInt(seed.toArgb()).hue
     return if (hue in 60.0..270.0) ColorSpec.SpecVersion.SPEC_2021 else ColorSpec.SpecVersion.SPEC_2025
 }

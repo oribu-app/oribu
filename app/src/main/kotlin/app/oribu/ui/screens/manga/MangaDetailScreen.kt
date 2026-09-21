@@ -45,14 +45,13 @@ import app.oribu.service.MediaCacheService
 import app.oribu.ui.components.AnotacoesSection
 import app.oribu.ui.components.StarRatingDisplay
 import app.oribu.ui.components.StarRatingPicker
+import app.oribu.ui.locale.formatDate
 import app.oribu.ui.navigation.navigateToAnotacoes
 import app.oribu.ui.navigation.rememberAnotacoesResult
 import app.oribu.ui.theme.ColorManga
 import app.oribu.ui.theme.CoverThemedSurface
 import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 class MangaDetailViewModel : ViewModel() {
     var mediaItem by mutableStateOf<MediaItem?>(null)
@@ -219,8 +218,6 @@ fun MangaDetailScreen(
     var pendingRating by remember { mutableStateOf(0) }
     var pendingReviewTitle by remember { mutableStateOf("") }
     var pendingNotes by remember { mutableStateOf("") }
-    val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
-
     val coverUrl = cache?.get("coverUrl") as? String ?: mediaItem.coverUrl
     val synopsis = cache?.get("synopsis") as? String
     val chapters = (cache?.get("chapters") as? Number)?.toInt() ?: mediaItem.totalProgress
@@ -537,11 +534,11 @@ fun MangaDetailScreen(
                             MangaSectionTitle(stringResource(R.string.label_dates))
                             Spacer(Modifier.height(10.dp))
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                MangaInfoCard(stringResource(R.string.label_added), dateFormatter.format(mediaItem.addedDate))
+                                MangaInfoCard(stringResource(R.string.label_added), formatDate(mediaItem.addedDate.time))
                                 if (mediaItem.readingStartDate != null) {
                                     MangaInfoCard(
                                         stringResource(R.string.manga_detail_reading_start),
-                                        dateFormatter.format(mediaItem.readingStartDate),
+                                        formatDate(mediaItem.readingStartDate.time),
                                     )
                                 }
                                 if (startDateMs !=
@@ -549,19 +546,19 @@ fun MangaDetailScreen(
                                 ) {
                                     MangaInfoCard(
                                         stringResource(R.string.manga_detail_publication_start),
-                                        dateFormatter.format(java.util.Date(startDateMs)),
+                                        formatDate(startDateMs),
                                     )
                                 }
                                 if (endDateMs != null) {
                                     MangaInfoCard(
                                         stringResource(R.string.manga_detail_publication_end),
-                                        dateFormatter.format(java.util.Date(endDateMs)),
+                                        formatDate(endDateMs),
                                     )
                                 }
                                 if (mediaItem.completionDate != null) {
                                     MangaInfoCard(
                                         stringResource(R.string.manga_detail_reading_end),
-                                        dateFormatter.format(mediaItem.completionDate),
+                                        formatDate(mediaItem.completionDate.time),
                                     )
                                 }
                             }
@@ -710,7 +707,7 @@ fun MangaDetailScreen(
                                         vm.reviewHistory.forEachIndexed { index, review ->
                                             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                                 Text(
-                                                    dateFormatter.format(review.completedAt),
+                                                    formatDate(review.completedAt.time),
                                                     style = MaterialTheme.typography.labelSmall,
                                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                                                 )

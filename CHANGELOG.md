@@ -111,6 +111,57 @@ The format is a simplified version of [Keep a Changelog](https://keepachangelog.
 - Update download from Sobre could freeze mid-download with the screen locked (Doze/App Standby
   killing the plain background worker) and never report success or error; now runs as a foreground
   service and times out instead of hanging.
+- Settings > General > Locale: the Date format picker was cosmetic — every date shown elsewhere in
+  the app (Calendar, History, Series, and Game/Manga/Book/Movie detail screens) used its own fixed
+  `dd/MM/yyyy` formatter and ignored the setting entirely; they now all follow it.
+- Settings > General > Locale: the Date format picker's option list now shows the bare pattern
+  (e.g. "dd/MM/yyyy") instead of a descriptive name with a formatted example, and its dismiss
+  button now reads "Cancel" instead of "Close" — same for the Appearance screen's cover theme
+  style picker, which shares the same dialog component.
+- Switching Language flashed/flickered through the Activity recreation, and briefly also dropped
+  the user back to Home instead of staying on the current screen (e.g. Settings > General) — an
+  earlier attempt at masking the flicker with a black screen (see below) swapped `MainNavGraph`
+  out of the composition for that overlay instead of layering the overlay on top of it, which
+  broke Navigation Compose's back-stack restoration across the Activity recreate. The app now
+  always keeps `MainNavGraph` composed and paints a plain black screen over it during the recreate
+  (`AppLocaleController.isLanguageChanging`, `MainActivity`) — declaring a `LocaleConfig`
+  (`androidResources.generateLocaleConfig` in `app/build.gradle.kts`) on its own wasn't enough to
+  get the platform's smoother transition for it.
+- Every dialog (`AlertDialog`), card and chip rendered with a flat neutral gray background
+  regardless of the selected theme, instead of a subtle tint of that theme's color like Rokku's
+  equivalents — `OribuTheme`'s `ColorScheme` only explicitly set 8 color roles and left every other
+  one (including the ones dialogs/cards actually paint their background with) at Compose's
+  untinted default. Turns out Rokku's own tint isn't a hand-picked color at all: it comes from
+  Material3's own tonal-elevation overlay, which blends the theme's primary color onto the real
+  surface at an alpha that grows logarithmically with a component's elevation (confirmed by
+  decompiling the actual `androidx.compose.material3` dependency jar) — normally automatic, but
+  only when a role's color is *exactly* `colorScheme.surface`, which didn't reliably reach
+  `AlertDialog` here. Each container role (`surfaceContainerHigh` and friends) is now precomputed
+  with that same formula directly, at the real Material3 elevation level it nominally represents,
+  and `AlertDialog`'s container color is passed in explicitly instead of left to its default.
+- Settings switches (`Switch`) used Compose Material3's stock colors instead of Rokku's real
+  ones. A first pass copied `switch_thumb_tint.xml` (checked thumb = `colorSecondary`) — the
+  wrong style to copy, since that's assigned to the generic `switchStyle` attr (plain
+  `Switch`/`SwitchCompat`), while Rokku's Settings screens use `SwitchPreferenceCompat` with a
+  custom widget layout that instantiates `MaterialSwitch` directly (`materialSwitchStyle`), which
+  Rokku leaves at the stock Material3 default — checked thumb = `colorOnPrimary`. That role was
+  hardcoded to a flat `Color.White` here for every theme, though every one of Rokku's real
+  `colorOnPrimary` values is a proper contrasting *dark* shade picked specifically for that
+  theme's primary (`onPrimaryLime` = #043314, not literal white) — added those real per-theme
+  values (`AppThemeDefinition.onPrimaryDark`/`onPrimaryLight`) instead. (Two attempts also added
+  a checkmark icon inside the checked thumb, assuming the genuinely-checked-style
+  `MaterialSwitch` draws one by default — confirmed against an actual Rokku screenshot that it
+  doesn't here, so that's a plain filled thumb.)
+- The Date format picker (Settings > General > Locale) was noticeably larger overall than Rokku's
+  equivalent — the stock `AlertDialog`'s fixed Material3-spec padding around the title and button
+  row, not the option rows (kept at the same spacing throughout). Rebuilt on `BasicAlertDialog`
+  for full control over that outer chrome; an earlier attempt at this shrank the gap between the
+  title and the first option far too much in the process, so this one keeps a deliberate 16dp
+  gap there instead.
+- Switching theme (Settings > Aparência) snapped to the new colors in ~250ms — noticeably more
+  abrupt than the real Rokku, which takes a couple of unhurried seconds with no flicker or spinner
+  in between. The color crossfade (`animatedColorScheme` in `AppTheme.kt`) now takes 1.5s and
+  covers every surface-container role too, not just the original 9.
 - "Procurar por atualizações" could report the app as up to date even when a newer nightly
   existed: every nightly tag pointed at the same static commit in oribu-nightly, so the
   GitHub API's release ordering (and the tag dates shown on GitHub) were unreliable. Nightly

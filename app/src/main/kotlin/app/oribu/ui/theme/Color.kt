@@ -65,6 +65,16 @@ data class AppThemeDefinition(
     val surfaceDark: Color,
     val bgLight: Color,
     val surfaceLight: Color,
+    /**
+     * Real Rokku `colorOnPrimary` per theme (`onPrimary<Name>`/`<name>_on_primary` in
+     * `colors.xml`) — a per-theme *dark* shade in every dark palette so far (not a flat black),
+     * used e.g. by the stock Material3 `MaterialSwitch`'s checked-thumb color (it contrasts
+     * against the primary-colored track). A flat `Color.White` here looked plausible but is
+     * wrong: [seedDark] is a light/pastel color in every current theme, so a white "on" color
+     * has poor contrast against it wherever a component actually uses this role.
+     */
+    val onPrimaryDark: Color,
+    val onPrimaryLight: Color,
     val availability: ThemeAvailability = ThemeAvailability.BOTH,
 )
 
@@ -82,6 +92,8 @@ val appThemes =
             surfaceDark = Color(0xFF1C1C1D),
             bgLight = Color(0xFFFAFAFA),
             surfaceLight = Color(0xFFFAFAFA),
+            onPrimaryDark = Color(0xFF071D39),
+            onPrimaryLight = Color(0xFFFFFFFF),
         ),
         AppThemeDefinition(
             id = "spring_dusk",
@@ -95,6 +107,8 @@ val appThemes =
             surfaceDark = Color(0xFF16151D),
             bgLight = Color(0xFFF7F4F8),
             surfaceLight = Color(0xFFF7F4F8),
+            onPrimaryDark = Color(0xFF370318),
+            onPrimaryLight = Color(0xFFFFFFFF),
         ),
         AppThemeDefinition(
             id = "strawberries",
@@ -108,6 +122,8 @@ val appThemes =
             surfaceDark = Color(0xFF1A1716),
             bgLight = Color(0xFFFAFAFA),
             surfaceLight = Color(0xFFFAFAFA),
+            onPrimaryDark = Color(0xFF330303),
+            onPrimaryLight = Color(0xFFFFFFFF),
         ),
         AppThemeDefinition(
             id = "teal_sapphire",
@@ -121,6 +137,8 @@ val appThemes =
             surfaceDark = Color(0xFF14191B),
             bgLight = Color(0xFFF0F7F7),
             surfaceLight = Color(0xFFF0F7F7),
+            onPrimaryDark = Color(0xFF02212C),
+            onPrimaryLight = Color(0xFFFFFFFF),
         ),
         AppThemeDefinition(
             id = "lavender",
@@ -134,6 +152,8 @@ val appThemes =
             surfaceDark = Color(0xFF111129),
             bgLight = Color(0xFFEDE2FF),
             surfaceLight = Color(0xFFEDE2FF),
+            onPrimaryDark = Color(0xFF111129),
+            onPrimaryLight = Color(0xFFEDE2FF),
         ),
         AppThemeDefinition(
             id = "tako",
@@ -147,6 +167,8 @@ val appThemes =
             surfaceDark = Color(0xFF21212E),
             bgLight = Color(0xFFF2EDF7),
             surfaceLight = Color(0xFFF2EDF7),
+            onPrimaryDark = Color(0xFF3C2004),
+            onPrimaryLight = Color(0xFFFFFFFF),
         ),
         AppThemeDefinition(
             id = "yin_yang",
@@ -160,6 +182,8 @@ val appThemes =
             surfaceDark = Color(0xFF1C1C1D),
             bgLight = Color(0xFFFAFAFA),
             surfaceLight = Color(0xFFFAFAFA),
+            onPrimaryDark = Color(0xFF191919),
+            onPrimaryLight = Color(0xFFFFFFFF),
         ),
         AppThemeDefinition(
             id = "lime",
@@ -173,6 +197,8 @@ val appThemes =
             surfaceDark = Color(0xFF202125),
             bgLight = Color(0xFFE9EFEB),
             surfaceLight = Color(0xFFE9EFEB),
+            onPrimaryDark = Color(0xFF043314),
+            onPrimaryLight = Color(0xFFFFFFFF),
         ),
         // Só claro no Rokku — mesma cor usada nos dois campos porque a variante escura nunca é lida.
         AppThemeDefinition(
@@ -187,6 +213,8 @@ val appThemes =
             surfaceDark = Color(0xFFFAFAFA),
             bgLight = Color(0xFFFAFAFA),
             surfaceLight = Color(0xFFFAFAFA),
+            onPrimaryDark = Color(0xFFFFFFFF),
+            onPrimaryLight = Color(0xFFFFFFFF),
             availability = ThemeAvailability.LIGHT_ONLY,
         ),
         // Só escuro no Rokku — mesma cor usada nos dois campos porque a variante clara nunca é lida.
@@ -202,6 +230,8 @@ val appThemes =
             surfaceDark = Color(0xFF040716),
             bgLight = Color(0xFF040716),
             surfaceLight = Color(0xFF040716),
+            onPrimaryDark = Color(0xFF070F2C),
+            onPrimaryLight = Color(0xFF070F2C),
             availability = ThemeAvailability.DARK_ONLY,
         ),
     )

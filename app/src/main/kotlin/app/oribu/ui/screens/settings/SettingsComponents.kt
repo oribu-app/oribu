@@ -1,6 +1,7 @@
 package app.oribu.ui.screens.settings
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -14,7 +15,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AlertDialogDefaults
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -22,7 +24,9 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -136,7 +140,28 @@ internal fun SettingsSwitchRow(
                 )
             }
         }
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            // `switch_thumb_tint.xml` (checked = `?attr/colorSecondary`) turned out to be the
+            // wrong style to copy: it's assigned to the generic `switchStyle` attr (plain
+            // `Switch`/`SwitchCompat`), but Rokku's Settings screens use `SwitchPreferenceCompat`
+            // with a custom widget layout that instantiates `MaterialSwitch` directly, styled by
+            // `materialSwitchStyle` instead — which Rokku leaves at the stock Material3 default.
+            // That stock default's checked-thumb color is `colorOnPrimary`, which is why it reads
+            // as dark: every theme's real `colorOnPrimary` is a proper contrasting-dark shade
+            // picked for that theme (`onPrimaryLime` = #043314, not a flat black), not literal
+            // white — see `AppThemeDefinition.onPrimaryDark`. Unchecked thumb keeps
+            // `colorOnSurface`, matching Rokku's `switch_thumb_tint.xml` value for that state
+            // (the two style paths happen to agree there).
+            colors =
+                SwitchDefaults.colors(
+                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                    checkedTrackColor = MaterialTheme.colorScheme.primary,
+                    checkedBorderColor = Color.Transparent,
+                    uncheckedThumbColor = MaterialTheme.colorScheme.onSurface,
+                ),
+        )
     }
 }
 
@@ -167,7 +192,17 @@ internal fun SettingsClickRow(
     )
 }
 
-/** Single-choice radio-button list dialog, shared by every Settings screen that picks one of N options. */
+/**
+ * Single-choice radio-button list dialog, shared by every Settings screen that picks one of N
+ * options. Built on [BasicAlertDialog]/[Surface] rather than the stock
+ * [androidx.compose.material3.AlertDialog] — that one's fixed Material3-spec padding around the
+ * title and button row makes the whole dialog noticeably taller than Rokku's native AndroidX
+ * Preference dialog it's meant to match, even with the option rows themselves kept at the exact
+ * same comfortable spacing as before (an earlier attempt at this shrank that gap too far instead,
+ * to the point the title crowded the first option — this one keeps a deliberate gap between
+ * them).
+ */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun <T> SingleChoiceDialog(
     title: String,
@@ -176,33 +211,50 @@ internal fun <T> SingleChoiceDialog(
     onSelect: (T) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = {
-            Column {
-                options.forEach { (value, label) ->
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .selectable(
-                                selected = value == selected,
-                                onClick = {
-                                    onSelect(value)
-                                    onDismiss()
-                                },
-                            ).padding(vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        RadioButton(selected = value == selected, onClick = null)
-                        Spacer(Modifier.width(12.dp))
-                        Text(label)
+    // Read explicitly out here and passed in, instead of resolving it inside the dialog's own
+    // separate composition/window — the themed tint wasn't reaching the dialog through
+    // AlertDialogDefaults.containerColor despite `OribuTheme`'s ColorScheme setting
+    // `surfaceContainerHigh` correctly (verified with a throwaway unit test printing the actual
+    // computed color), so something about resolving it from inside the dialog's own window
+    // specifically was the problem.
+    val containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+    BasicAlertDialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = AlertDialogDefaults.shape,
+            color = containerColor,
+            tonalElevation = AlertDialogDefaults.TonalElevation,
+        ) {
+            Column(Modifier.padding(top = 20.dp, bottom = 8.dp)) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(horizontal = 24.dp),
+                )
+                Spacer(Modifier.height(16.dp))
+                Column(Modifier.padding(horizontal = 24.dp)) {
+                    options.forEach { (value, label) ->
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .selectable(
+                                    selected = value == selected,
+                                    onClick = {
+                                        onSelect(value)
+                                        onDismiss()
+                                    },
+                                ).padding(vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(selected = value == selected, onClick = null)
+                            Spacer(Modifier.width(12.dp))
+                            Text(label)
+                        }
                     }
                 }
+                Row(Modifier.fillMaxWidth().padding(top = 4.dp, end = 8.dp), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+                }
             }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_close)) }
-        },
-    )
+        }
+    }
 }

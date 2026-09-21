@@ -138,6 +138,12 @@ android {
     androidResources {
         // Prevent aapt from re-compressing already-gzipped assets (stored as .bin)
         noCompress += "bin"
+        // Without a declared LocaleConfig, the system has no record of which locales the app
+        // actually supports, so AppCompatDelegate.setApplicationLocales() (the language picker
+        // in Settings > General) falls back to a plain Activity recreate instead of the smoother
+        // dim/cross-fade transition the platform shows for a properly-declared per-app-language
+        // switch (confirmed by comparing against Rokku, which declares this and doesn't flicker).
+        generateLocaleConfig = true
     }
 }
 

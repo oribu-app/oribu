@@ -16,6 +16,7 @@ import app.oribu.ui.locale.AppLocaleController
 import app.oribu.ui.locale.DateFormatMode
 import app.oribu.ui.locale.LanguageMode
 import app.oribu.ui.locale.exampleLabel
+import app.oribu.ui.locale.patternLabel
 
 @Composable
 fun SettingsGeneralScreen(navController: NavController) {
@@ -56,7 +57,7 @@ private fun LocaleSection() {
     if (dateFormatDialogOpen) {
         SingleChoiceDialog(
             title = stringResource(R.string.general_date_format),
-            options = DateFormatMode.entries.map { it to it.exampleLabel() },
+            options = DateFormatMode.entries.map { it to it.patternLabel() },
             selected = AppLocaleController.dateFormatMode,
             onSelect = { AppLocaleController.dateFormatMode = it },
             onDismiss = { dateFormatDialogOpen = false },
