@@ -44,6 +44,7 @@ import app.oribu.ui.components.AnotacoesSection
 import app.oribu.ui.components.HalfStarRatingDisplay
 import app.oribu.ui.components.HalfStarRatingPicker
 import app.oribu.ui.components.bookRatingPhrase
+import app.oribu.ui.locale.formatDate
 import app.oribu.ui.navigation.Routes
 import app.oribu.ui.navigation.navigateToAnotacoes
 import app.oribu.ui.navigation.rememberAnotacoesResult
@@ -242,8 +243,6 @@ fun BookDetailScreen(
     var commentInput by remember { mutableStateOf("") }
     var showStartDatePicker by remember { mutableStateOf(false) }
     var showEndDatePicker by remember { mutableStateOf(false) }
-
-    val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
 
     // Book cache — prefer extracted fields, fall back to volumeInfo for legacy entries
     val volumeInfo = cache?.get("volumeInfo") as? Map<*, *>
@@ -804,26 +803,26 @@ fun BookDetailScreen(
                                     if (mediaItem.readingStartDate != null) {
                                         BookInfoRow(
                                             stringResource(R.string.book_detail_start),
-                                            dateFormatter.format(mediaItem.readingStartDate),
+                                            formatDate(mediaItem.readingStartDate.time),
                                         )
                                     }
                                     if (mediaItem.completionDate != null) {
                                         BookInfoRow(
                                             stringResource(R.string.book_detail_completed),
-                                            dateFormatter.format(mediaItem.completionDate),
+                                            formatDate(mediaItem.completionDate.time),
                                         )
                                     }
                                     if (mediaItem.rereadingDate != null) {
                                         BookInfoRow(
                                             stringResource(R.string.book_detail_reread),
-                                            dateFormatter.format(mediaItem.rereadingDate),
+                                            formatDate(mediaItem.rereadingDate.time),
                                         )
                                     }
-                                    BookInfoRow(stringResource(R.string.label_added), dateFormatter.format(mediaItem.addedDate))
+                                    BookInfoRow(stringResource(R.string.label_added), formatDate(mediaItem.addedDate.time))
                                     if (releaseDateMs != null) {
                                         BookInfoRow(
                                             stringResource(R.string.book_detail_edition_publication),
-                                            dateFormatter.format(java.util.Date(releaseDateMs)),
+                                            formatDate(releaseDateMs),
                                         )
                                     }
                                 }

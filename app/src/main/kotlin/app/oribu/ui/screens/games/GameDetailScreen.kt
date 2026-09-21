@@ -48,6 +48,7 @@ import app.oribu.service.ItadPricePoint
 import app.oribu.service.MediaCacheService
 import app.oribu.ui.components.AnotacoesSection
 import app.oribu.ui.components.CoverImage
+import app.oribu.ui.locale.formatDate
 import app.oribu.ui.navigation.navigateToAnotacoes
 import app.oribu.ui.navigation.rememberAnotacoesResult
 import app.oribu.ui.theme.ColorJogo
@@ -234,7 +235,6 @@ fun GameDetailScreen(
     val expansions = (cache?.get("expansions") as? List<*>)?.filterIsInstance<Map<String, Any?>>()
     val recommendations = (cache?.get("recommendations") as? List<*>)?.filterIsInstance<Map<String, Any?>>()
 
-    val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
     val currentPlatformLabel = consoleDisplayName(console)
     // Enquanto o cache não traz a lista completa da API (ex.: jogo recém-adicionado),
     // ainda mostramos ao menos a plataforma já rastreada — essencial pra exclusivos.
@@ -637,29 +637,29 @@ fun GameDetailScreen(
                             GameSectionTitle(stringResource(R.string.label_dates))
                             Spacer(Modifier.height(10.dp))
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                GameInfoTile(stringResource(R.string.label_added), dateFormatter.format(mediaItem.addedDate))
+                                GameInfoTile(stringResource(R.string.label_added), formatDate(mediaItem.addedDate.time))
                                 if (mediaItem.historyCompletionDate != null) {
                                     GameInfoTile(
                                         stringResource(R.string.game_detail_completed_story_date),
-                                        dateFormatter.format(mediaItem.historyCompletionDate),
+                                        formatDate(mediaItem.historyCompletionDate.time),
                                     )
                                 }
                                 if (mediaItem.extrasCompletionDate != null) {
                                     GameInfoTile(
                                         stringResource(R.string.game_detail_completed_extras_date),
-                                        dateFormatter.format(mediaItem.extrasCompletionDate),
+                                        formatDate(mediaItem.extrasCompletionDate.time),
                                     )
                                 }
                                 if (mediaItem.platinumCompletionDate != null) {
                                     GameInfoTile(
                                         stringResource(R.string.game_detail_completed_100_date),
-                                        dateFormatter.format(mediaItem.platinumCompletionDate),
+                                        formatDate(mediaItem.platinumCompletionDate.time),
                                     )
                                 }
                                 if (releaseDateMs != null) {
                                     GameInfoTile(
                                         stringResource(R.string.label_release_date),
-                                        dateFormatter.format(java.util.Date(releaseDateMs)),
+                                        formatDate(releaseDateMs),
                                     )
                                 }
                             }
@@ -703,7 +703,6 @@ fun GameDetailScreen(
                                     playthroughs.forEach { pt ->
                                         PlaythroughTile(
                                             playthrough = pt,
-                                            dateFormatter = dateFormatter,
                                             color = platformColor,
                                             onClick = {
                                                 editingPlaythrough = pt
@@ -778,7 +777,7 @@ fun GameDetailScreen(
                                     Spacer(Modifier.height(4.dp))
                                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                         Text(
-                                            dateFormatter.format(java.util.Date(vm.priceHistory.first().timestampMs)),
+                                            formatDate(vm.priceHistory.first().timestampMs),
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                                         )
@@ -1090,7 +1089,6 @@ private fun PlatformTag(
 @Composable
 private fun PlaythroughTile(
     playthrough: GamePlaythrough,
-    dateFormatter: SimpleDateFormat,
     color: Color,
     onClick: () -> Unit,
     onDelete: () -> Unit,
@@ -1162,8 +1160,8 @@ private fun PlaythroughTile(
                     Spacer(Modifier.width(4.dp))
                     val range =
                         listOfNotNull(
-                            playthrough.startDate?.let { dateFormatter.format(it) },
-                            playthrough.endDate?.let { dateFormatter.format(it) },
+                            playthrough.startDate?.let { formatDate(it.time) },
+                            playthrough.endDate?.let { formatDate(it.time) },
                         ).joinToString(" → ")
                     Text(
                         range.ifEmpty { stringResource(R.string.game_detail_playthrough_not_started) },

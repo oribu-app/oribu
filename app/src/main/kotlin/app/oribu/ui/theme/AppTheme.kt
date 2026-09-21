@@ -8,22 +8,25 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.oribu.data.SavedTheme
 import app.oribu.data.ThemePreferences
+import com.materialkolor.PaletteStyle
+import com.materialkolor.dynamicColorScheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlin.math.ln
 
 // ── Controller global de tema ────────────────────────────────────────────────
 
@@ -140,40 +143,70 @@ fun OribuTheme(
     content: @Composable () -> Unit,
 ) {
     val def = appThemeById(if (darkTheme) darkThemeId else lightThemeId)
+    val pureBlack = AppThemeController.pureBlackDark
 
-    // `darkColorScheme()`/`lightColorScheme()` preenchem todo papel de cor não passado
-    // explicitamente com a paleta padrão roxa do Material — inclusive `surfaceTint`, que o
-    // Card/Surface do M3 usa pra colorir qualquer elevação, deixando superfícies elevadas com um
-    // véu roxo por cima da cor do tema. `secondary` = `def.accentDark/Light`, o `colorSecondary`
-    // real do Rokku (não uma variação de `colorPrimary`) — é essa cor, não a primary, que o Rokku
-    // usa pra colorir a borda de seleção e o cabeçalho de categoria tintado (ver comentário em
-    // `AppThemeDefinition.accentDark`); usar `colorScheme.primary` ali (como antes) deixava tudo
-    // mais claro/"sóbrio" do que o Rokku de verdade.
+    // `darkColorScheme()`/`lightColorScheme()` only fill the roles passed explicitly and leave
+    // every other one (`surfaceContainerHigh` and friends — what `AlertDialog`/`Card`/chips
+    // actually paint their background with) at Compose's flat neutral-gray default, instead of
+    // toned from the theme's seed color like Rokku's dialogs. Building the full scheme via
+    // `dynamicColorScheme` (same generator `CoverThemedSurface` already uses per-cover) fixes
+    // that everywhere, then `.copy()` re-applies the same explicit overrides as before —
+    // `surfaceTint`, so Card/Surface elevation doesn't get Material's default purple veil over
+    // the theme color, and `secondary` = `def.accentDark/Light`, the real Rokku `colorSecondary`
+    // (not a variation of `colorPrimary`) that colors the selection border and tinted category
+    // header (see `AppThemeDefinition.accentDark`) — using `colorScheme.primary` there (like
+    // before) made everything lighter/"more sober" than the real Rokku.
+    val seed = if (darkTheme) def.seedDark else def.seedLight
+    val background = if (darkTheme) (if (pureBlack) Color.Black else def.bgDark) else def.bgLight
+    val surface = if (darkTheme) (if (pureBlack) Color.Black else def.surfaceDark) else def.surfaceLight
+
+    // Rokku's own dialog/card tint (confirmed from its real `themes.xml` + how AndroidX
+    // Compose's `Surface` resolves it: `ColorSchemeKt.applyTonalElevation`, decompiled from the
+    // actual dependency jar) comes from Material3's tonal-elevation overlay — blending
+    // `surfaceTint` (the theme's seed here) onto `surface` at an alpha that grows
+    // logarithmically with a component's elevation: `(4.5 * ln(elevationDp + 1) + 2) / 100`.
+    // That overlay is normally automatic, but only kicks in when a role's color is *exactly*
+    // `colorScheme.surface`, which didn't reliably reach `AlertDialog` here (see
+    // `SingleChoiceDialog`) — so it's precomputed directly instead, at the real M3 elevation
+    // level each container role nominally represents (1/3/6/8/12dp). Two earlier attempts
+    // guessed instead of replicating this exactly: blending the raw seed via linear RGB `lerp()`
+    // was barely visible, and building each tone in HCT at a boosted chroma read as an
+    // over-saturated pure green — both before this was decompiled.
+    fun tonalSurface(elevationDp: Double): Color {
+        val alpha = ((4.5 * ln(elevationDp + 1) + 2) / 100).toFloat().coerceIn(0f, 1f)
+        return seed.copy(alpha = alpha).compositeOver(surface)
+    }
+
     val colorScheme =
-        if (darkTheme) {
-            val pureBlack = AppThemeController.pureBlackDark
-            darkColorScheme(
-                primary = def.seedDark,
-                secondary = def.accentDark,
-                surfaceTint = def.seedDark,
-                background = if (pureBlack) Color.Black else def.bgDark,
-                surface = if (pureBlack) Color.Black else def.surfaceDark,
-                onPrimary = Color.White,
-                onBackground = Color.White,
-                onSurface = Color.White,
+        remember(seed, darkTheme, pureBlack) {
+            dynamicColorScheme(
+                seedColor = seed,
+                isDark = darkTheme,
+                isAmoled = pureBlack,
+                style = PaletteStyle.TonalSpot,
+                specVersion = specFor(seed),
             )
-        } else {
-            lightColorScheme(
-                primary = def.seedLight,
-                secondary = def.accentLight,
-                surfaceTint = def.seedLight,
-                background = def.bgLight,
-                surface = def.surfaceLight,
-                onPrimary = Color.White,
-                onBackground = Color.Black,
-                onSurface = Color.Black,
-            )
-        }
+        }.copy(
+            // `dynamicColorScheme` maps the seed to a canonical HCT tone for the primary role
+            // instead of using its exact RGB, which drifted primary away from the real
+            // Rokku-matched color the seeds were picked for — pin it back explicitly.
+            primary = seed,
+            secondary = if (darkTheme) def.accentDark else def.accentLight,
+            surfaceTint = seed,
+            background = background,
+            surface = surface,
+            onPrimary = if (darkTheme) def.onPrimaryDark else def.onPrimaryLight,
+            onBackground = if (darkTheme) Color.White else Color.Black,
+            onSurface = if (darkTheme) Color.White else Color.Black,
+            surfaceContainerLowest = surface,
+            surfaceContainerLow = tonalSurface(1.0),
+            surfaceContainer = tonalSurface(3.0),
+            surfaceContainerHigh = tonalSurface(6.0),
+            surfaceContainerHighest = tonalSurface(8.0),
+            surfaceVariant = tonalSurface(6.0),
+            surfaceBright = tonalSurface(12.0),
+            surfaceDim = surface,
+        )
 
     // Escala de cantos M3: capas de mídia seguem retas (extraSmall/small), containers
     // de card e chips ganham arredondamento (medium/large) para uma leitura mais atual.
@@ -206,11 +239,14 @@ fun OribuTheme(
 /**
  * Anima a troca de cores em vez de trocar tudo de uma vez num único frame — sem isso, alternar
  * tema podia parecer "pular" (uma parte da tela recompunha com a cor nova antes da outra,
- * inclusive a barra superior) mesmo a mudança sendo tecnicamente instantânea.
+ * inclusive a barra superior) mesmo a mudança sendo tecnicamente instantânea. Duração longa
+ * (1.500ms) de propósito, replicando a troca de tema real do Rokku — que não pisca nem mostra
+ * spinner, só demora alguns segundos e assenta de forma suave — em vez do "salto" instantâneo que
+ * uma troca de cor típica do Compose (rápida, ~250ms) daria aqui.
  */
 @Composable
 private fun animatedColorScheme(target: ColorScheme): ColorScheme {
-    val spec = tween<Color>(250)
+    val spec = tween<Color>(1500)
     return target.copy(
         primary = animateColorAsState(target.primary, spec, label = "primary").value,
         onPrimary = animateColorAsState(target.onPrimary, spec, label = "onPrimary").value,
@@ -221,5 +257,13 @@ private fun animatedColorScheme(target: ColorScheme): ColorScheme {
         onBackground = animateColorAsState(target.onBackground, spec, label = "onBackground").value,
         surface = animateColorAsState(target.surface, spec, label = "surface").value,
         onSurface = animateColorAsState(target.onSurface, spec, label = "onSurface").value,
+        surfaceVariant = animateColorAsState(target.surfaceVariant, spec, label = "surfaceVariant").value,
+        surfaceContainerLowest = animateColorAsState(target.surfaceContainerLowest, spec, label = "surfaceContainerLowest").value,
+        surfaceContainerLow = animateColorAsState(target.surfaceContainerLow, spec, label = "surfaceContainerLow").value,
+        surfaceContainer = animateColorAsState(target.surfaceContainer, spec, label = "surfaceContainer").value,
+        surfaceContainerHigh = animateColorAsState(target.surfaceContainerHigh, spec, label = "surfaceContainerHigh").value,
+        surfaceContainerHighest = animateColorAsState(target.surfaceContainerHighest, spec, label = "surfaceContainerHighest").value,
+        surfaceBright = animateColorAsState(target.surfaceBright, spec, label = "surfaceBright").value,
+        surfaceDim = animateColorAsState(target.surfaceDim, spec, label = "surfaceDim").value,
     )
 }

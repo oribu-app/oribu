@@ -21,8 +21,10 @@ import java.util.GregorianCalendar
 import java.util.Locale
 
 /**
- * App language, applied via [AppCompatDelegate.setApplicationLocales] — works for any Activity
- * (not just AppCompatActivity) since AppCompat 1.6, and is persisted automatically by the
+ * App language, applied via [AppCompatDelegate.setApplicationLocales], which recreates every
+ * running Activity in the process to apply it — requires `MainActivity` to be an
+ * `AppCompatActivity` (see the comment there); on this single-Activity app there's otherwise no
+ * AppCompatDelegate for the static call to reach. Persisted automatically by the
  * `AppLocalesMetadataHolderService` entry in the manifest, so it needs no DataStore key of its
  * own (unlike [DateFormatMode], which AppCompat has no concept of).
  */
@@ -57,6 +59,9 @@ fun DateFormatMode.exampleLabel(): String {
     return "$name (${formatDate(dateFormatSample.time)})"
 }
 
+/** Bare pattern label (e.g. "dd/MM/yyyy") for the option list in the picker dialog. */
+fun DateFormatMode.patternLabel(): String = pattern ?: "System default"
+
 /** Formats a stored date (epoch millis) following [AppLocaleController.dateFormatMode]. */
 fun formatDate(dateMs: Long): String {
     val date = Date(dateMs)
@@ -70,6 +75,15 @@ fun formatDate(dateMs: Long): String {
 
 object AppLocaleController {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    /**
+     * Set right before triggering the locale change, so `MainActivity` can paint a plain black
+     * screen over the transition instead of the flash the platform's own recreate-driven
+     * animation shows for it — this object is a process-wide singleton, so the flag survives the
+     * Activity recreate itself; `MainActivity` clears it after a short delay once the new
+     * Activity instance is up.
+     */
+    var isLanguageChanging by mutableStateOf(false)
 
     private var _dateFormatMode by mutableStateOf(DateFormatMode.SYSTEM)
     var dateFormatMode: DateFormatMode
@@ -86,6 +100,8 @@ object AppLocaleController {
                 ?: LanguageMode.SYSTEM
         }
         set(value) {
+            if (value == languageMode) return
+            isLanguageChanging = true
             AppCompatDelegate.setApplicationLocales(
                 value.tag?.let { LocaleListCompat.forLanguageTags(it) } ?: LocaleListCompat.getEmptyLocaleList(),
             )

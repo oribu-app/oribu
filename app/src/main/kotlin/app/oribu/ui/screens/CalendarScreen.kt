@@ -31,14 +31,13 @@ import app.oribu.data.db.DB
 import app.oribu.model.MediaItem
 import app.oribu.model.MediaStatus
 import app.oribu.model.MediaType
+import app.oribu.ui.locale.formatDate
 import app.oribu.ui.navigation.Routes
 import coil.compose.AsyncImage
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
-import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
-import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 class CalendarViewModel : ViewModel() {
@@ -61,7 +60,6 @@ fun CalendarScreen(
     var selectedMonth by remember { mutableIntStateOf(now.get(Calendar.MONTH)) }
     var typeFilter by remember { mutableStateOf<MediaType?>(null) }
 
-    val dateFmt = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
     val months =
         listOf(
             stringResource(R.string.month_january),
@@ -225,7 +223,7 @@ fun CalendarScreen(
                         )
                     }
                     items(weekItems, key = { it.id ?: it.title + weekLabel }) { item ->
-                        ReleaseTile(item = item, dateFmt = dateFmt, today = today, onClick = { navigateToDetail(navController, item) })
+                        ReleaseTile(item = item, today = today, onClick = { navigateToDetail(navController, item) })
                     }
                 }
             }
@@ -238,7 +236,6 @@ fun CalendarScreen(
 @Composable
 private fun ReleaseTile(
     item: MediaItem,
-    dateFmt: SimpleDateFormat,
     today: Date,
     onClick: () -> Unit,
 ) {
@@ -288,7 +285,7 @@ private fun ReleaseTile(
             )
             if (releaseDate != null) {
                 Text(
-                    dateFmt.format(releaseDate),
+                    formatDate(releaseDate.time),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                 )

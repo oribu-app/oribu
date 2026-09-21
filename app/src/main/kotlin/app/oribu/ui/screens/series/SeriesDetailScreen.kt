@@ -45,6 +45,7 @@ import app.oribu.model.MediaStatus
 import app.oribu.service.ApiServices
 import app.oribu.service.MediaCacheService
 import app.oribu.ui.components.AnotacoesSection
+import app.oribu.ui.locale.formatDate
 import app.oribu.ui.navigation.navigateToAnotacoes
 import app.oribu.ui.navigation.rememberAnotacoesResult
 import app.oribu.ui.theme.ColorSerie
@@ -154,7 +155,6 @@ class SeriesDetailViewModel : ViewModel() {
     fun loadSeasonEpisodes(
         seriesExternalId: Int,
         seasonNum: Int,
-        dateFmt: java.text.SimpleDateFormat,
     ) {
         if (episodeDetailsBySeason.containsKey(seasonNum)) return
         val current = mediaItem ?: return
@@ -166,7 +166,7 @@ class SeriesDetailViewModel : ViewModel() {
                     }
                 val epDetails =
                     eps.associate {
-                        it.number to Pair(it.name, it.airDate?.let { d -> dateFmt.format(d) })
+                        it.number to Pair(it.name, it.airDate?.let { d -> formatDate(d.time) })
                     }
                 episodeDetailsBySeason[seasonNum] = epDetails
 
@@ -609,11 +609,7 @@ fun SeriesDetailScreen(
                                     onExpand = { seasonNum ->
                                         val extId = mediaItem.externalId?.toIntOrNull()
                                         if (extId != null && ApiServices.tmdbAvailable) {
-                                            vm.loadSeasonEpisodes(
-                                                extId,
-                                                seasonNum,
-                                                java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()),
-                                            )
+                                            vm.loadSeasonEpisodes(extId, seasonNum)
                                         }
                                     },
                                     onMarkEpisode = { s, e -> vm.markEpisode(s, e) },

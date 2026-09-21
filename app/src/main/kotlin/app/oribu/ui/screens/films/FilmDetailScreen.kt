@@ -43,6 +43,7 @@ import app.oribu.model.MediaItem
 import app.oribu.model.MediaStatus
 import app.oribu.service.MediaCacheService
 import app.oribu.ui.components.AnotacoesSection
+import app.oribu.ui.locale.formatDate
 import app.oribu.ui.navigation.Routes
 import app.oribu.ui.navigation.navigateToAnotacoes
 import app.oribu.ui.navigation.rememberAnotacoesResult
@@ -50,9 +51,7 @@ import app.oribu.ui.theme.ColorFilme
 import app.oribu.ui.theme.CoverThemedSurface
 import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 
 class FilmDetailViewModel : ViewModel() {
     var mediaItem by mutableStateOf<MediaItem?>(null)
@@ -187,13 +186,7 @@ fun FilmDetailScreen(
             }
         }
 
-    val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
-
-    val dataLabel =
-        releaseDateMs?.let {
-            val d = Date(it)
-            dateFormatter.format(d)
-        } ?: ""
+    val dataLabel = releaseDateMs?.let { formatDate(it) } ?: ""
 
     val duracaoLabel =
         runtime?.let {
