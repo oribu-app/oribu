@@ -389,6 +389,7 @@
     <string name="settings_data_subtitle">Cache and library</string>
     <string name="settings_general_title">General</string>
     <string name="settings_general_subtitle">Language and date format</string>
+    <string name="settings_help_content_description">Help</string>
 
     <!-- Appearance -->
     <string name="appearance_title">Appearance</string>

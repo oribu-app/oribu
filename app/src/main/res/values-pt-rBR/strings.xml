@@ -389,6 +389,7 @@
     <string name="settings_data_subtitle">Cache e biblioteca</string>
     <string name="settings_general_title">Geral</string>
     <string name="settings_general_subtitle">Idioma e formato de data</string>
+    <string name="settings_help_content_description">Ajuda</string>
 
     <!-- Aparência -->
     <string name="appearance_title">Aparência</string>

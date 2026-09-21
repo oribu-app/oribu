@@ -107,6 +107,15 @@ The format is a simplified version of [Keep a Changelog](https://keepachangelog.
   previously unconverted `SettingsNotificações`/`Plataformas`/`Dados`/`Integrações` screens now
   share the same `SettingsScaffold`/`SettingsSectionHeader`/`SettingsSwitchRow`/`SettingsClickRow`
   building blocks (`docs/design-system-settings.md`).
+- Settings hub didn't match Rokku's real screen: no help ("?") button in the top bar, search box
+  had a visible filled container, category rows and icons (General, Appearance) used the wrong
+  spacing/icon, and the top bar/search field used Material3's default sizes (64dp/56dp) instead of
+  Rokku's real Toolbar/search row (56dp/48dp) — forcing those down with a bare `Modifier.height()`
+  also clipped/overflowed their content, so the hub's top bar, search box and category rows are
+  now hand-built instead of M3's `TopAppBar`/`TextField`/`ListItem`, matching Rokku's real
+  `preference_material.xml`/Toolbar/`MiniSearchView` dimensions exactly (measured via `uiautomator`
+  against a real Rokku build side by side). The "?" button opens a new troubleshooting page on the
+  Oribu website.
 - Steam platform badge text was unreadable (near-black on a dark badge); now white.
 - Update download from Sobre could freeze mid-download with the screen locked (Doze/App Standby
   killing the plain background worker) and never report success or error; now runs as a foreground

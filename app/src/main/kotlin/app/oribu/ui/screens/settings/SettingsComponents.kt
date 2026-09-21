@@ -1,16 +1,19 @@
 package app.oribu.ui.screens.settings
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
@@ -21,6 +24,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
@@ -29,9 +33,8 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -49,28 +52,38 @@ import app.oribu.R
  * a large in-body title over a borderless top bar, non-bold rows, and a small tinted/secondary
  * section header — in one place, instead of each screen inventing its own variant.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScaffold(
     title: String,
     navController: NavController,
+    actions: @Composable RowScope.() -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {},
-                navigationIcon = {
+            // Hand-rolled instead of M3's `TopAppBar`: that component defaults to a 64dp box, and
+            // pinning it down to Rokku's real 56dp Toolbar height with `Modifier.height(56.dp)`
+            // doesn't make its internal navigation-icon slot shrink to fit — the back button kept
+            // its old vertical position/size internally and overflowed past the smaller box (same
+            // class of bug as the search field's clipping). A plain `Row` has no such internal
+            // layout to fight.
+            CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.background)
+                        .statusBarsPadding()
+                        .height(56.dp)
+                        .padding(horizontal = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
                     }
-                },
-                colors =
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background,
-                        scrolledContainerColor = MaterialTheme.colorScheme.background,
-                    ),
-            )
+                    Spacer(Modifier.weight(1f))
+                    actions()
+                }
+            }
         },
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
@@ -167,8 +180,10 @@ internal fun SettingsSwitchRow(
 
 /**
  * Click-through row (navigates, opens a dialog, triggers an action). Same non-bold typography as
- * [SettingsSwitchRow]; [minHeight] defaults to a plain row, pass 64.dp for a top-level category
- * row with a leading icon (matching the Settings hub).
+ * [SettingsSwitchRow]. The Settings hub's own top-level category rows (icon + title) do NOT use
+ * this — see `SettingsCategoryRow` in `SettingsScreen.kt`, a bespoke `Row` sized by padding
+ * instead of a fixed [minHeight], so it grows with the system font size the same way Rokku's real
+ * Preference row does. [minHeight] here defaults to a plain row with no leading icon.
  */
 @Composable
 internal fun SettingsClickRow(
