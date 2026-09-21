@@ -443,6 +443,39 @@ Checks happen at:
 
 ---
 
+## Quick test APK (for chat delivery)
+
+When asked to build an APK just for the user to test (not a tagged release),
+build the **`nightly`** build type and send the **`armeabi-v7a`** ABI split —
+this is the combination that reliably fits the ~30 MB chat upload limit:
+
+```bash
+./gradlew assembleNightly
+```
+
+APK: `app/build/outputs/apk/nightly/app-armeabi-v7a-nightly.apk` (~23-25 MB).
+
+Why this combination and not another build type/ABI:
+- **`qa`** (`isDebuggable = true`) keeps unstripped native debug symbols, so
+  every ABI split lands around 35-40 MB — too big to attach in chat.
+- **`debug`** is even larger for the same reason, and unsigned with a
+  throwaway per-machine keystore.
+- **`nightly`** (`isDebuggable = false`, same as `release`) gets native libs
+  stripped by AGP, landing around 23-30 MB per ABI split — same build type
+  the CI nightly workflow (`build_push.yml`) produces.
+- **`armeabi-v7a`** is the smallest ABI split and installs fine via ARM
+  translation on arm64 devices too; `arm64-v8a` nightly is ~29 MB (cuts it
+  close to the limit), `universal`/`x86`/`x86_64` are all bigger or irrelevant
+  for a phone test.
+
+No need to touch the Google Drive copy step from `## Build & Deploy de APKs`
+(global CLAUDE.md) for this — that's for actual release APKs the user asked
+to keep. If the resulting APK still doesn't fit in chat (e.g. after the app
+grows further), fall back to copying it into the project's Drive folder
+instead of trying a different build type/ABI first.
+
+---
+
 ## Definition of done
 
 Before reporting a task as complete, follow this order:
