@@ -52,15 +52,29 @@ object MediaCacheService {
             Log.d("MediaCache", "fetchAndStore: cache unchanged for ${item.title}")
         }
 
-        when (item.type) {
-            MediaType.SERIES -> checkSeriesStatus(item, newData)
-            MediaType.MANGA, MediaType.WEBTOON -> checkMangaSerializationStatus(item, newData)
-            else -> checkReleaseStatus(item, newData)
+        // Status checks below persist `item.copy(...)`, so they must see the flag already set.
+        val tracked = syncAnimationFlag(item, newData)
+
+        when (tracked.type) {
+            MediaType.SERIES -> checkSeriesStatus(tracked, newData)
+            MediaType.MANGA, MediaType.WEBTOON -> checkMangaSerializationStatus(tracked, newData)
+            else -> checkReleaseStatus(tracked, newData)
         }
 
-        if (item.type == MediaType.MANGA || item.type == MediaType.WEBTOON) {
-            syncAniListProgress(item)
+        if (tracked.type in listOf(MediaType.MANGA, MediaType.WEBTOON, MediaType.ANIME)) {
+            syncAniListProgress(tracked)
         }
+    }
+
+    /** Persists MediaItem.isAnimation from the TMDB details (movies/series only). */
+    private suspend fun syncAnimationFlag(
+        item: MediaItem,
+        data: Map<String, Any?>,
+    ): MediaItem {
+        if (item.type != MediaType.MOVIE && item.type != MediaType.SERIES) return item
+        val isAnimation = data["isAnimation"] as? Boolean ?: return item
+        if (isAnimation == item.isAnimation) return item
+        return item.copy(isAnimation = isAnimation).also { DB.repo.update(it) }
     }
 
     // ── Hiatus tracking (manga/webtoons) ────────────────────────────────────────
@@ -109,7 +123,8 @@ object MediaCacheService {
         val mediaId = item.externalId?.toIntOrNull() ?: return
         val progress =
             withContext(Dispatchers.IO) {
-                runCatching { ApiServices.anilist.getUserProgress(username, mediaId) }.getOrNull()
+                val listType = if (item.type == MediaType.ANIME) "ANIME" else "MANGA"
+                runCatching { ApiServices.anilist.getUserProgress(username, mediaId, listType) }.getOrNull()
             } ?: return
         val merged = computeMergedProgress(item.currentProgress, progress) ?: return
         DB.repo.update(item.copy(currentProgress = merged))
@@ -138,6 +153,7 @@ object MediaCacheService {
             MediaType.SERIES -> fetchSeries(externalId)
             MediaType.GAME -> fetchGame(item)
             MediaType.MANGA, MediaType.WEBTOON -> fetchManga(item)
+            MediaType.ANIME -> fetchAnime(item)
             MediaType.BOOK -> fetchBook(item)
         }
     }
@@ -158,6 +174,7 @@ object MediaCacheService {
 
         return buildMap {
             put("title", d.title)
+            put("isAnimation", d.isAnimation)
             put("synopsis", d.synopsis)
             put("posterUrl", d.posterUrl)
             put("backdropUrl", d.backdropUrl)
@@ -182,6 +199,7 @@ object MediaCacheService {
 
         return buildMap {
             put("title", d.title)
+            put("isAnimation", d.isAnimation)
             put("synopsis", d.synopsis)
             put("posterUrl", d.posterUrl)
             put("backdropUrl", d.backdropUrl)
@@ -416,37 +434,50 @@ object MediaCacheService {
         }
     }
 
-    private suspend fun fetchMangaFromAniList(
-        item: MediaItem,
-        externalId: String,
-    ): Map<String, Any?>? {
+    private suspend fun fetchAnime(item: MediaItem): Map<String, Any?>? {
+        val externalId = item.externalId ?: return null
+        if (item.apiSource == "kitsu") {
+            return withContext(Dispatchers.IO) {
+                runCatching { ApiServices.kitsu.getAnimeDetailsById(externalId) }.getOrNull()
+            }
+        }
         val id = externalId.toIntOrNull() ?: externalId.toDoubleOrNull()?.toInt() ?: return null
         val raw =
             withContext(Dispatchers.IO) {
-                runCatching { ApiServices.anilist.getDetailsById(id) }.getOrNull()
+                runCatching { ApiServices.anilist.getAnimeDetailsById(id) }.getOrNull()
             } ?: return null
+        return raw.toMutableMap().apply {
+            remove("status")
+            put("serializationStatus", aniListSerializationStatus(raw["status"] as? String))
+            put("format", animeFormat(raw["format"] as? String))
+            put("genres", translateAniListGenres(raw["genres"]))
+        }
+    }
 
-        val serializationStatus =
-            when (raw["status"] as? String) {
-                "RELEASING" -> "Ongoing"
-                "FINISHED" -> "Finished"
-                "NOT_YET_RELEASED" -> "Coming Soon"
-                "CANCELLED" -> "Cancelled"
-                "HIATUS" -> "Hiatus"
-                else -> raw["status"] as? String
-            }
+    /** Fixed English labels shared by every manga/anime source — they double as state keys. */
+    private fun aniListSerializationStatus(status: String?): String? =
+        when (status) {
+            "RELEASING" -> "Ongoing"
+            "FINISHED" -> "Finished"
+            "NOT_YET_RELEASED" -> "Coming Soon"
+            "CANCELLED" -> "Cancelled"
+            "HIATUS" -> "Hiatus"
+            else -> status
+        }
 
-        val mangaFormat =
-            when (raw["format"] as? String) {
-                "MANGA" -> "Manga"
-                "MANHWA" -> "Manhwa"
-                "MANHUA" -> "Manhua"
-                "ONE_SHOT" -> "One-shot"
-                "NOVEL" -> "Novel"
-                "OEL" -> "OEL"
-                else -> raw["format"] as? String
-            }
+    private fun animeFormat(format: String?): String? =
+        when (format) {
+            "TV" -> "TV"
+            "TV_SHORT" -> "TV Short"
+            "MOVIE" -> "Movie"
+            "SPECIAL" -> "Special"
+            "OVA" -> "OVA"
+            "ONA" -> "ONA"
+            "MUSIC" -> "Music"
+            else -> format
+        }
 
+    private fun translateAniListGenres(genres: Any?): List<String>? {
         val genreMap =
             mapOf(
                 "Action" to "Ação",
@@ -469,19 +500,44 @@ object MediaCacheService {
                 "Mahou Shoujo" to "Mahou Shoujo",
                 "Hentai" to "Hentai",
             )
-        val genresPt =
-            (raw["genres"] as? List<*>)
-                ?.filterIsInstance<String>()
-                ?.map {
-                    if (java.util.Locale
-                            .getDefault()
-                            .language == "pt"
-                    ) {
-                        genreMap[it] ?: it
-                    } else {
-                        it
-                    }
+        return (genres as? List<*>)
+            ?.filterIsInstance<String>()
+            ?.map {
+                if (java.util.Locale
+                        .getDefault()
+                        .language == "pt"
+                ) {
+                    genreMap[it] ?: it
+                } else {
+                    it
                 }
+            }
+    }
+
+    private suspend fun fetchMangaFromAniList(
+        item: MediaItem,
+        externalId: String,
+    ): Map<String, Any?>? {
+        val id = externalId.toIntOrNull() ?: externalId.toDoubleOrNull()?.toInt() ?: return null
+        val raw =
+            withContext(Dispatchers.IO) {
+                runCatching { ApiServices.anilist.getDetailsById(id) }.getOrNull()
+            } ?: return null
+
+        val serializationStatus = aniListSerializationStatus(raw["status"] as? String)
+
+        val mangaFormat =
+            when (raw["format"] as? String) {
+                "MANGA" -> "Manga"
+                "MANHWA" -> "Manhwa"
+                "MANHUA" -> "Manhua"
+                "ONE_SHOT" -> "One-shot"
+                "NOVEL" -> "Novel"
+                "OEL" -> "OEL"
+                else -> raw["format"] as? String
+            }
+
+        val genresPt = translateAniListGenres(raw["genres"])
 
         val result =
             raw.toMutableMap().apply {

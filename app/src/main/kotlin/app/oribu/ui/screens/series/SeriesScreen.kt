@@ -4,10 +4,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Animation
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.*
@@ -29,6 +32,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import app.oribu.R
+import app.oribu.data.SeriesScope
+import app.oribu.data.SeriesScopePreferences
 import app.oribu.data.db.DB
 import app.oribu.data.db.entity.SeriesEpisodeEntity
 import app.oribu.model.MediaItem
@@ -41,23 +46,47 @@ import app.oribu.ui.components.ProportionalTabRow
 import app.oribu.ui.components.swipeNavigation
 import app.oribu.ui.locale.formatDate
 import app.oribu.ui.navigation.Routes
+import app.oribu.ui.navigation.detailRoute
+import app.oribu.ui.theme.ColorAnime
 import app.oribu.ui.theme.ColorSerie
 import coil.compose.AsyncImage
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import java.util.*
 import androidx.compose.foundation.lazy.items as lazyItems
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class SeriesViewModel : ViewModel() {
+    /** Items of every type the chosen scope covers (series only until the user picks one). */
     val allItems =
-        DB.repo
-            .watchByType(MediaType.SERIES)
+        SeriesScopePreferences.seriesScope
+            .flatMapLatest { scope -> DB.repo.watchByTypes((scope ?: SeriesScope.SERIES).types) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val allEpisodes =
         DB.repo
             .watchAllEpisodes()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+}
+
+/** One row of the History tab: a watched series episode or a finished anime, ordered by date. */
+private sealed interface HistoryEntry {
+    val dateMs: Long
+    val item: MediaItem
+
+    data class Episode(
+        val ep: SeriesEpisodeEntity,
+        override val item: MediaItem,
+    ) : HistoryEntry {
+        override val dateMs get() = ep.watchedAtMs
+    }
+
+    data class FinishedAnime(
+        override val item: MediaItem,
+        override val dateMs: Long,
+    ) : HistoryEntry
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,6 +99,10 @@ fun SeriesScreen(
 ) {
     val allItems by vm.allItems.collectAsStateWithLifecycle()
     val allEpisodes by vm.allEpisodes.collectAsStateWithLifecycle()
+    val scopeLoaded by SeriesScopePreferences.loaded.collectAsStateWithLifecycle()
+    val chosenScope by SeriesScopePreferences.seriesScope.collectAsStateWithLifecycle()
+    val scope = chosenScope ?: SeriesScope.SERIES
+    val accent = if (scope == SeriesScope.ANIME) ColorAnime else ColorSerie
 
     val hoje = remember { Date() }
     val tabs =
@@ -82,60 +115,77 @@ fun SeriesScreen(
         )
     var selectedTab by remember { mutableIntStateOf(0) }
     var showMenu by remember { mutableStateOf(false) }
+    var showAddChooser by remember { mutableStateOf(false) }
+
+    // With both scopes, the type chips narrow every tab to series or anime.
+    var typeFilter by remember { mutableStateOf<MediaType?>(null) }
+    LaunchedEffect(scope) { if (scope != SeriesScope.BOTH) typeFilter = null }
+    val scopedItems = remember(allItems, typeFilter) { allItems.filter { typeFilter == null || it.type == typeFilter } }
 
     // Em Breve = WAITING_RELEASE ou WAITING_EPISODES (renovada, nova temporada a caminho)
     val upcoming =
-        remember(allItems, hoje) {
-            allItems
+        remember(scopedItems, hoje) {
+            scopedItems
                 .filter {
                     it.status == MediaStatus.WAITING_RELEASE ||
                         it.status == MediaStatus.WAITING_EPISODES
                 }.sortedBy { it.releaseDate }
         }
 
-    // Histórico = HISTORY ou CONCLUDED (cancelada/terminada)
-    val history =
-        remember(allItems) {
-            allItems
-                .filter {
-                    it.status == MediaStatus.HISTORY ||
-                        it.status == MediaStatus.CONCLUDED
-                }.sortedByDescending { it.completionDate ?: it.addedDate }
-        }
-
     var selectedGenre by remember { mutableStateOf<String?>(null) }
     var selectedPlatform by remember { mutableStateOf<String?>(null) }
     var favoritesOnly by remember { mutableStateOf(false) }
-    val availableGenres = remember(allItems) { allItems.mapNotNull { it.genre }.distinct().sorted() }
-    val availablePlatforms = remember(allItems) { allItems.mapNotNull { it.streamingPlatform }.distinct().sorted() }
+    var animationOnly by remember { mutableStateOf(false) }
+    val availableGenres = remember(scopedItems) { scopedItems.mapNotNull { it.genre }.distinct().sorted() }
+    val availablePlatforms = remember(scopedItems) { scopedItems.mapNotNull { it.streamingPlatform }.distinct().sorted() }
+    val hasAnimation = remember(scopedItems) { scopedItems.any { it.isAnimation } }
 
     val filtered =
-        remember(allItems, selectedTab) {
+        remember(scopedItems, selectedTab) {
             when (selectedTab) {
-                0 -> allItems
-                1 -> allItems.filter { it.status == MediaStatus.WATCHING || it.status == MediaStatus.REWATCHING }
-                2 -> allItems.filter { it.status == MediaStatus.QUEUED }.sortedBy { it.title }
-                3 -> history
+                0 -> scopedItems
+                1 -> scopedItems.filter { it.status == MediaStatus.WATCHING || it.status == MediaStatus.REWATCHING }
+                2 -> scopedItems.filter { it.status == MediaStatus.QUEUED }.sortedBy { it.title }
                 4 -> upcoming
-                else -> allItems
+                else -> scopedItems
             }
         }
 
-    // Histórico = lista plana de episódios assistidos (estilo SeriesGuide), mais
-    // recentes primeiro, independente do status atual da série.
-    val watchedEpisodesFlat =
-        remember(allEpisodes, allItems) {
-            val itemsById = allItems.associateBy { it.id }
-            allEpisodes
-                .mapNotNull { ep -> itemsById[ep.mediaItemId]?.let { series -> ep to series } }
-                .sortedByDescending { it.first.watchedAtMs }
+    // Histórico = linha do tempo (estilo SeriesGuide) com os episódios de série assistidos e os
+    // animes concluídos, mais recentes primeiro, independente do status atual.
+    val historyEntries =
+        remember(allEpisodes, scopedItems) {
+            val itemsById = scopedItems.associateBy { it.id }
+            val episodes =
+                allEpisodes.mapNotNull { ep -> itemsById[ep.mediaItemId]?.let { HistoryEntry.Episode(ep, it) } }
+            val finishedAnime =
+                scopedItems
+                    .filter { it.type == MediaType.ANIME && it.status == MediaStatus.WATCHED }
+                    .map { HistoryEntry.FinishedAnime(it, (it.completionDate ?: it.addedDate).time) }
+            (episodes + finishedAnime).sortedByDescending { it.dateMs }
         }
+
+    fun onAdd() {
+        when (scope) {
+            SeriesScope.SERIES -> navController.navigate(Routes.SERIES_ADD)
+            SeriesScope.ANIME -> navController.navigate(Routes.ANIME_ADD)
+            SeriesScope.BOTH -> showAddChooser = true
+        }
+    }
+
+    val titleRes =
+        when (scope) {
+            SeriesScope.SERIES -> R.string.series_title
+            SeriesScope.ANIME -> R.string.anime_title
+            SeriesScope.BOTH -> R.string.series_scope_both
+        }
+    val addLabel = stringResource(if (scope == SeriesScope.ANIME) R.string.anime_add_button else R.string.series_add_button)
 
     Scaffold(
         topBar = {
             Column {
                 TopAppBar(
-                    title = { Text(stringResource(R.string.series_title)) },
+                    title = { Text(stringResource(titleRes)) },
                     navigationIcon = {
                         IconButton(onClick = {
                             navController.navigate(Routes.HOME) { launchSingleTop = true }
@@ -156,23 +206,22 @@ fun SeriesScreen(
                 ProportionalTabRow(
                     selectedTabIndex = selectedTab,
                     tabs = tabs,
-                    selectedColor = ColorSerie,
+                    selectedColor = accent,
                     onTabSelected = { selectedTab = it },
                 )
             }
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                onClick = { navController.navigate(Routes.SERIES_ADD) },
-                containerColor = ColorSerie,
+                onClick = ::onAdd,
+                containerColor = accent,
                 contentColor = Color.White,
                 icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                text = { Text(stringResource(R.string.series_add_button)) },
+                text = { Text(addLabel) },
             )
         },
     ) { padding ->
-        val addSeriesLabel = stringResource(R.string.series_add_button)
-        Box(
+        Column(
             Modifier
                 .padding(padding)
                 .fillMaxSize()
@@ -185,14 +234,17 @@ fun SeriesScreen(
                     },
                 ),
         ) {
-            // ── Histórico — lista plana de episódios assistidos (estilo SeriesGuide) ──
+            if (scope == SeriesScope.BOTH) {
+                TypeFilterRow(typeFilter, onSelect = { typeFilter = it })
+            }
+            // ── Histórico — linha do tempo de episódios e animes concluídos ──
             if (selectedTab == 3) {
-                if (watchedEpisodesFlat.isEmpty()) {
+                if (historyEntries.isEmpty()) {
                     EmptyState(
                         stringResource(R.string.series_empty_history_title),
                         stringResource(R.string.series_empty_history_subtitle),
-                        addSeriesLabel,
-                        onButton = { navController.navigate(Routes.SERIES_ADD) },
+                        addLabel,
+                        onButton = ::onAdd,
                     )
                 } else {
                     LazyColumn(
@@ -200,14 +252,15 @@ fun SeriesScreen(
                         contentPadding = PaddingValues(bottom = 88.dp),
                     ) {
                         lazyItems(
-                            items = watchedEpisodesFlat,
-                            key = { (ep, series) -> "ep_${series.id}_${ep.season}_${ep.episode}" },
-                        ) { (ep, series) ->
-                            EpisodeHistoryFlatRow(
-                                ep = ep,
-                                series = series,
-                                onClick = { navigateToDetail(navController, series) },
-                            )
+                            items = historyEntries,
+                            key = { entry ->
+                                when (entry) {
+                                    is HistoryEntry.Episode -> "ep_${entry.item.id}_${entry.ep.season}_${entry.ep.episode}"
+                                    is HistoryEntry.FinishedAnime -> "anime_${entry.item.id}"
+                                }
+                            },
+                        ) { entry ->
+                            HistoryRow(entry = entry, onClick = { navigateToDetail(navController, entry.item) })
                         }
                     }
                 }
@@ -232,7 +285,7 @@ fun SeriesScreen(
                                 stringResource(R.string.series_empty_upcoming_subtitle)
                         }
                     }
-                EmptyState(title, subtitle, addSeriesLabel, onButton = { navController.navigate(Routes.SERIES_ADD) })
+                EmptyState(title, subtitle, addLabel, onButton = ::onAdd)
             } else {
                 val genreFiltered =
                     if (selectedTab == 0) {
@@ -240,6 +293,7 @@ fun SeriesScreen(
                             .filter { selectedGenre == null || it.genre == selectedGenre }
                             .filter { selectedPlatform == null || it.streamingPlatform == selectedPlatform }
                             .filter { !favoritesOnly || it.favorite }
+                            .filter { !animationOnly || it.isAnimation }
                     } else {
                         filtered
                     }
@@ -257,16 +311,29 @@ fun SeriesScreen(
                                 leadingIcon = { Icon(Icons.Default.Favorite, null, modifier = Modifier.size(16.dp)) },
                                 colors =
                                     FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = ColorSerie.copy(alpha = 0.18f),
-                                        selectedLabelColor = ColorSerie,
+                                        selectedContainerColor = accent.copy(alpha = 0.18f),
+                                        selectedLabelColor = accent,
                                     ),
                             )
+                            if (hasAnimation) {
+                                FilterChip(
+                                    selected = animationOnly,
+                                    onClick = { animationOnly = !animationOnly },
+                                    label = { Text(stringResource(R.string.label_animation)) },
+                                    leadingIcon = { Icon(Icons.Default.Animation, null, modifier = Modifier.size(16.dp)) },
+                                    colors =
+                                        FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = accent.copy(alpha = 0.18f),
+                                            selectedLabelColor = accent,
+                                        ),
+                                )
+                            }
                         }
                         if (availableGenres.isNotEmpty()) {
-                            GenreFilterRow(availableGenres, selectedGenre, ColorSerie) { selectedGenre = it }
+                            GenreFilterRow(availableGenres, selectedGenre, accent) { selectedGenre = it }
                         }
                         if (availablePlatforms.isNotEmpty()) {
-                            GenreFilterRow(availablePlatforms, selectedPlatform, ColorSerie) { selectedPlatform = it }
+                            GenreFilterRow(availablePlatforms, selectedPlatform, accent) { selectedPlatform = it }
                         }
                     }
                     if (genreFiltered.isEmpty()) {
@@ -290,14 +357,121 @@ fun SeriesScreen(
             }
         }
     }
+
+    if (scopeLoaded && chosenScope == null) {
+        SeriesScopeFirstRunDialog(onChoose = { SeriesScopePreferences.set(it) })
+    }
+
+    if (showAddChooser) {
+        AlertDialog(
+            onDismissRequest = { showAddChooser = false },
+            title = { Text(stringResource(R.string.series_add_chooser_title)) },
+            text = {
+                Column {
+                    listOf(
+                        R.string.series_add_button to Routes.SERIES_ADD,
+                        R.string.anime_add_button to Routes.ANIME_ADD,
+                    ).forEach { (labelRes, route) ->
+                        TextButton(
+                            onClick = {
+                                showAddChooser = false
+                                navController.navigate(route)
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) { Text(stringResource(labelRes)) }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = { TextButton(onClick = { showAddChooser = false }) { Text(stringResource(R.string.action_cancel)) } },
+        )
+    }
+}
+
+/**
+ * Asked on the Series tab's first access — which media the tab covers. Can't be dismissed
+ * without a choice (there's no sensible default to fall back to); the footnote points to where it
+ * can be changed later.
+ */
+@Composable
+private fun SeriesScopeFirstRunDialog(onChoose: (SeriesScope) -> Unit) {
+    var selected by remember { mutableStateOf(SeriesScope.BOTH) }
+    AlertDialog(
+        onDismissRequest = {},
+        title = { Text(stringResource(R.string.series_scope_first_run_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                SeriesScope.entries.forEach { option ->
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .selectable(selected = option == selected, onClick = { selected = option })
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(selected = option == selected, onClick = null)
+                        Spacer(Modifier.width(12.dp))
+                        Column {
+                            Text(stringResource(option.labelRes), style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                stringResource(option.descriptionRes),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    stringResource(R.string.series_scope_first_run_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                )
+            }
+        },
+        confirmButton = { TextButton(onClick = { onChoose(selected) }) { Text(stringResource(R.string.action_confirm)) } },
+    )
 }
 
 @Composable
-private fun EpisodeHistoryFlatRow(
-    ep: SeriesEpisodeEntity,
-    series: MediaItem,
+private fun TypeFilterRow(
+    selected: MediaType?,
+    onSelect: (MediaType?) -> Unit,
+) {
+    val options =
+        listOf(
+            null to stringResource(R.string.films_tab_all),
+            MediaType.SERIES to stringResource(R.string.series_title),
+            MediaType.ANIME to stringResource(R.string.anime_title),
+        )
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.padding(top = 8.dp),
+    ) {
+        lazyItems(options) { (type, label) ->
+            val color = if (type == MediaType.ANIME) ColorAnime else ColorSerie
+            FilterChip(
+                selected = selected == type,
+                onClick = { onSelect(type) },
+                label = { Text(label) },
+                colors =
+                    FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = color.copy(alpha = 0.18f),
+                        selectedLabelColor = color,
+                    ),
+            )
+        }
+    }
+}
+
+@Composable
+private fun HistoryRow(
+    entry: HistoryEntry,
     onClick: () -> Unit,
 ) {
+    val item = entry.item
+    val accent = if (item.type == MediaType.ANIME) ColorAnime else ColorSerie
     Row(
         Modifier
             .fillMaxWidth()
@@ -306,9 +480,9 @@ private fun EpisodeHistoryFlatRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        if (series.coverUrl != null) {
+        if (item.coverUrl != null) {
             AsyncImage(
-                model = series.coverUrl,
+                model = item.coverUrl,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.width(48.dp).height(68.dp).clip(RoundedCornerShape(4.dp)),
@@ -318,27 +492,38 @@ private fun EpisodeHistoryFlatRow(
                 Modifier
                     .width(48.dp)
                     .height(68.dp)
-                    .background(ColorSerie.copy(alpha = 0.15f), RoundedCornerShape(4.dp)),
+                    .background(accent.copy(alpha = 0.15f), RoundedCornerShape(4.dp)),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.Outlined.Tv, null, tint = ColorSerie.copy(alpha = 0.4f), modifier = Modifier.size(20.dp))
+                Icon(Icons.Outlined.Tv, null, tint = accent.copy(alpha = 0.4f), modifier = Modifier.size(20.dp))
             }
         }
         Column(Modifier.weight(1f)) {
             Text(
-                formatDate(ep.watchedAtMs),
+                formatDate(entry.dateMs),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
             )
             Text(
-                series.title,
+                item.title,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+            val detail =
+                when (entry) {
+                    is HistoryEntry.Episode -> {
+                        val ep = entry.ep
+                        "${ep.season}x${ep.episode}${if (!ep.episodeName.isNullOrBlank()) " ${ep.episodeName}" else ""}"
+                    }
+
+                    is HistoryEntry.FinishedAnime -> {
+                        stringResource(R.string.series_history_anime_finished)
+                    }
+                }
             Text(
-                "${ep.season}x${ep.episode}${if (!ep.episodeName.isNullOrBlank()) " ${ep.episodeName}" else ""}",
+                detail,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 maxLines = 1,
@@ -353,6 +538,7 @@ private fun SeriesCard(
     item: MediaItem,
     onTap: () -> Unit,
 ) {
+    val accent = if (item.type == MediaType.ANIME) ColorAnime else ColorSerie
     Column(
         Modifier.clickable(onClick = onTap),
         verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -367,10 +553,10 @@ private fun SeriesCard(
                 )
             } else {
                 Box(
-                    Modifier.fillMaxSize().background(ColorSerie.copy(alpha = 0.15f)),
+                    Modifier.fillMaxSize().background(accent.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(Icons.Outlined.Tv, null, tint = ColorSerie.copy(alpha = 0.4f), modifier = Modifier.size(32.dp))
+                    Icon(Icons.Outlined.Tv, null, tint = accent.copy(alpha = 0.4f), modifier = Modifier.size(32.dp))
                 }
             }
         }
@@ -389,5 +575,5 @@ private fun navigateToDetail(
     item: MediaItem,
 ) {
     navController.currentBackStackEntry?.savedStateHandle?.set("item", item)
-    navController.navigate(Routes.SERIES_DETAIL)
+    navController.navigate(item.type.detailRoute)
 }

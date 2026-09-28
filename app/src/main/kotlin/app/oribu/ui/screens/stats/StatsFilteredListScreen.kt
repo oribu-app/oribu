@@ -19,22 +19,14 @@ import app.oribu.model.MediaType
 import app.oribu.ui.components.EmptyState
 import app.oribu.ui.components.MediaGridCard
 import app.oribu.ui.navigation.Routes
-
-private fun detailRouteFor(type: MediaType): String =
-    when (type) {
-        MediaType.GAME -> Routes.GAMES_DETAIL
-        MediaType.MOVIE -> Routes.FILMS_DETAIL
-        MediaType.SERIES -> Routes.SERIES_DETAIL
-        MediaType.MANGA, MediaType.WEBTOON -> Routes.MANGA_DETAIL
-        MediaType.BOOK -> Routes.BOOKS_DETAIL
-    }
+import app.oribu.ui.navigation.detailRoute
 
 private fun navigateToItemDetail(
     navController: NavController,
     item: MediaItem,
 ) {
     navController.currentBackStackEntry?.savedStateHandle?.set("item", item)
-    navController.navigate(detailRouteFor(item.type))
+    navController.navigate(item.type.detailRoute)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

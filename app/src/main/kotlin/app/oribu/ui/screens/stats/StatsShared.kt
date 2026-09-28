@@ -18,7 +18,7 @@ val concludedStatuses =
     )
 
 /** Webtoon não é um hobby separado na prática — é sempre tratado como Mangá nas telas de estatísticas. */
-val hobbySections = listOf(MediaType.GAME, MediaType.MANGA, MediaType.SERIES, MediaType.MOVIE, MediaType.BOOK)
+val hobbySections = listOf(MediaType.GAME, MediaType.MANGA, MediaType.SERIES, MediaType.ANIME, MediaType.MOVIE, MediaType.BOOK)
 
 fun MediaItem.matchesHobby(hobby: MediaType): Boolean = type == hobby || (hobby == MediaType.MANGA && type == MediaType.WEBTOON)
 
@@ -100,7 +100,9 @@ val categoricalChartPalette =
         Color(0xFF008300), // verde
         Color(0xFF4A3AA7), // violeta
         Color(0xFFE34948), // vermelho
+        Color(0xFF8D6E63), // marrom
+        Color(0xFF546E7A), // cinza-azulado
     )
 
-/** Retorna [count] cores da paleta categórica fixa, ciclando se precisar de mais que 8. */
+/** Retorna [count] cores da paleta categórica fixa, ciclando se precisar de mais que 10. */
 fun categoricalColors(count: Int): List<Color> = List(count) { i -> categoricalChartPalette[i % categoricalChartPalette.size] }

@@ -14,7 +14,10 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.*
 import app.oribu.R
+import app.oribu.data.SeriesScope
+import app.oribu.data.SeriesScopePreferences
 import app.oribu.model.MediaItem
+import app.oribu.model.MediaType
 import app.oribu.ui.screens.AboutLibraryLicenseScreen
 import app.oribu.ui.screens.AboutLicenseScreen
 import app.oribu.ui.screens.AboutScreen
@@ -63,11 +66,14 @@ private data class BottomNavItem(
 
 @Composable
 fun MainNavGraph(startDestination: String = Routes.HOME) {
+    // "Séries e animes" doesn't fit the bottom bar, so only the anime-only scope renames the tab.
+    val seriesScope by SeriesScopePreferences.seriesScope.collectAsState()
+    val seriesTabLabel = stringResource(if (seriesScope == SeriesScope.ANIME) R.string.anime_title else R.string.series_title)
     val bottomNavItems =
         listOf(
             BottomNavItem(Routes.GAMES, stringResource(R.string.games_title), Icons.Outlined.SportsEsports, Icons.Filled.SportsEsports),
             BottomNavItem(Routes.FILMS, stringResource(R.string.films_title), Icons.Outlined.Movie, Icons.Filled.Movie),
-            BottomNavItem(Routes.SERIES, stringResource(R.string.series_title), Icons.Outlined.Tv, Icons.Filled.Tv),
+            BottomNavItem(Routes.SERIES, seriesTabLabel, Icons.Outlined.Tv, Icons.Filled.Tv),
             BottomNavItem(Routes.MANGA, stringResource(R.string.manga_title), Icons.Outlined.MenuBook, Icons.Filled.MenuBook),
             BottomNavItem(Routes.BOOKS, stringResource(R.string.books_title), Icons.Outlined.Book, Icons.Filled.Book),
         )
@@ -164,6 +170,12 @@ fun MainNavGraph(startDestination: String = Routes.HOME) {
 
             composable(Routes.MANGA_ADD) { AddMangaScreen(navController) }
             composable(Routes.MANGA_DETAIL) {
+                val item = navController.previousBackStackEntry?.savedStateHandle?.get<MediaItem>("item")
+                if (item != null) MangaDetailScreen(navController, item)
+            }
+            // Anime reuses the progress-based manga screens (episodes instead of chapters).
+            composable(Routes.ANIME_ADD) { AddMangaScreen(navController, MediaType.ANIME) }
+            composable(Routes.ANIME_DETAIL) {
                 val item = navController.previousBackStackEntry?.savedStateHandle?.get<MediaItem>("item")
                 if (item != null) MangaDetailScreen(navController, item)
             }

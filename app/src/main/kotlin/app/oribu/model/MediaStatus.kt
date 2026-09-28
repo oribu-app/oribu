@@ -71,6 +71,10 @@ enum class MediaStatus(
 
         fun forMangaAdd() = listOf(READING, REREADING, QUEUED)
 
+        fun forAnime() = listOf(WATCHING, REWATCHING, ON_HOLD, WATCHED, QUEUED)
+
+        fun forAnimeAdd() = listOf(WATCHING, REWATCHING, QUEUED)
+
         fun forBook() = listOf(READING, REREADING, READ, QUEUED, DROPPED)
 
         fun forBookAdd() = listOf(READING, REREADING, QUEUED)

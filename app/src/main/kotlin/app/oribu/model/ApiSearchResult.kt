@@ -17,6 +17,7 @@ data class ApiSearchResult(
     val popularity: Int = 0,
     val seasons: Int? = null,
     val chapters: Int? = null,
+    val episodes: Int? = null,
     val volumes: Int? = null,
     val authors: List<String>? = null,
     val pages: Int? = null,

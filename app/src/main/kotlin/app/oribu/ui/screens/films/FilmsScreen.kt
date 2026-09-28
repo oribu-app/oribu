@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Animation
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.*
@@ -134,14 +135,17 @@ fun FilmsScreen(
     var selectedGenre by remember { mutableStateOf<String?>(null) }
     var selectedPlatform by remember { mutableStateOf<String?>(null) }
     var favoritesOnly by remember { mutableStateOf(false) }
+    var animationOnly by remember { mutableStateOf(false) }
+    val hasAnimation = remember(allItems) { allItems.any { it.isAnimation } }
     val availableGenres = remember(allItems) { allItems.mapNotNull { it.genre }.distinct().sorted() }
     val availablePlatforms = remember(allItems) { allItems.mapNotNull { it.streamingPlatform }.distinct().sorted() }
     val genreFiltered =
-        remember(allItems, selectedGenre, selectedPlatform, favoritesOnly) {
+        remember(allItems, selectedGenre, selectedPlatform, favoritesOnly, animationOnly) {
             allItems
                 .filter { selectedGenre == null || it.genre == selectedGenre }
                 .filter { selectedPlatform == null || it.streamingPlatform == selectedPlatform }
                 .filter { !favoritesOnly || it.favorite }
+                .filter { !animationOnly || it.isAnimation }
         }
 
     val watched =
@@ -252,6 +256,19 @@ fun FilmsScreen(
                                             selectedLabelColor = ColorFilme,
                                         ),
                                 )
+                                if (hasAnimation) {
+                                    FilterChip(
+                                        selected = animationOnly,
+                                        onClick = { animationOnly = !animationOnly },
+                                        label = { Text(stringResource(R.string.label_animation)) },
+                                        leadingIcon = { Icon(Icons.Default.Animation, null, modifier = Modifier.size(16.dp)) },
+                                        colors =
+                                            FilterChipDefaults.filterChipColors(
+                                                selectedContainerColor = ColorFilme.copy(alpha = 0.18f),
+                                                selectedLabelColor = ColorFilme,
+                                            ),
+                                    )
+                                }
                             }
                             if (availableGenres.isNotEmpty()) {
                                 GenreFilterRow(availableGenres, selectedGenre, ColorFilme) { selectedGenre = it }

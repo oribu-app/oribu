@@ -67,19 +67,22 @@ class AniListService(
         }
     }
 
+    /** Chapters (MANGA) or episodes (ANIME) the user logged on their public AniList list. */
     fun getUserProgress(
         username: String,
         mediaId: Int,
+        type: String = "MANGA",
     ): Int? {
         val gql = """
-            query (${'$'}username: String, ${'$'}mediaId: Int) {
-              MediaList(userName: ${'$'}username, mediaId: ${'$'}mediaId, type: MANGA) {
+            query (${'$'}username: String, ${'$'}mediaId: Int, ${'$'}type: MediaType) {
+              MediaList(userName: ${'$'}username, mediaId: ${'$'}mediaId, type: ${'$'}type) {
                 progress
               }
             }
         """
         return runCatching {
-            val list = query(gql, mapOf("username" to username, "mediaId" to mediaId))["MediaList"] as? Map<*, *>
+            val variables = mapOf("username" to username, "mediaId" to mediaId, "type" to type)
+            val list = query(gql, variables)["MediaList"] as? Map<*, *>
             (list?.get("progress") as? Double)?.toInt()
         }.getOrNull()
     }
@@ -112,48 +115,118 @@ class AniListService(
                 put("volumes", (m["volumes"] as? Double)?.toInt())
                 put("status", m["status"])
                 put("format", m["format"])
-                put("synonyms", (m["synonyms"] as? List<*>)?.filterIsInstance<String>())
-                put("popularity", (m["popularity"] as? Double)?.toInt())
-
-                fun dateToMs(d: Map<*, *>?): Long? {
-                    val y = (d?.get("year") as? Double)?.toInt() ?: return null
-                    val mo = (d.get("month") as? Double)?.toInt() ?: 1
-                    val dy = (d.get("day") as? Double)?.toInt() ?: 1
-                    return runCatching { java.util.Date(y - 1900, mo - 1, dy).time }.getOrNull()
-                }
-                put("startDateMs", dateToMs(m["startDate"] as? Map<*, *>))
-                put("endDateMs", dateToMs(m["endDate"] as? Map<*, *>))
-
-                val staffEdges = (m["staff"] as? Map<*, *>)?.get("edges") as? List<*>
-                val staffList = staffEdges?.filterIsInstance<Map<String, Any?>>()
+                putCommonDetails(m)
+                val staffList = staffOf(m)
                 put(
                     "authors",
                     staffList
                         ?.filter { (it["role"] as? String)?.contains("Story", ignoreCase = true) == true }
-                        ?.mapNotNull { (it["node"] as? Map<*, *>)?.let { n -> (n["name"] as? Map<*, *>)?.get("full") as? String } },
-                )
-                put(
-                    "staff",
-                    staffList?.mapNotNull { edge ->
-                        val role = edge["role"] as? String ?: return@mapNotNull null
-                        val node = edge["node"] as? Map<*, *> ?: return@mapNotNull null
-                        val name = (node["name"] as? Map<*, *>)?.get("full") as? String ?: return@mapNotNull null
-                        val photo = (node["image"] as? Map<*, *>)?.get("large") as? String
-                        mapOf("name" to name, "role" to role, "photoUrl" to photo)
-                    },
-                )
-
-                val chars = (m["characters"] as? Map<*, *>)?.get("nodes") as? List<*>
-                put(
-                    "characters",
-                    chars?.filterIsInstance<Map<String, Any?>>()?.mapNotNull { c ->
-                        val name = (c["name"] as? Map<*, *>)?.get("full") as? String ?: return@mapNotNull null
-                        val photo = (c["image"] as? Map<*, *>)?.get("large") as? String
-                        mapOf("name" to name, "photoUrl" to photo)
-                    },
+                        ?.mapNotNull { it["name"] as? String },
                 )
             }
         }
+    }
+
+    fun searchAnime(q: String): List<ApiSearchResult> {
+        if (q.isBlank()) return emptyList()
+        val gql = """
+            query (${'$'}search: String) {
+              Page(perPage: 10) {
+                media(search: ${'$'}search, type: ANIME) {
+                  id title { romaji english native }
+                  coverImage { large }
+                  description(asHtml: false)
+                  startDate { year month day }
+                  genres episodes status
+                }
+              }
+            }
+        """
+        val page = (query(gql, mapOf("search" to q))["Page"] as? Map<*, *>) ?: return emptyList()
+        val media = (page["media"] as? List<*>)?.filterIsInstance<Map<String, Any?>>() ?: return emptyList()
+        return media.map { mapItem(it) }
+    }
+
+    /** Same keys as [getDetailsById], with `episodes` and the next airing episode instead of chapters/volumes. */
+    fun getAnimeDetailsById(id: Int): Map<String, Any?>? {
+        val gql = """
+            query (${'$'}id: Int) {
+              Media(id: ${'$'}id, type: ANIME) {
+                id title { romaji english native }
+                coverImage { large extraLarge }
+                description(asHtml: false)
+                startDate { year month day }
+                endDate { year month day }
+                genres episodes duration status format synonyms
+                averageScore popularity
+                nextAiringEpisode { episode airingAt }
+                studios(isMain: true) { nodes { name } }
+                staff { edges { role node { name { full } image { large } } } }
+                characters(sort: ROLE, perPage: 10) { nodes { name { full } image { large } } }
+              }
+            }
+        """
+        return (query(gql, mapOf("id" to id))["Media"] as? Map<String, Any?>)?.let { m ->
+            buildMap {
+                val title = m["title"] as? Map<*, *>
+                put("title", title?.get("english") ?: title?.get("romaji") ?: title?.get("native"))
+                put("titleRomaji", title?.get("romaji"))
+                put("coverUrl", (m["coverImage"] as? Map<*, *>)?.let { it["extraLarge"] ?: it["large"] })
+                put("synopsis", (m["description"] as? String)?.replace(Regex("<[^>]*>"), ""))
+                put("genres", m["genres"])
+                put("episodes", (m["episodes"] as? Double)?.toInt())
+                put("episodeDurationMin", (m["duration"] as? Double)?.toInt())
+                put("status", m["status"])
+                put("format", m["format"])
+                putCommonDetails(m)
+                put(
+                    "authors",
+                    ((m["studios"] as? Map<*, *>)?.get("nodes") as? List<*>)
+                        ?.filterIsInstance<Map<*, *>>()
+                        ?.mapNotNull { it["name"] as? String },
+                )
+                (m["nextAiringEpisode"] as? Map<*, *>)?.let { next ->
+                    put("nextEpisode", (next["episode"] as? Double)?.toInt())
+                    put("nextEpisodeAiringAtMs", (next["airingAt"] as? Double)?.toLong()?.times(1000))
+                }
+            }
+        }
+    }
+
+    /** Fields shared by manga and anime details: synonyms, popularity, dates, staff and characters. */
+    private fun MutableMap<String, Any?>.putCommonDetails(m: Map<String, Any?>) {
+        put("synonyms", (m["synonyms"] as? List<*>)?.filterIsInstance<String>())
+        put("popularity", (m["popularity"] as? Double)?.toInt())
+        put("startDateMs", dateToMs(m["startDate"] as? Map<*, *>))
+        put("endDateMs", dateToMs(m["endDate"] as? Map<*, *>))
+        put("staff", staffOf(m))
+        val chars = (m["characters"] as? Map<*, *>)?.get("nodes") as? List<*>
+        put(
+            "characters",
+            chars?.filterIsInstance<Map<String, Any?>>()?.mapNotNull { c ->
+                val name = (c["name"] as? Map<*, *>)?.get("full") as? String ?: return@mapNotNull null
+                val photo = (c["image"] as? Map<*, *>)?.get("large") as? String
+                mapOf("name" to name, "photoUrl" to photo)
+            },
+        )
+    }
+
+    private fun staffOf(m: Map<String, Any?>): List<Map<String, Any?>>? {
+        val staffEdges = (m["staff"] as? Map<*, *>)?.get("edges") as? List<*>
+        return staffEdges?.filterIsInstance<Map<String, Any?>>()?.mapNotNull { edge ->
+            val role = edge["role"] as? String ?: return@mapNotNull null
+            val node = edge["node"] as? Map<*, *> ?: return@mapNotNull null
+            val name = (node["name"] as? Map<*, *>)?.get("full") as? String ?: return@mapNotNull null
+            val photo = (node["image"] as? Map<*, *>)?.get("large") as? String
+            mapOf("name" to name, "role" to role, "photoUrl" to photo)
+        }
+    }
+
+    private fun dateToMs(d: Map<*, *>?): Long? {
+        val y = (d?.get("year") as? Double)?.toInt() ?: return null
+        val mo = (d.get("month") as? Double)?.toInt() ?: 1
+        val dy = (d.get("day") as? Double)?.toInt() ?: 1
+        return runCatching { java.util.Date(y - 1900, mo - 1, dy).time }.getOrNull()
     }
 
     private fun mapItem(
@@ -180,6 +253,7 @@ class AniListService(
             releaseDate = date,
             genre = genres.firstOrNull(),
             chapters = (r["chapters"] as? Double)?.toInt(),
+            episodes = (r["episodes"] as? Double)?.toInt(),
             apiSource = apiSource,
         )
     }

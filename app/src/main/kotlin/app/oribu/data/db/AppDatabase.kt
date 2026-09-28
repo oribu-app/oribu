@@ -19,7 +19,7 @@ import app.oribu.data.db.entity.*
         BookQuoteEntity::class,
         GamePlaythroughEntity::class,
     ],
-    version = 15,
+    version = 16,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -40,6 +40,13 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun gamePlaythroughDao(): GamePlaythroughDao
 
     companion object {
+        val MIGRATION_15_16 =
+            object : Migration(15, 16) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    // Western animation flag for movies/series (see MediaItem.isAnimation).
+                    db.execSQL("ALTER TABLE media_items ADD COLUMN animacao INTEGER NOT NULL DEFAULT 0")
+                }
+            }
         val MIGRATION_14_15 =
             object : Migration(14, 15) {
                 override fun migrate(db: SupportSQLiteDatabase) {

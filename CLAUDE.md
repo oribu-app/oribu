@@ -72,6 +72,8 @@ app/src/main/kotlin/app/oribu/
     MangaDexService.kt      # MangaDex — search/detail fallback and latest chapter count for ongoing series
     MangaBakaService.kt     # MangaBaka — third manga fallback (no auth)
     MangaSearchService.kt   # Orchestrates AniList → MangaDex → MangaBaka
+    KitsuService.kt         # Kitsu — anime fallback (no auth)
+    AnimeSearchService.kt   # Orchestrates AniList (anime) → Kitsu
     GoogleBooksService.kt   # Google Books — books
     OpenLibraryService.kt   # Open Library — books (fallback)
     HardcoverService.kt     # Hardcover (GraphQL) — optional third book fallback (personal API token)
@@ -120,8 +122,9 @@ app/src/main/kotlin/app/oribu/
         SeriesDetailScreen.kt
       manga/
         MangaScreen.kt
-        AddMangaScreen.kt
-        MangaDetailScreen.kt
+        AddMangaScreen.kt       # Also adds anime (type parameter)
+        MangaDetailScreen.kt    # Also the anime detail screen
+        ProgressVocabulary.kt   # Chapters/reading vs episodes/watching for those shared screens
       books/
         BooksScreen.kt
         AddBookScreen.kt
@@ -136,7 +139,7 @@ assets/
 
 ## Database (Room)
 
-**Current schema: v10** (see `AppDatabase.kt` for the full migration history)
+**Current schema: v16** (see `AppDatabase.kt` for the full migration history)
 
 Main entities:
 
@@ -148,6 +151,8 @@ Type-specific fields:
 - **Manga/Book/Series:** `progressoAtual`, `progressoTotal`
 - **Movie/Series:** `streamingPlataforma`
 - **All:** `dataLancamentoMs`, `genero`
+- **Movie/Series:** `animacao` (v16) — Western animation flag (`MediaItem.isAnimation`), set by
+  `MediaCacheService` from TMDB details (Animation genre id 16 + non-Japanese original language)
 - Fields added in the most recent migrations (v7-v10): `dataInicioLeituraMs`, `dataReleituraMs`, `dataConclusaoHistoriaMs`, `dataConclusaoExtrasMs`, `dataConclusaoPlatinaMs`
 
 ### `MediaDetailsCacheEntity` (table `media_details_cache`)
@@ -200,10 +205,19 @@ Increment `version` in `@Database` (`AppDatabase.kt`) and add a new `Migration` 
 ### MediaType
 ```kotlin
 enum class MediaType(val label: String, val dbValue: String) {
-    GAME, MANGA, WEBTOON, SERIES, MOVIE, BOOK
+    GAME, MANGA, WEBTOON, SERIES, ANIME, MOVIE, BOOK
 }
 ```
-`dbValue` keeps the original Portuguese names (`jogo`, `manga`, `webtoon`, `serie`, `filme`, `livro`) for compatibility with the schema migrated from Flutter/Drift.
+`dbValue` keeps the original Portuguese names (`jogo`, `manga`, `webtoon`, `serie`, `filme`, `livro`) for compatibility with the schema migrated from Flutter/Drift; `ANIME` is `anime`.
+
+**Anime vs. animation (same split as Tonkatsu Box):** `ANIME` is its own type backed by AniList (Kitsu
+fallback), tracked by episode on the manga screens (`ProgressVocabulary`) and synced with the user's
+AniList anime list. Western animation stays `MOVIE`/`SERIES` from TMDB with `isAnimation = true`,
+filterable in its tab and counted apart in stats.
+
+**Series tab scope** (`SeriesScopePreferences`): series only, anime only or both. Asked on the tab's
+first access (no default), changeable in Settings → General. Each item keeps its own type, so
+tracking always follows the item, not the tab.
 
 ### MediaStatus
 ```kotlin
@@ -227,6 +241,8 @@ Per type/platform list methods (`MediaStatus` companion object):
 - `forSeries()` / `forSeriesAdd()` → [WATCHING, REWATCHING, QUEUED, HISTORY]
 - `forManga()` → [READING, REREADING, ON_HOLD, READ, QUEUED, WAITING_RELEASE]
 - `forMangaAdd()` → [READING, REREADING, QUEUED]
+- `forAnime()` → [WATCHING, REWATCHING, ON_HOLD, WATCHED, QUEUED]
+- `forAnimeAdd()` → [WATCHING, REWATCHING, QUEUED]
 - `forBook()` → [READING, REREADING, READ, QUEUED, DROPPED]
 - `forBookAdd()` → [READING, REREADING, QUEUED]
 
@@ -266,6 +282,7 @@ If `anilist_username` is set in `secrets.json`, every cache update for a manga/w
 | Movies | TMDB (`TmdbService`) | — |
 | Series | TMDB (`TmdbService`) | — |
 | Games | IGDB (`IgdbService`, requires a Twitch token); HLTB (`HltbService`) and ITAD (`ItadService`) for supplementary data; SteamGridDB (`SteamGridDbService`) for a cover when none is found; Steam / RetroAchievements (`RetroAchievementsService`, retro consoles only) for achievements | Prefix search / local dataset (`GameDatasetImporter`) |
+| Anime | AniList (`AniListService.searchAnime`/`getAnimeDetailsById`) | Kitsu (`KitsuService`) via `AnimeSearchService` |
 | Manga/Webtoons | AniList (`AniListService`, GraphQL) | MangaDex (`MangaDexService`) — only triggered when AniList returns no results (see `MangaSearchService.kt`); also provides the latest chapter count for ongoing series via the `/aggregate` endpoint. Then MangaBaka (`MangaBakaService`) when MangaDex also finds nothing |
 | Books | Google Books (`GoogleBooksService`) | Open Library (`OpenLibraryService`), then Hardcover (`HardcoverService`, only when a token is configured) |
 
@@ -344,6 +361,8 @@ Defined in `Routes.kt` and wired in `MainNavGraph.kt`.
 | `manga` | MangaScreen |
 | `manga/add` | AddMangaScreen |
 | `manga/detail` | MangaDetailScreen |
+| `anime/add` | AddMangaScreen (type = ANIME) |
+| `anime/detail` | MangaDetailScreen |
 | `books` | BooksScreen |
 | `books/add` | AddBookScreen |
 | `books/detail` | BookDetailScreen |

@@ -32,7 +32,6 @@ import app.oribu.service.MediaCacheService
 import app.oribu.ui.components.MediaGridCard
 import app.oribu.ui.components.StatusOptionTile
 import app.oribu.ui.components.localizedApiErrorMessage
-import app.oribu.ui.theme.ColorManga
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -48,10 +47,16 @@ class AddMangaViewModel : ViewModel() {
     private val _existingIds = MutableStateFlow<Set<String>>(emptySet())
     val existingIds = _existingIds.asStateFlow()
     var loading by mutableStateOf(false)
+    private var type = MediaType.MANGA
+    private var initialized = false
 
-    init {
+    /** Manga and anime share this screen; the type picks the search source and the library to dedupe against. */
+    fun init(type: MediaType) {
+        if (initialized) return
+        initialized = true
+        this.type = type
         viewModelScope.launch {
-            val items = DB.repo.getByType(MediaType.MANGA)
+            val items = DB.repo.getByType(type)
             _existingIds.value = items.mapNotNull { it.externalId }.toSet()
         }
     }
@@ -63,7 +68,9 @@ class AddMangaViewModel : ViewModel() {
             _searchError.value = null
             _results.value =
                 runCatching {
-                    withContext(Dispatchers.IO) { ApiServices.mangaSearch.search(q) }
+                    withContext(Dispatchers.IO) {
+                        if (type == MediaType.ANIME) ApiServices.animeSearch.search(q) else ApiServices.mangaSearch.search(q)
+                    }
                 }.fold(
                     onSuccess = { it },
                     onFailure = { e ->
@@ -88,14 +95,14 @@ class AddMangaViewModel : ViewModel() {
         viewModelScope.launch {
             val item =
                 MediaItem(
-                    type = MediaType.MANGA,
+                    type = type,
                     title = result.title,
                     status = status,
                     coverUrl = result.coverUrl,
                     addedDate = Date(),
                     externalId = result.externalId,
                     apiSource = result.apiSource,
-                    totalProgress = result.chapters,
+                    totalProgress = if (type == MediaType.ANIME) result.episodes else result.chapters,
                 )
             val newId = DB.repo.save(item)
             _existingIds.value = _existingIds.value + setOfNotNull(result.externalId.ifBlank { null })
@@ -109,8 +116,11 @@ class AddMangaViewModel : ViewModel() {
 @Composable
 fun AddMangaScreen(
     navController: NavController,
+    type: MediaType = MediaType.MANGA,
     vm: AddMangaViewModel = viewModel(),
 ) {
+    LaunchedEffect(type) { vm.init(type) }
+    val vocab = remember(type) { progressVocabularyFor(type) }
     val results by vm.results.collectAsStateWithLifecycle()
     val searchError by vm.searchError.collectAsStateWithLifecycle()
     val existingIds by vm.existingIds.collectAsStateWithLifecycle()
@@ -120,7 +130,7 @@ fun AddMangaScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.manga_add_button)) },
+                title = { Text(stringResource(vocab.addTitle)) },
                 navigationIcon = { IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.Default.ArrowBack, null) } },
             )
         },
@@ -129,7 +139,7 @@ fun AddMangaScreen(
             OutlinedTextField(
                 value = query,
                 onValueChange = { query = it },
-                label = { Text(stringResource(R.string.add_manga_search_placeholder)) },
+                label = { Text(stringResource(vocab.searchPlaceholder)) },
                 trailingIcon = {
                     if (query.isNotEmpty()) {
                         IconButton(onClick = {
@@ -183,19 +193,19 @@ fun AddMangaScreen(
         }
     }
     showSheet?.let { result ->
-        val statuses = MediaStatus.forMangaAdd()
+        val statuses = vocab.addStatuses
         ModalBottomSheet(onDismissRequest = { showSheet = null }) {
             Column(Modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 32.dp)) {
                 Text(result.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(16.dp))
                 statuses.forEachIndexed { index, status ->
-                    val (icon, subtitle) = mangaStatusInfo(status)
+                    val (icon, subtitle) = vocab.statusOption(status)
                     StatusOptionTile(
                         icon = icon,
-                        title = mangaStatusLabel(status),
+                        title = progressStatusLabel(status, vocab),
                         subtitle = subtitle,
                         selected = false,
-                        color = ColorManga,
+                        color = vocab.accent,
                         onClick = {
                             vm.add(result, status) { navController.popBackStack() }
                             showSheet = null
@@ -207,12 +217,3 @@ fun AddMangaScreen(
         }
     }
 }
-
-@Composable
-private fun mangaStatusInfo(status: MediaStatus): Pair<ImageVector, String> =
-    when (status) {
-        MediaStatus.READING -> Icons.Default.MenuBook to stringResource(R.string.add_manga_status_reading_subtitle)
-        MediaStatus.REREADING -> Icons.Default.Replay to stringResource(R.string.add_manga_status_rereading_subtitle)
-        MediaStatus.QUEUED -> Icons.Default.Bookmark to stringResource(R.string.add_manga_status_queued_subtitle)
-        else -> Icons.Default.Bookmark to ""
-    }

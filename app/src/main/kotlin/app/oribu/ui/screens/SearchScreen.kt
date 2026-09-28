@@ -42,6 +42,7 @@ import app.oribu.service.MediaCacheService
 import app.oribu.ui.components.MediaGridCard
 import app.oribu.ui.components.localizedApiErrorMessage
 import app.oribu.ui.navigation.Routes
+import app.oribu.ui.navigation.detailRoute
 import coil.compose.AsyncImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
@@ -140,6 +141,12 @@ class SearchViewModel : ViewModel() {
                             }
                         }
 
+                        MediaType.ANIME -> {
+                            withContext(Dispatchers.IO) {
+                                ApiServices.animeSearch.search(query)
+                            }
+                        }
+
                         MediaType.BOOK -> {
                             withContext(Dispatchers.IO) {
                                 ApiServices.bookSearch.searchBooks(query)
@@ -189,7 +196,7 @@ class SearchViewModel : ViewModel() {
                     console = console,
                     streamingPlatform = streamingPlatform,
                     currentProgress = currentProgress,
-                    totalProgress = result.chapters ?: result.pages,
+                    totalProgress = result.chapters ?: result.episodes ?: result.pages,
                 )
             val id = DB.repo.save(item)
             val saved = DB.repo.getById(id)
@@ -651,6 +658,10 @@ private fun AddSheet(
                 MediaStatus.forManga()
             }
 
+            MediaType.ANIME -> {
+                MediaStatus.forAnime()
+            }
+
             MediaType.BOOK -> {
                 MediaStatus.forBook()
             }
@@ -791,6 +802,7 @@ private fun apiLabelFor(type: MediaType) =
         MediaType.MOVIE, MediaType.SERIES -> "TMDB"
         MediaType.GAME -> "IGDB"
         MediaType.MANGA, MediaType.WEBTOON -> "AniList / MangaDex"
+        MediaType.ANIME -> "AniList / Kitsu"
         MediaType.BOOK -> "Google Books"
     }
 
@@ -799,13 +811,5 @@ private fun navigateToDetail(
     item: MediaItem,
 ) {
     navController.currentBackStackEntry?.savedStateHandle?.set("item", item)
-    val route =
-        when (item.type) {
-            MediaType.GAME -> Routes.GAMES_DETAIL
-            MediaType.MOVIE -> Routes.FILMS_DETAIL
-            MediaType.SERIES -> Routes.SERIES_DETAIL
-            MediaType.MANGA, MediaType.WEBTOON -> Routes.MANGA_DETAIL
-            MediaType.BOOK -> Routes.BOOKS_DETAIL
-        }
-    navController.navigate(route)
+    navController.navigate(item.type.detailRoute)
 }

@@ -98,7 +98,11 @@ fun HomeScreen(
     val filmeItem = remember(allItems) { lastActive(allItems, listOf(MediaType.MOVIE), setOf(MediaStatus.WATCHED, MediaStatus.REWATCHING)) }
     val serieItem =
         remember(allItems) {
-            lastActive(allItems, listOf(MediaType.SERIES), setOf(MediaStatus.WATCHING, MediaStatus.REWATCHING, MediaStatus.HISTORY))
+            lastActive(
+                allItems,
+                listOf(MediaType.SERIES, MediaType.ANIME),
+                setOf(MediaStatus.WATCHING, MediaStatus.REWATCHING, MediaStatus.HISTORY, MediaStatus.WATCHED),
+            )
         }
     val mangaItem =
         remember(allItems) {

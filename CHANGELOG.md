@@ -11,6 +11,14 @@ The format is a simplified version of [Keep a Changelog](https://keepachangelog.
 ## [Unreleased]
 
 ### Additions
+- Anime as its own media type, backed by AniList (Kitsu as fallback): episode progress, next
+  airing episode, and progress sync from your public AniList anime list. The Series tab can show
+  series only, anime only or both — asked on its first access and changeable in
+  Settings > General. With both, type chips narrow the list, the add button asks which one, and
+  History becomes one timeline of watched episodes and finished anime.
+- Western animation (animated movies and series from TMDB that aren't Japanese) is now flagged
+  automatically: an "Animation" filter in the Movies and Series tabs, and animations watched and
+  anime episodes watched in Statistics.
 - Settings > General: a "Locale" section with Language (System default/English/Português) and
   Date format (System default/Day-Month-Year/Month-Day-Year/ISO) pickers. Language is applied
   app-wide via `AppCompatDelegate.setApplicationLocales`. The whole app's UI has been converted

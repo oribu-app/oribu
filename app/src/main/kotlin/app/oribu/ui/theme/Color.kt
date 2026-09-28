@@ -13,6 +13,7 @@ val ColorJogo: Color @Composable get() = themeAwareAccent(Color(0xFF7B1FA2))
 val ColorManga: Color @Composable get() = themeAwareAccent(Color(0xFFE91E63))
 val ColorWebtoon: Color @Composable get() = themeAwareAccent(Color(0xFF00BCD4))
 val ColorSerie: Color @Composable get() = themeAwareAccent(Color(0xFF1976D2))
+val ColorAnime: Color @Composable get() = themeAwareAccent(Color(0xFF00897B))
 val ColorFilme: Color @Composable get() = themeAwareAccent(Color(0xFFFF6F00))
 val ColorLivro: Color @Composable get() = themeAwareAccent(Color(0xFF388E3C))
 

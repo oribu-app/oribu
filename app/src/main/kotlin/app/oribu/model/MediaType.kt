@@ -17,6 +17,7 @@ enum class MediaType(
     MANGA(R.string.media_type_manga, R.string.manga_title, "manga"),
     WEBTOON(R.string.media_type_webtoon, R.string.media_type_webtoon_plural, "webtoon"),
     SERIES(R.string.media_type_series, R.string.series_title, "serie"),
+    ANIME(R.string.media_type_anime, R.string.anime_title, "anime"),
     MOVIE(R.string.media_type_movie, R.string.films_title, "filme"),
     BOOK(R.string.media_type_book, R.string.books_title, "livro"),
     ;
@@ -26,6 +27,7 @@ enum class MediaType(
             GAME -> Color(0xFF7B1FA2)
             MANGA, WEBTOON -> Color(0xFFE91E63)
             SERIES -> Color(0xFF1976D2)
+            ANIME -> Color(0xFF00897B)
             MOVIE -> Color(0xFFFF6F00)
             BOOK -> Color(0xFF388E3C)
         }

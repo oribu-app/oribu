@@ -1,5 +1,7 @@
 ﻿package app.oribu.ui.navigation
 
+import app.oribu.model.MediaType
+
 object Routes {
     const val ONBOARDING = "onboarding"
     const val HOME = "home"
@@ -17,6 +19,8 @@ object Routes {
     const val MANGA = "manga"
     const val MANGA_ADD = "manga/add"
     const val MANGA_DETAIL = "manga/detail"
+    const val ANIME_ADD = "anime/add"
+    const val ANIME_DETAIL = "anime/detail"
     const val BOOKS = "books"
     const val BOOKS_ADD = "books/add"
     const val BOOKS_DETAIL = "books/detail"
@@ -40,3 +44,15 @@ object Routes {
     const val ABOUT_LICENSE_DETAIL = "about/licenses/detail"
     const val ANOTACOES = "anotacoes"
 }
+
+/** Detail screen route for an item of this type (the item itself goes in savedStateHandle "item"). */
+val MediaType.detailRoute: String
+    get() =
+        when (this) {
+            MediaType.GAME -> Routes.GAMES_DETAIL
+            MediaType.MOVIE -> Routes.FILMS_DETAIL
+            MediaType.SERIES -> Routes.SERIES_DETAIL
+            MediaType.MANGA, MediaType.WEBTOON -> Routes.MANGA_DETAIL
+            MediaType.ANIME -> Routes.ANIME_DETAIL
+            MediaType.BOOK -> Routes.BOOKS_DETAIL
+        }

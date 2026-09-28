@@ -18,6 +18,8 @@ object ApiServices {
     private var _openLibrary: OpenLibraryService? = null
     private var _hardcover: HardcoverService? = null
     private var _mangaSearch: MangaSearchService? = null
+    private var _kitsu: KitsuService? = null
+    private var _animeSearch: AnimeSearchService? = null
     private var _bookSearch: BookSearchService? = null
     private var _steam: SteamService? = null
     private var _psn: PsnService? = null
@@ -93,6 +95,8 @@ object ApiServices {
                 _mangadex = MangaDexService()
                 _mangabaka = MangaBakaService()
                 _mangaSearch = MangaSearchService(_anilist!!, _mangadex!!, _mangabaka!!)
+                _kitsu = KitsuService()
+                _animeSearch = AnimeSearchService(_anilist!!, _kitsu!!)
             }
             _aniListUsername = secrets.anilistUsername
 
@@ -171,6 +175,7 @@ object ApiServices {
     fun setAniListToken(accessToken: String) {
         _anilist = AniListService(accessToken = accessToken)
         _mangaSearch = MangaSearchService(_anilist!!, _mangadex!!, _mangabaka!!)
+        _animeSearch = AnimeSearchService(_anilist!!, _kitsu!!)
     }
 
     fun setPsnToken(accessToken: String) {
@@ -212,6 +217,8 @@ object ApiServices {
     val openLibrary get() = _openLibrary!!
     val hardcover get() = _hardcover ?: error("Hardcover not configured")
     val mangaSearch get() = _mangaSearch!!
+    val kitsu get() = _kitsu!!
+    val animeSearch get() = _animeSearch!!
     val bookSearch get() = _bookSearch!!
     val gameSearch get() = _gameSearch!!
     val gameCache get() = _gameCache
@@ -251,7 +258,7 @@ object ApiServices {
                 }
             }
 
-            MediaType.MANGA, MediaType.WEBTOON, MediaType.BOOK -> {
+            MediaType.MANGA, MediaType.WEBTOON, MediaType.ANIME, MediaType.BOOK -> {
                 null
             }
         }

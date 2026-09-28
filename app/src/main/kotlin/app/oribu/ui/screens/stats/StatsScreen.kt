@@ -68,6 +68,8 @@ fun StatsScreen(
     val seriesWantLabel = stringResource(R.string.stats_series_want)
     val chaptersReadLabel = stringResource(R.string.stats_chapters_read)
     val booksReadLabel = stringResource(R.string.stats_books_read)
+    val animeEpisodesLabel = stringResource(R.string.stats_anime_episodes_watched)
+    val animationWatchedLabel = stringResource(R.string.stats_animation_watched)
 
     val generalStats =
         remember(allItems) {
@@ -76,9 +78,12 @@ fun StatsScreen(
             val series = allItems.filter { it.type == MediaType.SERIES }
             val mangas = allItems.filter { it.matchesHobby(MediaType.MANGA) }
             val books = allItems.filter { it.type == MediaType.BOOK }
+            val anime = allItems.filter { it.type == MediaType.ANIME }
+            // Animação ocidental é filme/série do TMDB, contada à parte (MediaItem.isAnimation).
+            val animationWatched = (movies + series).count { it.isAnimation && it.status in concludedStatuses }
 
-            // Paleta categórica fixa e validada — oito cores bem distintas, uma por métrica.
-            val colors = categoricalColors(8)
+            // Paleta categórica fixa e validada — dez cores bem distintas, uma por métrica.
+            val colors = categoricalColors(10)
 
             listOf(
                 GeneralStatItem(games.count { it.status == MediaStatus.FINISHED }, gamesFinishedLabel, colors[0]),
@@ -89,6 +94,8 @@ fun StatsScreen(
                 GeneralStatItem(series.count { it.status == MediaStatus.QUEUED }, seriesWantLabel, colors[5]),
                 GeneralStatItem(mangas.sumOf { it.currentProgress ?: 0 }, chaptersReadLabel, colors[6]),
                 GeneralStatItem(books.count { it.status == MediaStatus.READ }, booksReadLabel, colors[7]),
+                GeneralStatItem(anime.sumOf { it.currentProgress ?: 0 }, animeEpisodesLabel, colors[8]),
+                GeneralStatItem(animationWatched, animationWatchedLabel, colors[9]),
             )
         }
 

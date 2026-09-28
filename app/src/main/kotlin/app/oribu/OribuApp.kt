@@ -4,6 +4,7 @@ import android.app.Application
 import app.oribu.data.ApiKeyPreferences
 import app.oribu.data.OnboardingPreferences
 import app.oribu.data.PlatformPreferences
+import app.oribu.data.SeriesScopePreferences
 import app.oribu.data.StoragePreferences
 import app.oribu.data.db.DB
 import app.oribu.service.ApiServices
@@ -28,6 +29,7 @@ class OribuApp : Application() {
         NotificationHelper.init(this)
         PlatformPreferences.init(this)
         OnboardingPreferences.init(this)
+        SeriesScopePreferences.init(this)
         StoragePreferences.init(this)
         ApiKeyPreferences.init(this)
         AppThemeController.init(this)

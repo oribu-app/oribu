@@ -33,6 +33,7 @@ import app.oribu.model.MediaType
 import app.oribu.model.label
 import app.oribu.ui.locale.formatDate
 import app.oribu.ui.navigation.Routes
+import app.oribu.ui.navigation.detailRoute
 import coil.compose.AsyncImage
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
@@ -261,13 +262,5 @@ private fun navigateToDetail(
     item: MediaItem,
 ) {
     navController.currentBackStackEntry?.savedStateHandle?.set("item", item)
-    val route =
-        when (item.type) {
-            MediaType.GAME -> Routes.GAMES_DETAIL
-            MediaType.MOVIE -> Routes.FILMS_DETAIL
-            MediaType.SERIES -> Routes.SERIES_DETAIL
-            MediaType.MANGA, MediaType.WEBTOON -> Routes.MANGA_DETAIL
-            MediaType.BOOK -> Routes.BOOKS_DETAIL
-        }
-    navController.navigate(route)
+    navController.navigate(item.type.detailRoute)
 }

@@ -414,6 +414,7 @@ data class TmdbMovieDetails(
     val releaseDate: Date? = null,
     val runtimeMinutes: Int? = null,
     val genres: List<String> = emptyList(),
+    val isAnimation: Boolean = false,
     val tmdbStatus: String? = null,
     val cast: List<TmdbPerson> = emptyList(),
     val crew: List<TmdbPerson> = emptyList(),
@@ -484,6 +485,7 @@ data class TmdbMovieDetails(
                 runtimeMinutes = (j["runtime"] as? Double)?.toInt(),
                 genres =
                     (j["genres"] as? List<*>)?.filterIsInstance<Map<String, Any?>>()?.map { it["name"] as? String ?: "" } ?: emptyList(),
+                isAnimation = isWesternAnimation(j),
                 tmdbStatus = j["status"] as? String,
                 cast = castRaw.map { TmdbPerson.cast(it) },
                 crew = crewRaw.map { TmdbPerson.crew(it) },
@@ -504,6 +506,7 @@ data class TmdbSeriesDetails(
     val lastAirDate: Date? = null,
     val totalEpisodes: Int? = null,
     val genres: List<String> = emptyList(),
+    val isAnimation: Boolean = false,
     val tmdbStatus: String? = null,
     val network: String? = null,
     val seasons: List<TmdbSeason> = emptyList(),
@@ -596,6 +599,7 @@ data class TmdbSeriesDetails(
                 totalEpisodes = (j["number_of_episodes"] as? Double)?.toInt(),
                 genres =
                     (j["genres"] as? List<*>)?.filterIsInstance<Map<String, Any?>>()?.map { it["name"] as? String ?: "" } ?: emptyList(),
+                isAnimation = isWesternAnimation(j),
                 tmdbStatus = j["status"] as? String,
                 network = network,
                 seasons = seasons,
@@ -607,3 +611,19 @@ data class TmdbSeriesDetails(
         }
     }
 }
+
+/**
+ * TMDB's Animation genre (id 16 — ids don't change with the request language, names do) on a
+ * title whose original language isn't Japanese: Western animation. Japanese animation is anime,
+ * tracked as its own media type from AniList instead.
+ */
+internal fun isWesternAnimation(j: Map<String, Any?>): Boolean {
+    val genreIds =
+        (j["genres"] as? List<*>)
+            ?.filterIsInstance<Map<*, *>>()
+            ?.mapNotNull { (it["id"] as? Double)?.toInt() }
+            .orEmpty()
+    return TMDB_ANIMATION_GENRE_ID in genreIds && j["original_language"] != "ja"
+}
+
+private const val TMDB_ANIMATION_GENRE_ID = 16

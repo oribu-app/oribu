@@ -69,6 +69,12 @@ data class MediaItem(
     val historyCompletionDate: Date? = null,
     val extrasCompletionDate: Date? = null,
     val platinumCompletionDate: Date? = null,
+    /**
+     * Western animation (TMDB movie/series with the Animation genre that isn't Japanese) — kept
+     * as MOVIE/SERIES but counted apart in stats and filterable in their tabs. Anime proper is
+     * its own [MediaType.ANIME] backed by AniList. Set by MediaCacheService from TMDB details.
+     */
+    val isAnimation: Boolean = false,
 ) : Parcelable {
     val playedTimeLabel: String? get() {
         val min = playedMinutes ?: return null
@@ -105,6 +111,10 @@ data class MediaItem(
 
             MediaType.MANGA, MediaType.WEBTOON -> {
                 MediaStatus.forManga()
+            }
+
+            MediaType.ANIME -> {
+                MediaStatus.forAnime()
             }
 
             MediaType.BOOK -> {

@@ -41,6 +41,7 @@ import app.oribu.data.db.DB
 import app.oribu.model.MangaReview
 import app.oribu.model.MediaItem
 import app.oribu.model.MediaStatus
+import app.oribu.model.MediaType
 import app.oribu.model.label
 import app.oribu.service.MediaCacheService
 import app.oribu.ui.components.AnotacoesSection
@@ -49,7 +50,6 @@ import app.oribu.ui.components.StarRatingPicker
 import app.oribu.ui.locale.formatDate
 import app.oribu.ui.navigation.navigateToAnotacoes
 import app.oribu.ui.navigation.rememberAnotacoesResult
-import app.oribu.ui.theme.ColorManga
 import app.oribu.ui.theme.CoverThemedSurface
 import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
@@ -80,10 +80,11 @@ class MangaDetailViewModel : ViewModel() {
 
     fun setStatus(newStatus: MediaStatus) {
         val current = mediaItem ?: return
+        val vocab = progressVocabularyFor(current.type)
         viewModelScope.launch {
             // Ao começar uma releitura, a avaliação/resenha anterior vira histórico —
             // o usuário está formando um novo julgamento, não editando o antigo.
-            if (newStatus == MediaStatus.REREADING && current.status == MediaStatus.READ) {
+            if (newStatus == vocab.redo && current.status == vocab.done) {
                 current.id?.let { id ->
                     DB.repo.archiveMangaReview(
                         mediaItemId = id,
@@ -95,22 +96,18 @@ class MangaDetailViewModel : ViewModel() {
                     reviewHistory = DB.repo.mangaReviewHistory(id)
                 }
             }
-            val clearingForReread = newStatus == MediaStatus.REREADING && current.status == MediaStatus.READ
+            val clearingForReread = newStatus == vocab.redo && current.status == vocab.done
             val updated =
                 current.copy(
                     status = newStatus,
                     completionDate =
-                        if (newStatus ==
-                            MediaStatus.READ
-                        ) {
+                        if (newStatus == vocab.done) {
                             current.completionDate ?: java.util.Date()
                         } else {
                             current.completionDate
                         },
                     readingStartDate =
-                        if (newStatus ==
-                            MediaStatus.READING
-                        ) {
+                        if (newStatus == vocab.inProgress) {
                             current.readingStartDate ?: java.util.Date()
                         } else {
                             current.readingStartDate
@@ -207,6 +204,8 @@ fun MangaDetailScreen(
 
     val mediaItem = vm.mediaItem ?: initialItem
     val cache = vm.cache
+    val vocab = remember(initialItem.type) { progressVocabularyFor(initialItem.type) }
+    val accent = vocab.accent
 
     var showDelete by remember { mutableStateOf(false) }
     var showStatusMenu by remember { mutableStateOf(false) }
@@ -221,7 +220,9 @@ fun MangaDetailScreen(
     var pendingNotes by remember { mutableStateOf("") }
     val coverUrl = cache?.get("coverUrl") as? String ?: mediaItem.coverUrl
     val synopsis = cache?.get("synopsis") as? String
-    val chapters = (cache?.get("chapters") as? Number)?.toInt() ?: mediaItem.totalProgress
+    val chapters = (cache?.get(vocab.totalKey) as? Number)?.toInt() ?: mediaItem.totalProgress
+    val nextEpisode = (cache?.get("nextEpisode") as? Number)?.toInt()
+    val nextEpisodeAiringAtMs = (cache?.get("nextEpisodeAiringAtMs") as? Number)?.toLong()
     val volumes = (cache?.get("volumes") as? Number)?.toInt()
     val serializationStatus = cache?.get("serializationStatus") as? String
     val format = cache?.get("format") as? String
@@ -321,29 +322,28 @@ fun MangaDetailScreen(
                             Box {
                                 Button(
                                     onClick = { showStatusMenu = true },
-                                    colors = ButtonDefaults.buttonColors(containerColor = ColorManga),
+                                    colors = ButtonDefaults.buttonColors(containerColor = accent),
                                     shape = RoundedCornerShape(4.dp),
                                     border = BorderStroke(1.5.dp, Color.White.copy(alpha = 0.24f)),
                                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
                                 ) {
                                     Icon(Icons.Default.UnfoldMore, null, modifier = Modifier.size(16.dp))
                                     Spacer(Modifier.width(4.dp))
-                                    Text(mangaStatusLabel(mediaItem.status), fontSize = 13.sp)
+                                    Text(progressStatusLabel(mediaItem.status, vocab), fontSize = 13.sp)
                                 }
                                 DropdownMenu(expanded = showStatusMenu, onDismissRequest = { showStatusMenu = false }) {
-                                    MediaStatus
-                                        .forManga()
-                                        .filter { it != MediaStatus.READ || serializationStatus != "Ongoing" }
+                                    vocab.statuses
+                                        .filter { it != vocab.done || serializationStatus != "Ongoing" }
                                         .forEach { s ->
                                             val selected = s == mediaItem.status
                                             DropdownMenuItem(
-                                                text = { Text(mangaStatusLabel(s)) },
+                                                text = { Text(progressStatusLabel(s, vocab)) },
                                                 trailingIcon = {
                                                     if (selected) {
                                                         Icon(
                                                             Icons.Default.Check,
                                                             null,
-                                                            tint = ColorManga,
+                                                            tint = accent,
                                                             modifier = Modifier.size(16.dp),
                                                         )
                                                     }
@@ -419,7 +419,7 @@ fun MangaDetailScreen(
                                     DropdownMenuItem(
                                         text = {
                                             Text(
-                                                stringResource(R.string.manga_detail_remove_manga),
+                                                stringResource(vocab.removeItem),
                                                 color = MaterialTheme.colorScheme.error,
                                             )
                                         },
@@ -451,7 +451,7 @@ fun MangaDetailScreen(
                                 Spacer(Modifier.height(4.dp))
                                 Text(
                                     stringResource(if (synopsisExpanded) R.string.action_see_less else R.string.action_see_more),
-                                    color = ColorManga,
+                                    color = accent,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     modifier = Modifier.clickable { synopsisExpanded = !synopsisExpanded },
@@ -480,7 +480,7 @@ fun MangaDetailScreen(
                                     Icon(
                                         Icons.Default.Edit,
                                         contentDescription = stringResource(R.string.action_edit),
-                                        tint = ColorManga,
+                                        tint = accent,
                                         modifier = Modifier.size(18.dp),
                                     )
                                 }
@@ -493,16 +493,16 @@ fun MangaDetailScreen(
                                 LinearProgressIndicator(
                                     progress = { (displayedProgress.toFloat() / chapters.toFloat()).coerceIn(0f, 1f) },
                                     modifier = Modifier.fillMaxWidth(),
-                                    color = ColorManga,
+                                    color = accent,
                                     trackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
                                     strokeCap = StrokeCap.Butt,
                                 )
                             }
                             Text(
                                 if (chapters != null) {
-                                    stringResource(R.string.manga_detail_chapter_of_total, displayedProgress, chapters)
+                                    stringResource(vocab.unitOfTotal, displayedProgress, chapters)
                                 } else {
-                                    stringResource(R.string.manga_detail_chapter_current, displayedProgress)
+                                    stringResource(vocab.unitCurrent, displayedProgress)
                                 },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
@@ -522,8 +522,18 @@ fun MangaDetailScreen(
                                     MangaInfoCard(stringResource(R.string.label_genre), genres.take(3).joinToString(", "))
                                 }
                                 if (volumes != null) MangaInfoCard("Volumes", "$volumes")
-                                if (chapters != null) MangaInfoCard(stringResource(R.string.manga_detail_chapters_label), "$chapters")
+                                if (chapters != null) MangaInfoCard(stringResource(vocab.unitsLabel), "$chapters")
                                 if (serializationStatus != null) MangaInfoCard(stringResource(R.string.label_status), serializationStatus)
+                                if (nextEpisode != null && nextEpisodeAiringAtMs != null) {
+                                    MangaInfoCard(
+                                        stringResource(R.string.anime_detail_next_episode),
+                                        stringResource(
+                                            R.string.anime_detail_next_episode_value,
+                                            nextEpisode,
+                                            formatDate(nextEpisodeAiringAtMs),
+                                        ),
+                                    )
+                                }
                             }
                         }
                         Spacer(Modifier.height(16.dp))
@@ -538,7 +548,7 @@ fun MangaDetailScreen(
                                 MangaInfoCard(stringResource(R.string.label_added), formatDate(mediaItem.addedDate.time))
                                 if (mediaItem.readingStartDate != null) {
                                     MangaInfoCard(
-                                        stringResource(R.string.manga_detail_reading_start),
+                                        stringResource(vocab.startLabel),
                                         formatDate(mediaItem.readingStartDate.time),
                                     )
                                 }
@@ -546,19 +556,19 @@ fun MangaDetailScreen(
                                     null
                                 ) {
                                     MangaInfoCard(
-                                        stringResource(R.string.manga_detail_publication_start),
+                                        stringResource(vocab.releaseStart),
                                         formatDate(startDateMs),
                                     )
                                 }
                                 if (endDateMs != null) {
                                     MangaInfoCard(
-                                        stringResource(R.string.manga_detail_publication_end),
+                                        stringResource(vocab.releaseEnd),
                                         formatDate(endDateMs),
                                     )
                                 }
                                 if (mediaItem.completionDate != null) {
                                     MangaInfoCard(
-                                        stringResource(R.string.manga_detail_reading_end),
+                                        stringResource(vocab.endLabel),
                                         formatDate(mediaItem.completionDate.time),
                                     )
                                 }
@@ -568,7 +578,7 @@ fun MangaDetailScreen(
                     }
 
                     // ── Avaliação (só disponível quando Lido) ─────────────────────
-                    if (mediaItem.status == MediaStatus.READ) {
+                    if (mediaItem.status == vocab.done) {
                         item {
                             Column(Modifier.padding(horizontal = 16.dp)) {
                                 Row(
@@ -663,7 +673,7 @@ fun MangaDetailScreen(
                                                     },
                                                     modifier = Modifier.weight(1f),
                                                     shape = RoundedCornerShape(12.dp),
-                                                    colors = ButtonDefaults.buttonColors(containerColor = ColorManga),
+                                                    colors = ButtonDefaults.buttonColors(containerColor = accent),
                                                 ) { Text(stringResource(R.string.action_save)) }
                                             }
                                         } else {
@@ -701,7 +711,7 @@ fun MangaDetailScreen(
                     if (vm.reviewHistory.isNotEmpty()) {
                         item {
                             Column(Modifier.padding(horizontal = 16.dp)) {
-                                MangaSectionTitle(stringResource(R.string.manga_detail_previous_readings))
+                                MangaSectionTitle(stringResource(vocab.previousRuns))
                                 Spacer(Modifier.height(10.dp))
                                 Card(shape = RoundedCornerShape(12.dp)) {
                                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -870,18 +880,18 @@ fun MangaDetailScreen(
                 chapterInput.isBlank() -> null
                 chapterNum == null -> stringResource(R.string.manga_detail_error_invalid_number)
                 chapterNum < 0 -> stringResource(R.string.manga_detail_error_negative)
-                chapters != null && chapterNum > chapters -> stringResource(R.string.manga_detail_error_max_chapters, chapters)
+                chapters != null && chapterNum > chapters -> stringResource(vocab.errorMaxUnits, chapters)
                 else -> null
             }
         val canSaveChapter = chapterError == null && chapterInput.isNotBlank()
         AlertDialog(
             onDismissRequest = { showChapterDialog = false },
-            title = { Text(stringResource(R.string.manga_detail_current_chapter_title)) },
+            title = { Text(stringResource(vocab.currentUnitTitle)) },
             text = {
                 OutlinedTextField(
                     value = chapterInput,
                     onValueChange = { chapterInput = it },
-                    label = { Text(stringResource(R.string.manga_detail_chapter_field_label)) },
+                    label = { Text(stringResource(vocab.unitFieldLabel)) },
                     isError = chapterError != null,
                     supportingText = chapterError?.let { { Text(it) } },
                     singleLine = true,
@@ -914,7 +924,7 @@ fun MangaDetailScreen(
     if (showDelete) {
         AlertDialog(
             onDismissRequest = { showDelete = false },
-            title = { Text(stringResource(R.string.manga_detail_remove_manga)) },
+            title = { Text(stringResource(vocab.removeItem)) },
             text = { Text(stringResource(R.string.manga_detail_remove_confirm, mediaItem.title)) },
             confirmButton = {
                 Button(
@@ -930,9 +940,15 @@ fun MangaDetailScreen(
 // ── Sub-composables ────────────────────────────────────────────────────────────
 
 @Composable
-fun mangaStatusLabel(status: MediaStatus): String =
+fun mangaStatusLabel(status: MediaStatus): String = progressStatusLabel(status, progressVocabularyFor(MediaType.MANGA))
+
+@Composable
+internal fun progressStatusLabel(
+    status: MediaStatus,
+    vocab: ProgressVocabulary,
+): String =
     when (status) {
-        MediaStatus.QUEUED -> stringResource(R.string.manga_tab_want_to_read)
+        MediaStatus.QUEUED -> stringResource(vocab.queuedLabel)
         MediaStatus.ON_HOLD -> stringResource(R.string.manga_tab_on_hold)
         else -> status.label
     }
