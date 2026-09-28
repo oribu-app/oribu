@@ -23,6 +23,7 @@ import app.oribu.ui.screens.AboutLicenseScreen
 import app.oribu.ui.screens.AboutScreen
 import app.oribu.ui.screens.AnotacoesScreen
 import app.oribu.ui.screens.CalendarScreen
+import app.oribu.ui.screens.CreditsScreen
 import app.oribu.ui.screens.HistoryScreen
 import app.oribu.ui.screens.HomeScreen
 import app.oribu.ui.screens.SearchScreen
@@ -205,6 +206,7 @@ fun MainNavGraph(startDestination: String = Routes.HOME) {
             composable(Routes.STATS_FILTERED_LIST) { StatsFilteredListScreen(navController) }
             composable(Routes.CALENDAR) { CalendarScreen(navController) }
             composable(Routes.ABOUT) { AboutScreen(navController) }
+            composable(Routes.ABOUT_CREDITS) { CreditsScreen(navController) }
             composable(Routes.ABOUT_LICENSES) { AboutLicenseScreen(navController) }
             composable(Routes.ABOUT_LICENSE_DETAIL) { AboutLibraryLicenseScreen(navController) }
             composable(Routes.ANOTACOES) { AnotacoesScreen(navController) }

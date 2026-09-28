@@ -40,6 +40,7 @@ object Routes {
     const val STATS_FILTERED_LIST = "stats/filteredList"
     const val CALENDAR = "calendar"
     const val ABOUT = "about"
+    const val ABOUT_CREDITS = "about/credits"
     const val ABOUT_LICENSES = "about/licenses"
     const val ABOUT_LICENSE_DETAIL = "about/licenses/detail"
     const val ANOTACOES = "anotacoes"

@@ -160,8 +160,8 @@ fun AboutScreen(navController: NavController) {
             }
             item {
                 AboutRow(
-                    title = stringResource(R.string.about_open_source_licenses),
-                    onClick = { navController.navigate(Routes.ABOUT_LICENSES) },
+                    title = stringResource(R.string.about_credits_licenses),
+                    onClick = { navController.navigate(Routes.ABOUT_CREDITS) },
                 )
             }
             item {

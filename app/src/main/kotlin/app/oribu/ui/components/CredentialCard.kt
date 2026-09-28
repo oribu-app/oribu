@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Sell
 import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -33,8 +34,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.oribu.R
 import kotlinx.coroutines.CoroutineScope
@@ -43,39 +46,49 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * Service logo shown on credential cards. Like Rokku's tracker logos, each one sits on a tile in
- * the brand color so logos drawn for dark backgrounds (AniList, IGDB) stay readable in any theme.
- * Logos come from Tonkatsu Box (MIT) and Rokku (AniList); ITAD has none, so it uses an icon.
+ * Service logo shown on credential and credits cards. Like Rokku's tracker logos, each one sits
+ * on a tile in the brand color so logos drawn for dark backgrounds (AniList, IGDB) stay readable
+ * in any theme. Logos come from Tonkatsu Box (MIT) and Rokku (AniList, MangaBaka); services with
+ * no logo in either (ITAD, HowLongToBeat) use an icon instead.
  */
 enum class ServiceLogo(
     @DrawableRes val drawable: Int?,
     val background: Color,
+    val fallbackIcon: ImageVector = Icons.Default.Sell,
 ) {
     TMDB(R.drawable.ic_service_tmdb, Color(0xFF0D253F)),
     IGDB(R.drawable.ic_service_igdb, Color(0xFF9147FF)),
+    HLTB(null, Color(0xFF2A3F5F), Icons.Default.Timer),
     STEAMGRIDDB(R.drawable.ic_service_steamgriddb, Color.White),
     ITAD(null, Color(0xFF046EB4)),
     GOOGLE_BOOKS(R.drawable.ic_service_google_books, Color.White),
+    OPEN_LIBRARY(R.drawable.ic_service_open_library, Color.White),
     HARDCOVER(R.drawable.ic_service_hardcover, Color.White),
     STEAM(R.drawable.ic_service_steam, Color(0xFF171A21)),
     RETROACHIEVEMENTS(R.drawable.ic_service_retroachievements, Color(0xFF161B22)),
     ANILIST(R.drawable.ic_service_anilist, Color(0xFF121923)),
+    MANGADEX(R.drawable.ic_service_mangadex, Color(0xFF2C2C2C)),
+    MANGABAKA(R.drawable.ic_service_mangabaka, Color.White),
+    KITSU(R.drawable.ic_service_kitsu, Color.White),
 }
 
 @Composable
-internal fun ServiceLogoBadge(logo: ServiceLogo) {
+internal fun ServiceLogoBadge(
+    logo: ServiceLogo,
+    size: Dp = 40.dp,
+) {
     Box(
         Modifier
-            .size(40.dp)
+            .size(size)
             .clip(RoundedCornerShape(8.dp))
             .background(logo.background)
-            .padding(6.dp),
+            .padding(size * 0.15f),
         contentAlignment = Alignment.Center,
     ) {
         if (logo.drawable != null) {
             Image(painterResource(logo.drawable), contentDescription = null, modifier = Modifier.fillMaxSize())
         } else {
-            Icon(Icons.Default.Sell, contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
+            Icon(logo.fallbackIcon, contentDescription = null, tint = Color.White, modifier = Modifier.fillMaxSize())
         }
     }
 }

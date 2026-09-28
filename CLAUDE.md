@@ -316,6 +316,14 @@ If `anilist_username` is set in `secrets.json`, every cache update for a manga/w
 | Manga/Webtoons | AniList (`AniListService`, GraphQL) | MangaDex (`MangaDexService`) — only triggered when AniList returns no results (see `MangaSearchService.kt`); also provides the latest chapter count for ongoing series via the `/aggregate` endpoint. Then MangaBaka (`MangaBakaService`) when MangaDex also finds nothing |
 | Books | Google Books (`GoogleBooksService`) | Open Library (`OpenLibraryService`), then Hardcover (`HardcoverService`, only when a token is configured) |
 
+### Credits (required attribution)
+
+Settings → About → Credits and licenses (`CreditsScreen`, route `about/credits`) lists every data
+provider with its logo, the hobbies it covers and an attribution line, in Tonkatsu Box's format.
+TMDB's line is the exact notice its API terms require ("This product uses the TMDB API but is not
+endorsed or certified by TMDB.") and stays in English in every language. **When adding a data
+source, add it to `providers` in `CreditsScreen.kt`** (and a `ServiceLogo` if it has a logo).
+
 ### Availability checked before use
 ```kotlin
 if (!secrets.tmdbConfigurado) { /* show error */ }

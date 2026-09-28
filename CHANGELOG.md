@@ -11,6 +11,10 @@ The format is a simplified version of [Keep a Changelog](https://keepachangelog.
 ## [Unreleased]
 
 ### Additions
+- About > Credits and licenses: every data provider Oribu uses (TMDB, IGDB, HowLongToBeat,
+  IsThereAnyDeal, SteamGridDB, Steam, RetroAchievements, AniList, Kitsu, MangaDex, MangaBaka,
+  Google Books, Open Library, Hardcover) with its logo, the hobbies it covers and its attribution —
+  including the notice TMDB's API terms require — plus the open source licenses.
 - Settings > Tracking is grouped by hobby (Games, Anime and manga, Movies and series, Books), and
   each account gets an "Update automatically" switch and a "Sync now" button that backs up the
   library first. Syncs only move things forward — they never lower progress or a status, nor
