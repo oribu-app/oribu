@@ -70,6 +70,13 @@ fun SettingsScreen(navController: NavController) {
                 Icons.Default.Cable,
                 Routes.SETTINGS_INTEGRATIONS,
             ),
+            // Same icon as Rokku's Tracking settings (ic_sync_24dp).
+            SettingsCategory(
+                stringResource(R.string.settings_tracking_title),
+                stringResource(R.string.settings_tracking_subtitle),
+                Icons.Default.Sync,
+                Routes.SETTINGS_TRACKING,
+            ),
             SettingsCategory(
                 stringResource(R.string.settings_platforms_title),
                 stringResource(R.string.settings_platforms_subtitle),

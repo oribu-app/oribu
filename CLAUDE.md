@@ -94,6 +94,9 @@ app/src/main/kotlin/app/oribu/
       MainNavGraph.kt
     components/
       SharedComponents.kt
+      CredentialCard.kt         # Shared credential card: service logo tile, fields, status line, test/reset buttons
+      ServiceCredentialsList.kt # Settings → Integrations: search/metadata keys (built-in or user's own)
+      TrackingAccountsList.kt   # Settings → Tracking: user accounts grouped by hobby (never built-in keys)
     screens/
       HomeScreen.kt
       SearchScreen.kt
@@ -287,6 +290,10 @@ the box in nightly/beta/stable APKs. A key the user types in Settings → Integr
   Settings → Integrations the bundled key is never shown: the field stays empty with a
   "built-in key" placeholder, the test button still works, and a reset button appears once the
   user replaces it with their own key.
+- **Where a credential lives:** if any search uses it, it lives in Settings → Integrations
+  (`ServiceCredentialsList`), even when an account feature reuses it later (Hardcover's token);
+  otherwise it lives in Settings → Tracking (`TrackingAccountsList`), grouped by hobby. Never ask
+  for the same credential in both places.
 - **Never bundled** — account integrations always use the user's own credentials, same as
   Tonkatsu Box: Steam (`steam_api_key` + `steam_id`), RetroAchievements
   (`retroachievements_username` + `retroachievements_api_key`), Hardcover

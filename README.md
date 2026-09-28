@@ -131,6 +131,11 @@ conventions, branch strategy and everything else you need to get set up.
 
 Thank you to all the people who have contributed!
 
+Service logos in the integration settings come from
+[Tonkatsu Box](https://github.com/hacan359/tonkatsu_box) (MIT License, Copyright (c) 2025 hacan359)
+and [Rokku](https://github.com/rokku-app/rokku); the logos themselves are trademarks of their
+respective services.
+
 <a href="https://github.com/oribu-app/oribu-app/graphs/contributors">
     <img src="https://contrib.rocks/image?repo=oribu-app/oribu-app" alt="Oribu contributors" title="Oribu contributors"/>
 </a>

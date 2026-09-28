@@ -25,6 +25,7 @@ data class ApiKeyOverrides(
     val retroAchievementsUsername: String? = null,
     val retroAchievementsApiKey: String? = null,
     val hardcoverApiToken: String? = null,
+    val anilistUsername: String? = null,
 )
 
 private val Context.apiKeyDataStore by preferencesDataStore(name = "api_key_prefs")
@@ -45,6 +46,7 @@ object ApiKeyPreferences {
     private val RETROACHIEVEMENTS_USERNAME_KEY = stringPreferencesKey("retroachievements_username")
     private val RETROACHIEVEMENTS_API_KEY = stringPreferencesKey("retroachievements_api_key")
     private val HARDCOVER_KEY = stringPreferencesKey("hardcover_api_token")
+    private val ANILIST_USERNAME_KEY = stringPreferencesKey("anilist_username")
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var appContext: Context
@@ -69,6 +71,7 @@ object ApiKeyPreferences {
                         retroAchievementsUsername = prefs[RETROACHIEVEMENTS_USERNAME_KEY],
                         retroAchievementsApiKey = prefs[RETROACHIEVEMENTS_API_KEY],
                         hardcoverApiToken = prefs[HARDCOVER_KEY],
+                        anilistUsername = prefs[ANILIST_USERNAME_KEY],
                     )
             }
         }
@@ -93,6 +96,7 @@ object ApiKeyPreferences {
             retroAchievementsUsername = prefs[RETROACHIEVEMENTS_USERNAME_KEY],
             retroAchievementsApiKey = prefs[RETROACHIEVEMENTS_API_KEY],
             hardcoverApiToken = prefs[HARDCOVER_KEY],
+            anilistUsername = prefs[ANILIST_USERNAME_KEY],
         )
     }
 
@@ -117,6 +121,8 @@ object ApiKeyPreferences {
     fun setRetroAchievementsApiKey(value: String) = setValue(RETROACHIEVEMENTS_API_KEY, value)
 
     fun setHardcoverApiToken(value: String) = setValue(HARDCOVER_KEY, value)
+
+    fun setAnilistUsername(value: String) = setValue(ANILIST_USERNAME_KEY, value)
 
     private fun setValue(
         key: Preferences.Key<String>,

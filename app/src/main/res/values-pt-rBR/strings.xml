@@ -422,7 +422,11 @@
     <string name="settings_notifications_title">Notificações</string>
     <string name="settings_notifications_subtitle">Atualizações em segundo plano</string>
     <string name="settings_integrations_title">Integrações</string>
-    <string name="settings_integrations_subtitle">Status das APIs conectadas</string>
+    <string name="settings_integrations_subtitle">Chaves de busca e metadados</string>
+    <string name="settings_tracking_title">Monitoramento</string>
+    <string name="settings_tracking_subtitle">Contas que sincronizam seu progresso</string>
+    <string name="tracking_section_manga">Mangás e webtoons</string>
+    <string name="service_anilist_tracking_desc">Progresso de leitura da sua lista pública no AniList</string>
     <string name="settings_platforms_title">Plataformas</string>
     <string name="settings_platforms_subtitle">Filtros de plataforma em Jogos</string>
     <string name="settings_data_title">Dados</string>
@@ -529,7 +533,7 @@
     <string name="onboarding_next">Próxima</string>
     <string name="onboarding_welcome">Bem Vindo(a)!</string>
     <string name="onboarding_intro">Vamos definir algumas coisas primeiro. Você sempre pode fazer alterações nas configurações depois também.</string>
-    <string name="onboarding_apikeys_description">Opcional — a busca já funciona sem configurar nada. Adicione sua conta da Steam, RetroAchievements ou Hardcover para sincronizar seu próprio progresso. Você pode configurar tudo isso depois em Configurações → Integrações.</string>
+    <string name="onboarding_apikeys_description">Opcional — a busca já funciona sem configurar nada. Adicione sua conta da Steam, RetroAchievements ou AniList para sincronizar seu próprio progresso. Você pode configurar tudo isso depois em Configurações → Monitoramento e Configurações → Integrações.</string>
     <string name="onboarding_permissions_title">Opcional, mas recomendado</string>
     <string name="onboarding_notif_subtitle">Avisos de novidades e atualizações da biblioteca</string>
     <string name="onboarding_battery_title">Ignorar otimização de bateria</string>

@@ -63,6 +63,11 @@ The format is a simplified version of [Keep a Changelog](https://keepachangelog.
   version is found.
 - The "..." menu (Configurações, Status, Histórico, Sobre, Ajuda) is now the same on every hobby
   list screen (Jogos, Filmes, Séries, Mangás, Livros), not just Home.
+- Settings > Tracking (new, Rokku's tracking icon): the accounts that sync your own progress,
+  grouped by hobby — Steam and RetroAchievements under Games, AniList under Manga and webtoons.
+  The AniList username can now be set in the app (it used to be readable only from
+  `secrets.json`) and checked with the test button. Settings > Integrations keeps only search and
+  metadata keys, now including Hardcover. Every card shows the service's logo.
 - Release builds now ship Oribu's own API keys for search and metadata (TMDB, IGDB, Google Books,
   ITAD, SteamGridDB), so they work with no setup. Settings > Integrations is split into "Search
   and metadata" and "Your accounts" (Steam, RetroAchievements, Hardcover — always your own

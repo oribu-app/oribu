@@ -56,6 +56,17 @@ class AniListService(
         return media.map { mapItem(it) }
     }
 
+    /**
+     * Confirms a public AniList profile exists for [username] (progress sync reads that user's
+     * public list, no OAuth). AniList answers an unknown user with `User: null`.
+     */
+    fun testUser(username: String) {
+        val gql = "query (${'$'}name: String) { User(name: ${'$'}name) { id } }"
+        if (username.isBlank() || query(gql, mapOf("name" to username.trim()))["User"] == null) {
+            throw ApiException("AniList", ApiErrorReason.NOT_FOUND)
+        }
+    }
+
     fun getUserProgress(
         username: String,
         mediaId: Int,

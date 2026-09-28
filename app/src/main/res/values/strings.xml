@@ -422,7 +422,11 @@
     <string name="settings_notifications_title">Notifications</string>
     <string name="settings_notifications_subtitle">Background updates</string>
     <string name="settings_integrations_title">Integrations</string>
-    <string name="settings_integrations_subtitle">Status of connected APIs</string>
+    <string name="settings_integrations_subtitle">Keys for search and metadata</string>
+    <string name="settings_tracking_title">Tracking</string>
+    <string name="settings_tracking_subtitle">Accounts that sync your progress</string>
+    <string name="tracking_section_manga">Manga and webtoons</string>
+    <string name="service_anilist_tracking_desc">Reading progress from your public AniList list</string>
     <string name="settings_platforms_title">Platforms</string>
     <string name="settings_platforms_subtitle">Platform filters in Games</string>
     <string name="settings_data_title">Data</string>
@@ -529,7 +533,7 @@
     <string name="onboarding_next">Next</string>
     <string name="onboarding_welcome">Welcome!</string>
     <string name="onboarding_intro">Let\'s set a few things up first. You can always change these settings later too.</string>
-    <string name="onboarding_apikeys_description">Optional — search already works out of the box. Add your Steam, RetroAchievements or Hardcover account to sync your own progress. You can set all of this up later in Settings → Integrations.</string>
+    <string name="onboarding_apikeys_description">Optional — search already works out of the box. Add your Steam, RetroAchievements or AniList account to sync your own progress. You can set all of this up later in Settings → Tracking and Settings → Integrations.</string>
     <string name="onboarding_permissions_title">Optional, but recommended</string>
     <string name="onboarding_notif_subtitle">Alerts about news and library updates</string>
     <string name="onboarding_battery_title">Ignore battery optimization</string>

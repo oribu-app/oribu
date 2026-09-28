@@ -49,6 +49,7 @@ import app.oribu.ui.screens.settings.SettingsIntegrationsScreen
 import app.oribu.ui.screens.settings.SettingsNotificationsScreen
 import app.oribu.ui.screens.settings.SettingsPlatformsScreen
 import app.oribu.ui.screens.settings.SettingsScreen
+import app.oribu.ui.screens.settings.SettingsTrackingScreen
 import app.oribu.ui.screens.stats.StatsDetailsScreen
 import app.oribu.ui.screens.stats.StatsFilteredListScreen
 import app.oribu.ui.screens.stats.StatsScreen
@@ -183,6 +184,7 @@ fun MainNavGraph(startDestination: String = Routes.HOME) {
             composable(Routes.SETTINGS_APPEARANCE) { SettingsAppearanceScreen(navController) }
             composable(Routes.SETTINGS_NOTIFICATIONS) { SettingsNotificationsScreen(navController) }
             composable(Routes.SETTINGS_INTEGRATIONS) { SettingsIntegrationsScreen(navController) }
+            composable(Routes.SETTINGS_TRACKING) { SettingsTrackingScreen(navController) }
             composable(Routes.SETTINGS_DATA) { SettingsDataScreen(navController) }
             composable(Routes.SETTINGS_PLATFORMS) { SettingsPlatformsScreen(navController) }
             composable(Routes.HISTORY) { HistoryScreen(navController) }

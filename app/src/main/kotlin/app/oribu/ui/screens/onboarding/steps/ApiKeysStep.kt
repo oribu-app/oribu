@@ -11,7 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.oribu.R
+import app.oribu.ui.components.CredentialSectionHeader
 import app.oribu.ui.components.ServiceCredentialsList
+import app.oribu.ui.components.TrackingAccountsList
 
 @Composable
 fun ApiKeysStep() {
@@ -21,7 +23,11 @@ fun ApiKeysStep() {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
         )
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(8.dp))
+        // Search already works with the built-in keys, so the user's own accounts come first.
+        CredentialSectionHeader(stringResource(R.string.service_section_tracking))
+        TrackingAccountsList(modifier = Modifier.fillMaxWidth())
+        CredentialSectionHeader(stringResource(R.string.service_section_metadata))
         ServiceCredentialsList(modifier = Modifier.fillMaxWidth())
     }
 }

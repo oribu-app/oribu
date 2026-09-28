@@ -42,7 +42,7 @@ data class Secrets(
             igdbClientSecret = overrides.igdbClientSecret?.takeIf { it.isNotBlank() } ?: igdbClientSecret,
             googleBooksApiKey = overrides.googleBooksApiKey?.takeIf { it.isNotBlank() } ?: googleBooksApiKey,
             anilistClientId = anilistClientId,
-            anilistUsername = anilistUsername,
+            anilistUsername = overrides.anilistUsername?.takeIf { it.isNotBlank() } ?: anilistUsername,
             steamApiKey = overrides.steamApiKey?.takeIf { it.isNotBlank() } ?: steamApiKey,
             steamId = overrides.steamId?.takeIf { it.isNotBlank() } ?: steamId,
             itadApiKey = overrides.itadApiKey?.takeIf { it.isNotBlank() } ?: itadApiKey,

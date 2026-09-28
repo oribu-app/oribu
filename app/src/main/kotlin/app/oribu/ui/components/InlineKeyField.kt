@@ -37,6 +37,7 @@ fun InlineKeyField(
     onSave: (String) -> Unit,
     modifier: Modifier = Modifier,
     placeholder: String? = null,
+    secret: Boolean = true,
 ) {
     var draft by remember(value) { mutableStateOf(value) }
     var visible by remember { mutableStateOf(false) }
@@ -48,13 +49,15 @@ fun InlineKeyField(
         label = { Text(label) },
         placeholder = placeholder?.let { { Text(it) } },
         singleLine = true,
-        visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
+        visualTransformation = if (!secret || visible) VisualTransformation.None else PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(onDone = { if (dirty) onSave(draft) }),
         trailingIcon = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = { visible = !visible }) {
-                    Icon(if (visible) Icons.Default.VisibilityOff else Icons.Default.Visibility, contentDescription = null)
+                if (secret) {
+                    IconButton(onClick = { visible = !visible }) {
+                        Icon(if (visible) Icons.Default.VisibilityOff else Icons.Default.Visibility, contentDescription = null)
+                    }
                 }
                 if (dirty) {
                     TextButton(onClick = { onSave(draft) }) { Text(stringResource(R.string.action_save)) }
