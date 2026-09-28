@@ -463,6 +463,16 @@
     <string name="settings_tracking_title">Tracking</string>
     <string name="settings_tracking_subtitle">Accounts that sync your progress</string>
     <string name="tracking_section_manga">Anime and manga</string>
+    <string name="tracking_section_movies_series">Movies and series</string>
+    <string name="tracking_auto_sync">Update automatically</string>
+    <string name="tracking_syncing">Syncing…</string>
+    <string name="tracking_synced">Items synced: %1$d</string>
+    <string name="tracking_synced_without_backup">Items synced: %1$d — no backup folder is set, so no backup was made first</string>
+    <string name="tracking_sync_failed">Couldn\'t back up before syncing, so nothing was changed</string>
+    <string name="tracking_last_sync">Last synced: %1$s</string>
+    <string name="tracking_never_synced">Not synced manually yet</string>
+    <string name="tracking_sync_now">Sync now</string>
+    <string name="tracking_no_integrations_yet">No integrations for this hobby yet.</string>
     <string name="service_anilist_tracking_desc">Reading and watching progress from your public AniList lists</string>
     <string name="settings_platforms_title">Platforms</string>
     <string name="settings_platforms_subtitle">Platform filters in Games</string>

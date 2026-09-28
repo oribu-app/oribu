@@ -184,6 +184,17 @@ mediaCacheRepository.salvar(mediaItemId, dadosJson)
 mediaCacheRepository.deletar(mediaItemId)
 ```
 
+### Tracking sync (`service/sync/`)
+
+`TrackingIntegration` lists the account integrations (Steam, RetroAchievements, AniList), which
+library items each one covers and its hobby section in Settings → Tracking. Each has an "update
+automatically" switch (`TrackingPreferences`, on by default): with it off, the daily refresh
+skips that integration and `MediaCacheService` keeps what it synced last. "Sync now"
+(`SyncService`) takes a pre-sync backup, then refreshes the covered items with the integration
+forced on. **All merges go through `SyncMerge`**: the local library is the source of truth —
+progress and status only move forward, user ratings and dates are never replaced. New
+integrations (imports included) must use it too.
+
 ### Local backups (`data/backup/`)
 
 `BackupService` writes the library tables (items, movie lists, watched episodes, manga reviews,

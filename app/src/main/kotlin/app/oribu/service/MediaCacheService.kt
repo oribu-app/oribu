@@ -6,6 +6,8 @@ import app.oribu.data.db.DB
 import app.oribu.model.MediaItem
 import app.oribu.model.MediaStatus
 import app.oribu.model.MediaType
+import app.oribu.service.sync.TrackingIntegration
+import app.oribu.service.sync.TrackingPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -30,21 +32,36 @@ object MediaCacheService {
         }
     }
 
-    suspend fun fetchAndPersist(item: MediaItem) =
-        withContext(Dispatchers.IO) {
-            runCatching { fetchAndStore(item) }.getOrNull()
-        }
+    /**
+     * [forceSync]: integrations to run for this item even if their "update automatically" switch
+     * is off — used by Settings → Tracking → "Sync now".
+     */
+    suspend fun fetchAndPersist(
+        item: MediaItem,
+        forceSync: Set<TrackingIntegration> = emptySet(),
+    ) = withContext(Dispatchers.IO) {
+        runCatching { fetchAndStore(item, forceSync) }.getOrNull()
+    }
 
-    private suspend fun fetchAndStore(item: MediaItem) {
+    private fun shouldSync(
+        integration: TrackingIntegration,
+        forced: Set<TrackingIntegration>,
+    ) = integration in forced || TrackingPreferences.isAutoSync(integration)
+
+    private suspend fun fetchAndStore(
+        item: MediaItem,
+        forceSync: Set<TrackingIntegration> = emptySet(),
+    ) {
         val id = item.id ?: return
         Log.d("MediaCache", "fetchAndStore: item=${item.title} id=$id type=${item.type}")
-        val newData =
-            fetchFromApi(item) ?: run {
+        val fetched =
+            fetchFromApi(item, forceSync) ?: run {
                 Log.w("MediaCache", "fetchAndStore: fetchFromApi returned null for ${item.title}")
                 return
             }
 
         val current = DB.cache.load(id)
+        val newData = keepSkippedSyncData(fetched, current)
         if (hasCacheChanged(current, newData)) {
             Log.d("MediaCache", "fetchAndStore: saving cache for ${item.title}")
             DB.cache.save(id, newData)
@@ -61,9 +78,24 @@ object MediaCacheService {
             else -> checkReleaseStatus(tracked, newData)
         }
 
-        if (tracked.type in listOf(MediaType.MANGA, MediaType.WEBTOON, MediaType.ANIME)) {
+        if (tracked.type in listOf(MediaType.MANGA, MediaType.WEBTOON, MediaType.ANIME) &&
+            shouldSync(TrackingIntegration.ANILIST, forceSync)
+        ) {
             syncAniListProgress(tracked)
         }
+    }
+
+    /**
+     * With an integration's automatic sync off, the fetch skips it — keep what it synced last time
+     * instead of wiping it from the cache on every refresh.
+     */
+    private fun keepSkippedSyncData(
+        fetched: Map<String, Any?>,
+        current: Map<String, Any?>?,
+    ): Map<String, Any?> {
+        if (current == null || fetched.containsKey("achievements")) return fetched
+        val kept = SYNCED_ACHIEVEMENT_KEYS.mapNotNull { key -> current[key]?.let { key to it } }
+        return if (kept.isEmpty()) fetched else fetched + kept
     }
 
     /** Persists MediaItem.isAnimation from the TMDB details (movies/series only). */
@@ -146,12 +178,15 @@ object MediaCacheService {
         }
     }
 
-    private suspend fun fetchFromApi(item: MediaItem): Map<String, Any?>? {
+    private suspend fun fetchFromApi(
+        item: MediaItem,
+        forceSync: Set<TrackingIntegration>,
+    ): Map<String, Any?>? {
         val externalId = item.externalId ?: return null
         return when (item.type) {
             MediaType.MOVIE -> fetchMovie(externalId)
             MediaType.SERIES -> fetchSeries(externalId)
-            MediaType.GAME -> fetchGame(item)
+            MediaType.GAME -> fetchGame(item, forceSync)
             MediaType.MANGA, MediaType.WEBTOON -> fetchManga(item)
             MediaType.ANIME -> fetchAnime(item)
             MediaType.BOOK -> fetchBook(item)
@@ -228,7 +263,10 @@ object MediaCacheService {
         }
     }
 
-    private suspend fun fetchGame(item: MediaItem): Map<String, Any?>? {
+    private suspend fun fetchGame(
+        item: MediaItem,
+        forceSync: Set<TrackingIntegration>,
+    ): Map<String, Any?>? {
         if (!ApiServices.igdbAvailable && ApiServices.gameCache == null) return null
 
         val result = mutableMapOf<String, Any?>()
@@ -349,7 +387,7 @@ object MediaCacheService {
         }
 
         // 4. Steam achievements
-        if (ApiServices.steamAvailable && item.externalId != null) {
+        if (ApiServices.steamAvailable && item.externalId != null && shouldSync(TrackingIntegration.STEAM, forceSync)) {
             withContext(Dispatchers.IO) {
                 runCatching {
                     val achievements = ApiServices.steam.getAchievements(item.externalId!!)
@@ -371,7 +409,8 @@ object MediaCacheService {
         // 5. RetroAchievements (retro consoles only — Steam games are covered above)
         if ((result["achievements"] as? List<*>).isNullOrEmpty() &&
             ApiServices.retroAchievementsAvailable &&
-            RetroAchievementsService.supports(item.console)
+            RetroAchievementsService.supports(item.console) &&
+            shouldSync(TrackingIntegration.RETROACHIEVEMENTS, forceSync)
         ) {
             withContext(Dispatchers.IO) {
                 runCatching {
@@ -792,6 +831,8 @@ object MediaCacheService {
         }
 
     /** Compara o cache local com os dados recém-buscados. Função pura, extraída para teste. */
+    private val SYNCED_ACHIEVEMENT_KEYS = listOf("achievements", "totalAchievements", "achievementsUnlocked")
+
     internal fun hasCacheChanged(
         current: Map<String, Any?>?,
         newData: Map<String, Any?>,
@@ -805,5 +846,7 @@ object MediaCacheService {
     internal fun computeMergedProgress(
         localProgress: Int?,
         remoteProgress: Int,
-    ): Int? = if (remoteProgress > (localProgress ?: 0)) remoteProgress else null
+    ): Int? =
+        app.oribu.service.sync.SyncMerge
+            .mergeProgress(localProgress, remoteProgress)
 }

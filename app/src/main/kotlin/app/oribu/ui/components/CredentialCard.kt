@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -103,6 +104,8 @@ internal fun ServiceCredentialCard(
     onReset: (() -> Unit)? = null,
     usingBuiltIn: Boolean = false,
     testAlwaysAvailable: Boolean = false,
+    /** Extra controls under the status line (Tracking: automatic sync switch, "Sync now"). */
+    footer: (@Composable ColumnScope.() -> Unit)? = null,
     fields: @Composable ColumnScope.(usingBuiltIn: Boolean) -> Unit,
 ) {
     Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)) {
@@ -129,6 +132,10 @@ internal fun ServiceCredentialCard(
                 onTest = onTest,
                 onReset = onReset,
             )
+            if (footer != null) {
+                HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                footer()
+            }
         }
     }
 }

@@ -463,6 +463,16 @@
     <string name="settings_tracking_title">Monitoramento</string>
     <string name="settings_tracking_subtitle">Contas que sincronizam seu progresso</string>
     <string name="tracking_section_manga">Animes e mangás</string>
+    <string name="tracking_section_movies_series">Filmes e séries</string>
+    <string name="tracking_auto_sync">Atualizar automaticamente</string>
+    <string name="tracking_syncing">Sincronizando…</string>
+    <string name="tracking_synced">Itens sincronizados: %1$d</string>
+    <string name="tracking_synced_without_backup">Itens sincronizados: %1$d — sem pasta de backup definida, nenhum backup foi feito antes</string>
+    <string name="tracking_sync_failed">Não foi possível fazer o backup antes de sincronizar, então nada foi alterado</string>
+    <string name="tracking_last_sync">Última sincronização: %1$s</string>
+    <string name="tracking_never_synced">Nenhuma sincronização manual ainda</string>
+    <string name="tracking_sync_now">Sincronizar agora</string>
+    <string name="tracking_no_integrations_yet">Ainda não há integrações para este hobby.</string>
     <string name="service_anilist_tracking_desc">Progresso de leitura e de episódios das suas listas públicas no AniList</string>
     <string name="settings_platforms_title">Plataformas</string>
     <string name="settings_platforms_subtitle">Filtros de plataforma em Jogos</string>

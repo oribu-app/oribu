@@ -1,8 +1,18 @@
 package app.oribu.ui.components
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -10,16 +20,24 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.oribu.R
 import app.oribu.data.ApiKeyPreferences
+import app.oribu.data.backup.BackupException
 import app.oribu.service.AniListService
 import app.oribu.service.ApiServices
 import app.oribu.service.RetroAchievementsService
 import app.oribu.service.SteamService
+import app.oribu.service.sync.SyncResult
+import app.oribu.service.sync.SyncService
+import app.oribu.service.sync.TrackingHobby
+import app.oribu.service.sync.TrackingIntegration
+import app.oribu.service.sync.TrackingPreferences
+import app.oribu.ui.locale.formatDate
 import kotlinx.coroutines.launch
 
 /**
@@ -27,6 +45,9 @@ import kotlinx.coroutines.launch
  * model as Tonkatsu Box's import/sync screens: these always use the user's own credentials,
  * never a built-in key. A credential that a search also needs (Hardcover) stays in
  * [ServiceCredentialsList] and is only reused from here.
+ *
+ * Each connected integration can update automatically (with the daily refresh) or only when the
+ * user taps "Sync now", which takes a backup first when a backup folder is set.
  */
 @Composable
 fun TrackingAccountsList(modifier: Modifier = Modifier) {
@@ -43,7 +64,7 @@ fun TrackingAccountsList(modifier: Modifier = Modifier) {
     var aniListStatus by remember { mutableStateOf(credentialStatusFor(listOf(overrides.anilistUsername))) }
 
     Column(modifier) {
-        CredentialSectionHeader(stringResource(R.string.games_title))
+        CredentialSectionHeader(stringResource(TrackingHobby.GAMES.labelRes))
 
         ServiceCredentialCard(
             name = "Steam",
@@ -55,6 +76,7 @@ fun TrackingAccountsList(modifier: Modifier = Modifier) {
                     SteamService(overrides.steamApiKey.orEmpty(), overrides.steamId.orEmpty()).testConnection()
                 }
             },
+            footer = { SyncControls(TrackingIntegration.STEAM, connected = steamStatus.isConnected) },
         ) {
             InlineKeyField(
                 label = stringResource(R.string.credential_field_steam_id_64),
@@ -91,6 +113,7 @@ fun TrackingAccountsList(modifier: Modifier = Modifier) {
                     ).testConnection()
                 }
             },
+            footer = { SyncControls(TrackingIntegration.RETROACHIEVEMENTS, connected = retroAchievementsStatus.isConnected) },
         ) {
             InlineKeyField(
                 label = stringResource(R.string.credential_field_username),
@@ -114,7 +137,7 @@ fun TrackingAccountsList(modifier: Modifier = Modifier) {
             )
         }
 
-        CredentialSectionHeader(stringResource(R.string.tracking_section_manga))
+        CredentialSectionHeader(stringResource(TrackingHobby.ANIME_MANGA.labelRes))
 
         ServiceCredentialCard(
             name = "AniList",
@@ -124,6 +147,7 @@ fun TrackingAccountsList(modifier: Modifier = Modifier) {
             onTest = {
                 scope.testCredential({ aniListStatus = it }) { AniListService().testUser(overrides.anilistUsername.orEmpty()) }
             },
+            footer = { SyncControls(TrackingIntegration.ANILIST, connected = aniListStatus.isConnected) },
         ) {
             InlineKeyField(
                 label = stringResource(R.string.credential_field_username),
@@ -136,5 +160,112 @@ fun TrackingAccountsList(modifier: Modifier = Modifier) {
                 },
             )
         }
+
+        CredentialSectionHeader(stringResource(TrackingHobby.MOVIES_SERIES.labelRes))
+        NoIntegrationsYet()
+
+        CredentialSectionHeader(stringResource(TrackingHobby.BOOKS.labelRes))
+        NoIntegrationsYet()
     }
+}
+
+private val CredentialStatus.isConnected
+    get() = this == CredentialStatus.CONFIGURED || this == CredentialStatus.VALID
+
+/** Result of the last "Sync now" on a card, shown instead of the last-sync time. */
+private sealed interface SyncOutcome {
+    data class Done(
+        val result: SyncResult,
+    ) : SyncOutcome
+
+    data object Failed : SyncOutcome
+}
+
+@Composable
+private fun ColumnScope.SyncControls(
+    integration: TrackingIntegration,
+    connected: Boolean,
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val autoSync by TrackingPreferences.autoSync.collectAsState()
+    val lastSyncMs by TrackingPreferences.lastSyncMs.collectAsState()
+    var syncing by remember { mutableStateOf(false) }
+    var outcome by remember { mutableStateOf<SyncOutcome?>(null) }
+
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            stringResource(R.string.tracking_auto_sync),
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(1f),
+        )
+        Switch(
+            checked = autoSync[integration] ?: true,
+            onCheckedChange = { TrackingPreferences.setAutoSync(integration, it) },
+            enabled = connected,
+        )
+    }
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        val current = outcome
+        val lastSync = lastSyncMs[integration]
+        Text(
+            when {
+                syncing -> {
+                    stringResource(R.string.tracking_syncing)
+                }
+
+                current is SyncOutcome.Done && !current.result.backupTaken -> {
+                    stringResource(R.string.tracking_synced_without_backup, current.result.itemsSynced)
+                }
+
+                current is SyncOutcome.Done -> {
+                    stringResource(R.string.tracking_synced, current.result.itemsSynced)
+                }
+
+                current is SyncOutcome.Failed -> {
+                    stringResource(R.string.tracking_sync_failed)
+                }
+
+                lastSync != null -> {
+                    stringResource(R.string.tracking_last_sync, formatDate(lastSync))
+                }
+
+                else -> {
+                    stringResource(R.string.tracking_never_synced)
+                }
+            },
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            modifier = Modifier.weight(1f),
+        )
+        if (syncing) {
+            CircularProgressIndicator(Modifier.padding(horizontal = 12.dp).size(18.dp), strokeWidth = 2.dp)
+        } else {
+            TextButton(
+                enabled = connected,
+                onClick = {
+                    syncing = true
+                    scope.launch {
+                        outcome =
+                            try {
+                                SyncOutcome.Done(SyncService.syncNow(context, integration))
+                            } catch (_: BackupException) {
+                                SyncOutcome.Failed
+                            }
+                        syncing = false
+                    }
+                },
+            ) { Text(stringResource(R.string.tracking_sync_now)) }
+        }
+    }
+}
+
+@Composable
+private fun NoIntegrationsYet() {
+    Text(
+        stringResource(R.string.tracking_no_integrations_yet),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+    )
 }

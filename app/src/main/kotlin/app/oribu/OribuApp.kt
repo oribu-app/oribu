@@ -11,6 +11,7 @@ import app.oribu.data.db.DB
 import app.oribu.service.ApiServices
 import app.oribu.service.GameDatasetImporter
 import app.oribu.service.NotificationHelper
+import app.oribu.service.sync.TrackingPreferences
 import app.oribu.ui.locale.AppLocaleController
 import app.oribu.ui.theme.AppThemeController
 import app.oribu.ui.theme.CoverThemeController
@@ -34,6 +35,7 @@ class OribuApp : Application() {
         SeriesScopePreferences.init(this)
         StoragePreferences.init(this)
         BackupPreferences.init(this)
+        TrackingPreferences.init(this)
         ApiKeyPreferences.init(this)
         AppThemeController.init(this)
         AppLocaleController.init(this)
