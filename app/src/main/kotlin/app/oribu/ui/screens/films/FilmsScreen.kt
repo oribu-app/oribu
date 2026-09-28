@@ -39,6 +39,7 @@ import app.oribu.ui.components.AppOverflowMenu
 import app.oribu.ui.components.EmptyState
 import app.oribu.ui.components.GenreFilterRow
 import app.oribu.ui.components.ProportionalTabRow
+import app.oribu.ui.components.swipeNavigation
 import app.oribu.ui.navigation.Routes
 import app.oribu.ui.theme.ColorFilme
 import coil.compose.AsyncImage
@@ -110,6 +111,8 @@ class FilmsViewModel : ViewModel() {
 fun FilmsScreen(
     navController: NavController,
     vm: FilmsViewModel = viewModel(),
+    onSwipeToNextHobby: () -> Unit = {},
+    onSwipeToPrevHobby: () -> Unit = {},
 ) {
     val allItems by vm.allItems.collectAsStateWithLifecycle()
     val lists by vm.lists.collectAsStateWithLifecycle()
@@ -209,7 +212,19 @@ fun FilmsScreen(
         },
     ) { padding ->
         val addFilmLabel = stringResource(R.string.films_add_button)
-        Box(Modifier.padding(padding).fillMaxSize()) {
+        Box(
+            Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .swipeNavigation(
+                    onSwipeLeft = {
+                        if (selectedTab < tabs.lastIndex) selectedTab++ else onSwipeToNextHobby()
+                    },
+                    onSwipeRight = {
+                        if (selectedTab > 0) selectedTab-- else onSwipeToPrevHobby()
+                    },
+                ),
+        ) {
             when (selectedTab) {
                 // ── Todos ──────────────────────────────────────────────────────
                 0 -> {

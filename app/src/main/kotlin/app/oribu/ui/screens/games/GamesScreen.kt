@@ -35,9 +35,11 @@ import app.oribu.model.GameConsole
 import app.oribu.model.MediaItem
 import app.oribu.model.MediaStatus
 import app.oribu.model.MediaType
+import app.oribu.model.label
 import app.oribu.ui.components.AppOverflowMenu
 import app.oribu.ui.components.EmptyState
 import app.oribu.ui.components.ProportionalTabRow
+import app.oribu.ui.components.swipeNavigation
 import app.oribu.ui.navigation.Routes
 import app.oribu.ui.theme.ColorJogo
 import coil.compose.AsyncImage
@@ -89,6 +91,8 @@ class GamesViewModel : ViewModel() {
 fun GamesScreen(
     navController: NavController,
     vm: GamesViewModel = viewModel(),
+    onSwipeToNextHobby: () -> Unit = {},
+    onSwipeToPrevHobby: () -> Unit = {},
 ) {
     val allItems by vm.allItems.collectAsStateWithLifecycle()
     var showFilters by remember { mutableStateOf(false) }
@@ -207,7 +211,19 @@ fun GamesScreen(
         },
     ) { padding ->
         val addGameLabel = stringResource(R.string.games_add_button)
-        Box(Modifier.padding(padding).fillMaxSize()) {
+        Box(
+            Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .swipeNavigation(
+                    onSwipeLeft = {
+                        if (selectedTab < tabs.lastIndex) selectedTab++ else onSwipeToNextHobby()
+                    },
+                    onSwipeRight = {
+                        if (selectedTab > 0) selectedTab-- else onSwipeToPrevHobby()
+                    },
+                ),
+        ) {
             when (selectedTab) {
                 0 -> {
                     GameGrid(

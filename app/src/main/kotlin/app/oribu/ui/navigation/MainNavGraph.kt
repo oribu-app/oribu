@@ -1,7 +1,5 @@
 ﻿package app.oribu.ui.navigation
 
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -11,9 +9,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -56,7 +51,6 @@ import app.oribu.ui.screens.settings.SettingsScreen
 import app.oribu.ui.screens.stats.StatsDetailsScreen
 import app.oribu.ui.screens.stats.StatsFilteredListScreen
 import app.oribu.ui.screens.stats.StatsScreen
-import kotlin.math.abs
 
 private data class BottomNavItem(
     val route: String,
@@ -86,6 +80,18 @@ fun MainNavGraph(startDestination: String = Routes.HOME) {
     val selectedIndex = bottomNavItems.indexOfFirst { it.route == currentRoute }.takeIf { it >= 0 }
 
     Scaffold(
+    // Swipe entre hobbies só acontece quando a tela atual já esgotou suas próprias abas
+    // internas de status (ver *Screen.kt) — cada uma delas consome o gesto primeiro.
+    fun onSwipeToNextHobby() {
+        val next = (selectedIndex ?: 0) + 1
+        if (next < bottomNavItems.size) navController.navigateToHobbyTab(bottomNavItems[next].route)
+    }
+
+    fun onSwipeToPrevHobby() {
+        val prev = (selectedIndex ?: 0) - 1
+        if (prev >= 0) navController.navigateToHobbyTab(bottomNavItems[prev].route)
+    }
+
         bottomBar = {
             if (showBottomBar) {
                 NavigationBar(tonalElevation = 0.dp) {
@@ -111,28 +117,25 @@ fun MainNavGraph(startDestination: String = Routes.HOME) {
         NavHost(
             navController = navController,
             startDestination = startDestination,
-            modifier =
-                Modifier
-                    .padding(bottom = innerPadding.calculateBottomPadding())
-                    .hobbySwipeNavigation(
-                        enabled = selectedIndex != null,
-                        onSwipeLeft = {
-                            val next = (selectedIndex ?: 0) + 1
-                            if (next < bottomNavItems.size) navController.navigateToHobbyTab(bottomNavItems[next].route)
-                        },
-                        onSwipeRight = {
-                            val prev = (selectedIndex ?: 0) - 1
-                            if (prev >= 0) navController.navigateToHobbyTab(bottomNavItems[prev].route)
-                        },
-                    ),
+            modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding()),
         ) {
             composable(Routes.ONBOARDING) { OnboardingScreen(navController) }
             composable(Routes.HOME) { HomeScreen(navController) }
-            composable(Routes.GAMES) { GamesScreen(navController) }
-            composable(Routes.FILMS) { FilmsScreen(navController) }
-            composable(Routes.SERIES) { SeriesScreen(navController) }
-            composable(Routes.MANGA) { MangaScreen(navController) }
-            composable(Routes.BOOKS) { BooksScreen(navController) }
+            composable(Routes.GAMES) {
+                GamesScreen(navController, onSwipeToNextHobby = ::onSwipeToNextHobby, onSwipeToPrevHobby = ::onSwipeToPrevHobby)
+            }
+            composable(Routes.FILMS) {
+                FilmsScreen(navController, onSwipeToNextHobby = ::onSwipeToNextHobby, onSwipeToPrevHobby = ::onSwipeToPrevHobby)
+            }
+            composable(Routes.SERIES) {
+                SeriesScreen(navController, onSwipeToNextHobby = ::onSwipeToNextHobby, onSwipeToPrevHobby = ::onSwipeToPrevHobby)
+            }
+            composable(Routes.MANGA) {
+                MangaScreen(navController, onSwipeToNextHobby = ::onSwipeToNextHobby, onSwipeToPrevHobby = ::onSwipeToPrevHobby)
+            }
+            composable(Routes.BOOKS) {
+                BooksScreen(navController, onSwipeToNextHobby = ::onSwipeToNextHobby, onSwipeToPrevHobby = ::onSwipeToPrevHobby)
+            }
 
             composable(Routes.GAMES_ADD) { AddGameScreen(navController) }
             composable(Routes.GAMES_DETAIL) {
@@ -198,47 +201,5 @@ private fun androidx.navigation.NavController.navigateToHobbyTab(route: String) 
         popUpTo(graph.findStartDestination().id) { saveState = true }
         launchSingleTop = true
         restoreState = true
-    }
-}
-
-/**
- * Detecta um arraste predominantemente horizontal (com viés de 1.5x sobre o vertical antes de
- * decidir) para não competir com o scroll vertical das grades — só passa a consumir o gesto
- * depois de confirmar que é uma navegação por swipe, então listas verticais continuam intactas.
- */
-private fun Modifier.hobbySwipeNavigation(
-    enabled: Boolean,
-    onSwipeLeft: () -> Unit,
-    onSwipeRight: () -> Unit,
-): Modifier {
-    if (!enabled) return this
-    return this.pointerInput(onSwipeLeft, onSwipeRight) {
-        awaitEachGesture {
-            val down = awaitFirstDown(requireUnconsumed = false)
-            var isHorizontal: Boolean? = null
-            var totalDx = 0f
-            var totalDy = 0f
-            while (true) {
-                val event = awaitPointerEvent()
-                val change = event.changes.firstOrNull { it.id == down.id } ?: break
-                if (change.changedToUpIgnoreConsumed()) {
-                    if (isHorizontal == true) {
-                        if (totalDx < -120f) {
-                            onSwipeLeft()
-                        } else if (totalDx > 120f) {
-                            onSwipeRight()
-                        }
-                    }
-                    break
-                }
-                val delta = change.positionChange()
-                totalDx += delta.x
-                totalDy += delta.y
-                if (isHorizontal == null && (abs(totalDx) > 16f || abs(totalDy) > 16f)) {
-                    isHorizontal = abs(totalDx) > abs(totalDy) * 1.5f
-                }
-                if (isHorizontal == true) change.consume()
-            }
-        }
     }
 }

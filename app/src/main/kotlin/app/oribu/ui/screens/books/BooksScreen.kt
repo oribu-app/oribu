@@ -29,9 +29,11 @@ import app.oribu.data.db.DB
 import app.oribu.model.MediaItem
 import app.oribu.model.MediaStatus
 import app.oribu.model.MediaType
+import app.oribu.model.label
 import app.oribu.ui.components.AppOverflowMenu
 import app.oribu.ui.components.EmptyState
 import app.oribu.ui.components.ProportionalTabRow
+import app.oribu.ui.components.swipeNavigation
 import app.oribu.ui.navigation.Routes
 import app.oribu.ui.theme.ColorLivro
 import coil.compose.AsyncImage
@@ -50,6 +52,8 @@ class BooksViewModel : ViewModel() {
 fun BooksScreen(
     navController: NavController,
     vm: BooksViewModel = viewModel(),
+    onSwipeToNextHobby: () -> Unit = {},
+    onSwipeToPrevHobby: () -> Unit = {},
 ) {
     val allItems by vm.allItems.collectAsStateWithLifecycle()
 
@@ -138,7 +142,19 @@ fun BooksScreen(
         },
     ) { padding ->
         val addBookLabel = stringResource(R.string.books_add_button)
-        Box(Modifier.padding(padding).fillMaxSize()) {
+        Box(
+            Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .swipeNavigation(
+                    onSwipeLeft = {
+                        if (selectedTab < tabs.lastIndex) selectedTab++ else onSwipeToNextHobby()
+                    },
+                    onSwipeRight = {
+                        if (selectedTab > 0) selectedTab-- else onSwipeToPrevHobby()
+                    },
+                ),
+        ) {
             if (filtered.isEmpty()) {
                 val (title, subtitle) =
                     when (selectedTab) {

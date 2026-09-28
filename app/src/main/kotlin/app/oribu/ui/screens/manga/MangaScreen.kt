@@ -32,6 +32,7 @@ import app.oribu.model.MediaType
 import app.oribu.ui.components.AppOverflowMenu
 import app.oribu.ui.components.EmptyState
 import app.oribu.ui.components.ProportionalTabRow
+import app.oribu.ui.components.swipeNavigation
 import app.oribu.ui.navigation.Routes
 import app.oribu.ui.theme.ColorManga
 import coil.compose.AsyncImage
@@ -72,6 +73,8 @@ class MangaViewModel : ViewModel() {
 fun MangaScreen(
     navController: NavController,
     vm: MangaViewModel = viewModel(),
+    onSwipeToNextHobby: () -> Unit = {},
+    onSwipeToPrevHobby: () -> Unit = {},
 ) {
     val allItems by vm.allItems.collectAsStateWithLifecycle()
 
@@ -160,7 +163,19 @@ fun MangaScreen(
         },
     ) { padding ->
         val addMangaLabel = stringResource(R.string.manga_add_button)
-        Box(Modifier.padding(padding).fillMaxSize()) {
+        Box(
+            Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .swipeNavigation(
+                    onSwipeLeft = {
+                        if (selectedTab < tabs.lastIndex) selectedTab++ else onSwipeToNextHobby()
+                    },
+                    onSwipeRight = {
+                        if (selectedTab > 0) selectedTab-- else onSwipeToPrevHobby()
+                    },
+                ),
+        ) {
             if (filtered.isEmpty()) {
                 val (title, subtitle) =
                     when (selectedTab) {

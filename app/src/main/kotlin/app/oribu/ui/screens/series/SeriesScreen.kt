@@ -38,6 +38,7 @@ import app.oribu.ui.components.AppOverflowMenu
 import app.oribu.ui.components.EmptyState
 import app.oribu.ui.components.GenreFilterRow
 import app.oribu.ui.components.ProportionalTabRow
+import app.oribu.ui.components.swipeNavigation
 import app.oribu.ui.locale.formatDate
 import app.oribu.ui.navigation.Routes
 import app.oribu.ui.theme.ColorSerie
@@ -64,6 +65,8 @@ class SeriesViewModel : ViewModel() {
 fun SeriesScreen(
     navController: NavController,
     vm: SeriesViewModel = viewModel(),
+    onSwipeToNextHobby: () -> Unit = {},
+    onSwipeToPrevHobby: () -> Unit = {},
 ) {
     val allItems by vm.allItems.collectAsStateWithLifecycle()
     val allEpisodes by vm.allEpisodes.collectAsStateWithLifecycle()
@@ -169,7 +172,19 @@ fun SeriesScreen(
         },
     ) { padding ->
         val addSeriesLabel = stringResource(R.string.series_add_button)
-        Box(Modifier.padding(padding).fillMaxSize()) {
+        Box(
+            Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .swipeNavigation(
+                    onSwipeLeft = {
+                        if (selectedTab < tabs.lastIndex) selectedTab++ else onSwipeToNextHobby()
+                    },
+                    onSwipeRight = {
+                        if (selectedTab > 0) selectedTab-- else onSwipeToPrevHobby()
+                    },
+                ),
+        ) {
             // ── Histórico — lista plana de episódios assistidos (estilo SeriesGuide) ──
             if (selectedTab == 3) {
                 if (watchedEpisodesFlat.isEmpty()) {
