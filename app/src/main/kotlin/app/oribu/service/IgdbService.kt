@@ -106,9 +106,9 @@ class IgdbService(
         val code = response.code
         val resp = response.use { it.body?.string() ?: "[]" }
         when (code) {
-            401 -> throw Exception("Token IGDB inválido ou expirado (HTTP 401) — verifique as credenciais em secrets.json")
-            429 -> throw Exception("Limite de requisições IGDB atingido (HTTP 429) — tente novamente em instantes")
-            !in 200..299 -> throw Exception("Erro IGDB HTTP $code")
+            401 -> throw ApiException("IGDB", ApiErrorReason.UNAUTHORIZED)
+            429 -> throw ApiException("IGDB", ApiErrorReason.RATE_LIMITED)
+            !in 200..299 -> throw ApiException("IGDB", ApiErrorReason.HTTP_ERROR, code)
         }
         return try {
             val type = object : TypeToken<List<Map<String, Any?>>>() {}.type
@@ -190,7 +190,7 @@ class IgdbService(
                 "summary, involved_companies.company.name, involved_companies.developer, " +
                 "involved_companies.publisher, platforms.name, platforms.id, artworks.url; limit 1;"
         val results = post("games", body)
-        if (results.isEmpty()) throw Exception("Game not found: $igdbId")
+        if (results.isEmpty()) throw ApiException("IGDB", ApiErrorReason.NOT_FOUND)
         return mapGame(results.first()) ?: ApiSearchResult(externalId = igdbId.toString(), title = "")
     }
 

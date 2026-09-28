@@ -41,6 +41,7 @@ import app.oribu.model.GameConsole
 import app.oribu.model.GamePlaythrough
 import app.oribu.model.MediaItem
 import app.oribu.model.MediaStatus
+import app.oribu.model.label
 import app.oribu.service.ApiServices
 import app.oribu.service.HltbResult
 import app.oribu.service.ItadDeal

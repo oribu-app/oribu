@@ -3,12 +3,14 @@
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -27,10 +29,12 @@ import app.oribu.model.GameConsole
 import app.oribu.model.MediaItem
 import app.oribu.model.MediaStatus
 import app.oribu.model.MediaType
+import app.oribu.model.label
 import app.oribu.service.ApiServices
 import app.oribu.service.MediaCacheService
 import app.oribu.ui.components.MediaGridCard
 import app.oribu.ui.components.StatusOptionTile
+import app.oribu.ui.components.localizedApiErrorMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -41,22 +45,46 @@ import java.util.Date
 class AddGameViewModel : ViewModel() {
     private val _results = MutableStateFlow<List<ApiSearchResult>>(emptyList())
     val results = _results.asStateFlow()
+    private val _searchError = MutableStateFlow<Throwable?>(null)
+    val searchError = _searchError.asStateFlow()
+    private val _existingIds = MutableStateFlow<Set<String>>(emptySet())
+    val existingIds = _existingIds.asStateFlow()
     var loading by mutableStateOf(false)
+
+    init {
+        viewModelScope.launch {
+            val items = DB.repo.getByType(MediaType.GAME)
+            _existingIds.value = items.mapNotNull { it.externalId }.toSet()
+        }
+    }
 
     fun search(query: String) {
         if (query.isBlank()) return
         viewModelScope.launch {
             loading = true
+            _searchError.value = null
+            if (!ApiServices.igdbAvailable) {
+                _results.value = emptyList()
+                loading = false
+                return@launch
+            }
             _results.value =
                 runCatching {
                     withContext(Dispatchers.IO) { ApiServices.gameSearch.search(query) }
-                }.getOrElse { emptyList() }
+                }.fold(
+                    onSuccess = { it },
+                    onFailure = { e ->
+                        _searchError.value = e
+                        emptyList()
+                    },
+                )
             loading = false
         }
     }
 
     fun clear() {
         _results.value = emptyList()
+        _searchError.value = null
     }
 
     fun add(
@@ -89,6 +117,7 @@ class AddGameViewModel : ViewModel() {
                     releaseDate = result.releaseDate,
                 )
             val newId = DB.repo.save(item)
+            _existingIds.value = _existingIds.value + setOfNotNull(result.externalId.ifBlank { null })
             onDone()
             MediaCacheService.fetchAndPersist(item.copy(id = newId))
         }
@@ -102,6 +131,8 @@ fun AddGameScreen(
     vm: AddGameViewModel = viewModel(),
 ) {
     val results by vm.results.collectAsStateWithLifecycle()
+    val searchError by vm.searchError.collectAsStateWithLifecycle()
+    val existingIds by vm.existingIds.collectAsStateWithLifecycle()
     var query by remember { mutableStateOf("") }
     var showConsoleSheet by remember { mutableStateOf<ApiSearchResult?>(null) }
     var showStatusSheet by remember { mutableStateOf<Pair<ApiSearchResult, GameConsole>?>(null) }
@@ -134,7 +165,27 @@ fun AddGameScreen(
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth().padding(16.dp),
             )
-            if (vm.loading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            if (vm.loading) {
+                Box(Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+            val configReason = ApiServices.serviceUnavailableReason(MediaType.GAME)
+            val displayError = configReason?.let { stringResource(it.messageRes) } ?: searchError?.let { localizedApiErrorMessage(it) }
+            if (displayError != null) {
+                Surface(
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                    shape = RoundedCornerShape(4.dp),
+                ) {
+                    Text(
+                        displayError,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(12.dp),
+                    )
+                }
+            }
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
                 contentPadding = PaddingValues(8.dp),
@@ -142,22 +193,29 @@ fun AddGameScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(results) { result ->
+                    val inLibrary = result.externalId in existingIds
                     MediaGridCard(
                         title = result.title,
                         coverUrl = result.coverUrl,
-                        onAddClick = {
-                            val consoles = consolesForPlatforms(result.platforms)
-                            if (consoles.size == 1) {
-                                val console = consoles.first()
-                                if (isUnreleased(result)) {
-                                    vm.add(result, console, MediaStatus.WAITING_RELEASE) { navController.popBackStack() }
-                                } else {
-                                    showStatusSheet = Pair(result, console)
-                                }
+                        inLibrary = inLibrary,
+                        onAddClick =
+                            if (inLibrary) {
+                                null
                             } else {
-                                showConsoleSheet = result
-                            }
-                        },
+                                {
+                                    val consoles = consolesForPlatforms(result.platforms)
+                                    if (consoles.size == 1) {
+                                        val console = consoles.first()
+                                        if (isUnreleased(result)) {
+                                            vm.add(result, console, MediaStatus.WAITING_RELEASE) { navController.popBackStack() }
+                                        } else {
+                                            showStatusSheet = Pair(result, console)
+                                        }
+                                    } else {
+                                        showConsoleSheet = result
+                                    }
+                                }
+                            },
                     )
                 }
             }

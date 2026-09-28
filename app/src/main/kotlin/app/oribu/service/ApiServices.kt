@@ -1,6 +1,8 @@
 ﻿package app.oribu.service
 
 import android.content.Context
+import androidx.annotation.StringRes
+import app.oribu.R
 import app.oribu.data.ApiKeyPreferences
 import app.oribu.model.MediaType
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +31,11 @@ object ApiServices {
 
     suspend fun init(context: Context) {
         if (initialized) return
+    // Set when igdb_client_id/secret ARE present but auth failed (wrong credentials, revoked
+    // app, network error) — distinct from "not configured" so the UI doesn't tell a user who
+    // filled in real keys that they filled in nothing.
+    private var _igdbAuthFailed = false
+
         refresh(context, effectiveSecrets(context))
         initialized = true
     }
@@ -63,7 +70,13 @@ object ApiServices {
                     igdbToken = IgdbAuthService.loadCachedToken(context, secrets.igdbClientId)
                         ?: IgdbAuthService.getAccessToken(context, secrets.igdbClientId!!, secrets.igdbClientSecret!!)
                     _igdb = IgdbService(clientId = secrets.igdbClientId!!, accessToken = igdbToken!!.accessToken)
-                }.onFailure { _igdb = null }
+                }.fold(
+                    onSuccess = { _igdbAuthFailed = false },
+                    onFailure = {
+                        _igdb = null
+                        _igdbAuthFailed = true
+                    },
+                )
             } else {
                 igdbToken = null
                 _igdb = null
@@ -71,6 +84,7 @@ object ApiServices {
 
             // Manga
             runCatching {
+                _igdbAuthFailed = false
                 _anilist = AniListService()
                 _mangadex = MangaDexService()
                 _mangaSearch = MangaSearchService(_anilist!!, _mangadex!!)
@@ -176,23 +190,38 @@ object ApiServices {
 
     // ── Config validation ─────────────────────────────────────────────────────
 
-    fun serviceUnavailableReason(type: MediaType): String? =
+    fun serviceUnavailableReason(type: MediaType): ServiceUnavailableReason? =
         when (type) {
             MediaType.MOVIE, MediaType.SERIES -> {
-                if (!tmdbAvailable) "TMDB não configurado — adicione tmdb_bearer_token ao secrets.json" else null
+                if (!tmdbAvailable) ServiceUnavailableReason.TMDB_NOT_CONFIGURED else null
             }
 
             MediaType.GAME -> {
-                if (!igdbAvailable) {
-                    "IGDB não configurado — adicionando igdb_client_id e igdb_client_secret ao " +
-                        "secrets.json habilita busca online (cache local ainda funciona)"
-                } else {
-                    null
+                when {
+                    igdbAuthFailed -> ServiceUnavailableReason.IGDB_AUTH_FAILED
+                    !igdbAvailable -> ServiceUnavailableReason.IGDB_NOT_CONFIGURED
+                    else -> null
                 }
             }
 
             MediaType.MANGA, MediaType.WEBTOON, MediaType.BOOK -> {
                 null
             }
-        }
+        }.fold(
+            onSuccess = { _igdbAuthFailed = false },
+            onFailure = {
+                igdbToken = null
+                _igdb = null
+                _igdbAuthFailed = true
+            },
+        )
+}
+    val igdbAuthFailed get() = _igdbAuthFailed
+
+enum class ServiceUnavailableReason(
+    @StringRes val messageRes: Int,
+) {
+    TMDB_NOT_CONFIGURED(R.string.service_tmdb_not_configured),
+    IGDB_NOT_CONFIGURED(R.string.service_igdb_not_configured),
+    IGDB_AUTH_FAILED(R.string.service_igdb_auth_failed),
 }

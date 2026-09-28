@@ -118,3 +118,18 @@ object AppLocaleController {
         LocalePreferences.persist(SavedLocale(dateFormatMode))
     }
 }
+
+/**
+ * True when the app's active language is Portuguese. SYSTEM mode has no TMDB/AppCompat concept
+ * of its own — it falls back to the device locale, defaulting to English (the app's primary
+ * language) for anything that isn't Portuguese.
+ */
+fun isPortugueseLocale(): Boolean =
+    when (AppLocaleController.languageMode) {
+        LanguageMode.PORTUGUESE -> true
+        LanguageMode.ENGLISH -> false
+        LanguageMode.SYSTEM -> Locale.getDefault().language == "pt"
+    }
+
+/** TMDB's `language`/`region` query params, derived from the app's language setting. */
+fun tmdbLocale(): Pair<String, String> = if (isPortugueseLocale()) "pt-BR" to "BR" else "en-US" to "US"

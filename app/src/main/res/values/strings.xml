@@ -25,6 +25,7 @@
     <string name="action_create">Create</string>
     <string name="action_add">Add</string>
     <string name="action_save_changes">Save changes</string>
+    <string name="error_unknown">Unknown error</string>
     <plurals name="movie_count">
         <item quantity="one">%d movie</item>
         <item quantity="other">%d movies</item>
@@ -43,6 +44,35 @@
     <string name="label_trophies">Trophies</string>
     <string name="label_achievements">Achievements</string>
     <string name="label_recommendations">Recommendations</string>
+
+    <!-- MediaType labels (backs MediaType.labelRes / labelPluralRes) -->
+    <string name="media_type_game">Game</string>
+    <string name="media_type_manga">Manga</string>
+    <string name="media_type_webtoon">Webtoon</string>
+    <string name="media_type_webtoon_plural">Webtoons</string>
+    <string name="media_type_series">Series</string>
+    <string name="media_type_movie">Movie</string>
+    <string name="media_type_book">Book</string>
+
+    <!-- MediaStatus labels (backs MediaStatus.labelRes) -->
+    <string name="status_completed">Completed</string>
+    <string name="status_finished">Finished</string>
+    <string name="status_playing">Playing</string>
+    <string name="status_replaying">Replaying</string>
+    <string name="status_platinum">Platinum</string>
+    <string name="status_watched">Watched</string>
+    <string name="status_watching">Watching</string>
+    <string name="status_rewatching">Rewatching</string>
+    <string name="status_concluded">Concluded</string>
+    <string name="status_history">History</string>
+    <string name="status_waiting_episodes">Waiting Episodes</string>
+    <string name="status_read">Read</string>
+    <string name="status_reading">Reading</string>
+    <string name="status_rereading">Rereading</string>
+    <string name="status_on_hold">On Hold</string>
+    <string name="status_queued">Queued</string>
+    <string name="status_dropped">Dropped</string>
+    <string name="status_waiting_release">Waiting Release</string>
 
     <!-- Months -->
     <string name="month_january">January</string>
@@ -357,6 +387,16 @@
     <string name="search_chapter_current_optional">Current chapter (optional)</string>
     <string name="search_add_type">Add %1$s</string>
 
+    <!-- API errors (see app.oribu.service.ApiException / ServiceUnavailableReason) -->
+    <string name="service_tmdb_not_configured">TMDB not configured — add a bearer token in Settings › Integrations</string>
+    <string name="service_igdb_not_configured">IGDB not configured — adding a client ID and secret in Settings › Integrations enables online search (local cache still works)</string>
+    <string name="service_igdb_auth_failed">Couldn\'t sign in to IGDB — double-check your client ID and secret in Settings › Integrations (local cache still works)</string>
+    <string name="api_error_unauthorized">Invalid or expired %1$s token — check your credentials in Settings › Integrations</string>
+    <string name="api_error_rate_limited">%1$s request limit reached — try again shortly</string>
+    <string name="api_error_not_found">%1$s couldn\'t find this item</string>
+    <string name="api_error_http">%1$s error (HTTP %2$d)</string>
+    <string name="api_error_generic">Something went wrong — try again</string>
+
     <!-- Stats -->
     <string name="stats_games_finished">Games Finished</string>
     <string name="stats_games_platinum">Games Platinum</string>
@@ -521,6 +561,11 @@
     <string name="service_itad_desc">Prices and discount history (IsThereAnyDeal)</string>
     <string name="service_anilist_note">AniList doesn\'t require its own key — manga and webtoon search already works with no setup.</string>
     <string name="service_test_connection">Test connection</string>
+    <string name="credential_field_bearer_token">Bearer Token</string>
+    <string name="credential_field_client_id">Client ID</string>
+    <string name="credential_field_client_secret">Client Secret</string>
+    <string name="credential_field_api_key">API Key</string>
+    <string name="credential_field_steam_id_64">SteamID64</string>
 
     <!-- Notifications -->
     <string name="notif_channel_manga">Manga updates</string>
@@ -528,4 +573,11 @@
     <string name="manga_notification_hiatus">Went on hiatus — moved to On Hold</string>
     <string name="manga_notification_cancelled">Publication cancelled — moved to Read</string>
     <string name="manga_notification_resumed">Resumed publication — moved to Reading</string>
+    <string name="notif_update_downloading_title">Downloading update</string>
+    <string name="notif_update_ready_title">Update ready</string>
+    <string name="notif_update_ready_text">Tap to install</string>
+    <string name="notif_update_error_title">Failed to download update</string>
+    <string name="notif_update_error_text">Tap to try again from the About screen</string>
+    <string name="notif_update_available_title">New version available</string>
+    <string name="notif_update_available_text">%1$s — tap to open Oribu and update from About</string>
 </resources>

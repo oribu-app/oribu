@@ -23,7 +23,10 @@ import androidx.navigation.NavController
 import app.oribu.R
 import app.oribu.data.db.DB
 import app.oribu.model.MediaItem
+import app.oribu.model.MediaStatus
 import app.oribu.model.MediaType
+import app.oribu.model.label
+import app.oribu.model.labelPlural
 import app.oribu.ui.components.BarChartCanvas
 import app.oribu.ui.components.BarItem
 import app.oribu.ui.components.PieChartCanvas
@@ -111,8 +114,9 @@ private fun HobbyChartCard(
     items: List<MediaItem>,
     modifier: Modifier = Modifier,
 ) {
-    val statusGroups = remember(items) { groupItems(items, StatDimension.STATUS) }
-    val ratingGroups = remember(items) { groupItems(items, StatDimension.RATING) }
+    val statusLabels = MediaStatus.entries.associateWith { stringResource(it.labelRes) }
+    val statusGroups = remember(items, statusLabels) { groupItems(items, StatDimension.STATUS, statusLabels) }
+    val ratingGroups = remember(items) { groupItems(items, StatDimension.RATING, emptyMap()) }
 
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(

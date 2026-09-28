@@ -39,6 +39,7 @@ import app.oribu.R
 import app.oribu.data.db.DB
 import app.oribu.model.MediaItem
 import app.oribu.model.MediaStatus
+import app.oribu.model.label
 import app.oribu.service.MediaCacheService
 import app.oribu.ui.components.AnotacoesSection
 import app.oribu.ui.components.HalfStarRatingDisplay

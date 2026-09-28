@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -25,10 +26,12 @@ import app.oribu.model.ApiSearchResult
 import app.oribu.model.MediaItem
 import app.oribu.model.MediaStatus
 import app.oribu.model.MediaType
+import app.oribu.model.label
 import app.oribu.service.ApiServices
 import app.oribu.service.MediaCacheService
 import app.oribu.ui.components.MediaGridCard
 import app.oribu.ui.components.StatusOptionTile
+import app.oribu.ui.components.localizedApiErrorMessage
 import app.oribu.ui.theme.ColorSerie
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,9 +43,18 @@ import java.util.Date
 class AddSeriesViewModel : ViewModel() {
     private val _results = MutableStateFlow<List<ApiSearchResult>>(emptyList())
     val results = _results.asStateFlow()
-    private val _searchError = MutableStateFlow<String?>(null)
+    private val _searchError = MutableStateFlow<Throwable?>(null)
     val searchError = _searchError.asStateFlow()
+    private val _existingIds = MutableStateFlow<Set<String>>(emptySet())
+    val existingIds = _existingIds.asStateFlow()
     var loading by mutableStateOf(false)
+
+    init {
+        viewModelScope.launch {
+            val items = DB.repo.getByType(MediaType.SERIES)
+            _existingIds.value = items.mapNotNull { it.externalId }.toSet()
+        }
+    }
 
     fun search(q: String) {
         if (q.isBlank()) return
@@ -50,7 +62,6 @@ class AddSeriesViewModel : ViewModel() {
             loading = true
             _searchError.value = null
             if (!ApiServices.tmdbAvailable) {
-                _searchError.value = "TMDB not configured — add tmdb_bearer_token to secrets.json"
                 _results.value = emptyList()
                 loading = false
                 return@launch
@@ -61,7 +72,7 @@ class AddSeriesViewModel : ViewModel() {
                 }.fold(
                     onSuccess = { it },
                     onFailure = { e ->
-                        _searchError.value = e.message
+                        _searchError.value = e
                         emptyList()
                     },
                 )
@@ -91,6 +102,7 @@ class AddSeriesViewModel : ViewModel() {
                     apiSource = result.apiSource,
                 )
             val newId = DB.repo.save(item)
+            _existingIds.value = _existingIds.value + setOfNotNull(result.externalId.ifBlank { null })
             onDone()
             MediaCacheService.fetchAndPersist(item.copy(id = newId))
         }
@@ -105,6 +117,7 @@ fun AddSeriesScreen(
 ) {
     val results by vm.results.collectAsStateWithLifecycle()
     val searchError by vm.searchError.collectAsStateWithLifecycle()
+    val existingIds by vm.existingIds.collectAsStateWithLifecycle()
     var query by remember { mutableStateOf("") }
     var showSheet by remember { mutableStateOf<ApiSearchResult?>(null) }
 
@@ -136,8 +149,14 @@ fun AddSeriesScreen(
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth().padding(16.dp),
             )
-            if (vm.loading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            if (searchError != null) {
+            if (vm.loading) {
+                Box(Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+            val configReason = ApiServices.serviceUnavailableReason(MediaType.SERIES)
+            val displayError = configReason?.let { stringResource(it.messageRes) } ?: searchError?.let { localizedApiErrorMessage(it) }
+            if (displayError != null) {
                 Surface(
                     color = MaterialTheme.colorScheme.errorContainer,
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
@@ -146,7 +165,7 @@ fun AddSeriesScreen(
                             .RoundedCornerShape(4.dp),
                 ) {
                     Text(
-                        searchError!!,
+                        displayError,
                         color = MaterialTheme.colorScheme.onErrorContainer,
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(12.dp),
@@ -159,7 +178,15 @@ fun AddSeriesScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                items(results) { r -> MediaGridCard(title = r.title, coverUrl = r.coverUrl, onAddClick = { showSheet = r }) }
+                items(results) { r ->
+                    val inLibrary = r.externalId in existingIds
+                    MediaGridCard(
+                        title = r.title,
+                        coverUrl = r.coverUrl,
+                        inLibrary = inLibrary,
+                        onAddClick = if (inLibrary) null else ({ showSheet = r }),
+                    )
+                }
             }
         }
     }

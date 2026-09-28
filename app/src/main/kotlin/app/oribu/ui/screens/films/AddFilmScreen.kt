@@ -32,10 +32,12 @@ import app.oribu.model.ApiSearchResult
 import app.oribu.model.MediaItem
 import app.oribu.model.MediaStatus
 import app.oribu.model.MediaType
+import app.oribu.model.label
 import app.oribu.service.ApiServices
 import app.oribu.service.MediaCacheService
 import app.oribu.ui.components.MediaGridCard
 import app.oribu.ui.components.StatusOptionTile
+import app.oribu.ui.components.localizedApiErrorMessage
 import app.oribu.ui.theme.ColorFilme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -51,7 +53,7 @@ enum class OpcaoFilme { ASSISTIDO, QUERO_ASSISTIR, ADICIONAR_LISTA }
 class AddFilmViewModel : ViewModel() {
     private val _results = MutableStateFlow<List<ApiSearchResult>>(emptyList())
     val results = _results.asStateFlow()
-    private val _searchError = MutableStateFlow<String?>(null)
+    private val _searchError = MutableStateFlow<Throwable?>(null)
     val searchError = _searchError.asStateFlow()
     private val _existingIds = MutableStateFlow<Set<String>>(emptySet())
     val existingIds = _existingIds.asStateFlow()
@@ -85,7 +87,6 @@ class AddFilmViewModel : ViewModel() {
             loading = true
             _searchError.value = null
             if (!ApiServices.tmdbAvailable) {
-                _searchError.value = "TMDB not configured — add tmdb_bearer_token to secrets.json"
                 _results.value = emptyList()
                 loading = false
                 return@launch
@@ -100,7 +101,7 @@ class AddFilmViewModel : ViewModel() {
                 }.fold(
                     onSuccess = { it },
                     onFailure = { e ->
-                        _searchError.value = e.message
+                        _searchError.value = e
                         emptyList()
                     },
                 )
@@ -202,20 +203,11 @@ fun AddFilmScreen(
                 placeholder = { Text(stringResource(R.string.add_film_search_placeholder)) },
                 leadingIcon = { Icon(Icons.Default.Search, null) },
                 trailingIcon = {
-                    when {
-                        vm.loading -> {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp).padding(2.dp),
-                                strokeWidth = 2.dp,
-                            )
-                        }
-
-                        query.isNotEmpty() -> {
-                            IconButton(onClick = {
-                                query = ""
-                                vm.onQueryChange("")
-                            }) { Icon(Icons.Default.Clear, null) }
-                        }
+                    if (query.isNotEmpty()) {
+                        IconButton(onClick = {
+                            query = ""
+                            vm.onQueryChange("")
+                        }) { Icon(Icons.Default.Clear, null) }
                     }
                 },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
@@ -225,9 +217,17 @@ fun AddFilmScreen(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
             )
 
-            if (searchError != null) {
+            if (vm.loading) {
+                Box(Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            val configReason = ApiServices.serviceUnavailableReason(MediaType.MOVIE)
+            val displayError = configReason?.let { stringResource(it.messageRes) } ?: searchError?.let { localizedApiErrorMessage(it) }
+            if (displayError != null) {
                 Text(
-                    searchError!!,
+                    displayError,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),

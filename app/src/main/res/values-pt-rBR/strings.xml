@@ -25,6 +25,7 @@
     <string name="action_create">Criar</string>
     <string name="action_add">Adicionar</string>
     <string name="action_save_changes">Salvar alterações</string>
+    <string name="error_unknown">Erro desconhecido</string>
     <plurals name="movie_count">
         <item quantity="one">%d filme</item>
         <item quantity="other">%d filmes</item>
@@ -43,6 +44,35 @@
     <string name="label_trophies">Troféus</string>
     <string name="label_achievements">Conquistas</string>
     <string name="label_recommendations">Recomendações</string>
+
+    <!-- Labels de MediaType (usadas por MediaType.labelRes / labelPluralRes) -->
+    <string name="media_type_game">Jogo</string>
+    <string name="media_type_manga">Mangá</string>
+    <string name="media_type_webtoon">Webtoon</string>
+    <string name="media_type_webtoon_plural">Webtoons</string>
+    <string name="media_type_series">Série</string>
+    <string name="media_type_movie">Filme</string>
+    <string name="media_type_book">Livro</string>
+
+    <!-- Labels de MediaStatus (usadas por MediaStatus.labelRes) -->
+    <string name="status_completed">Completo</string>
+    <string name="status_finished">Finalizado</string>
+    <string name="status_playing">Jogando</string>
+    <string name="status_replaying">Rejogando</string>
+    <string name="status_platinum">Platinado</string>
+    <string name="status_watched">Assistido</string>
+    <string name="status_watching">Assistindo</string>
+    <string name="status_rewatching">Reassistindo</string>
+    <string name="status_concluded">Concluída</string>
+    <string name="status_history">Histórico</string>
+    <string name="status_waiting_episodes">Aguardando Episódios</string>
+    <string name="status_read">Lido</string>
+    <string name="status_reading">Lendo</string>
+    <string name="status_rereading">Relendo</string>
+    <string name="status_on_hold">Pausado</string>
+    <string name="status_queued">Na Fila</string>
+    <string name="status_dropped">Abandonado</string>
+    <string name="status_waiting_release">Aguardando Lançamento</string>
 
     <!-- Meses -->
     <string name="month_january">Janeiro</string>
@@ -357,6 +387,16 @@
     <string name="search_chapter_current_optional">Capítulo atual (opcional)</string>
     <string name="search_add_type">Adicionar %1$s</string>
 
+    <!-- Erros de API (ver app.oribu.service.ApiException / ServiceUnavailableReason) -->
+    <string name="service_tmdb_not_configured">TMDB não configurado — adicione um bearer token em Configurações › Integrações</string>
+    <string name="service_igdb_not_configured">IGDB não configurado — adicionar client ID e secret em Configurações › Integrações habilita busca online (cache local ainda funciona)</string>
+    <string name="service_igdb_auth_failed">Não foi possível autenticar no IGDB — confira o client ID e o secret em Configurações › Integrações (cache local ainda funciona)</string>
+    <string name="api_error_unauthorized">Token do %1$s inválido ou expirado — verifique suas credenciais em Configurações › Integrações</string>
+    <string name="api_error_rate_limited">Limite de requisições do %1$s atingido — tente novamente em instantes</string>
+    <string name="api_error_not_found">%1$s não encontrou esse item</string>
+    <string name="api_error_http">Erro do %1$s (HTTP %2$d)</string>
+    <string name="api_error_generic">Algo deu errado — tente novamente</string>
+
     <!-- Estatísticas -->
     <string name="stats_games_finished">Jogos Zerados</string>
     <string name="stats_games_platinum">Jogos Platinados</string>
@@ -521,6 +561,11 @@
     <string name="service_itad_desc">Preços e histórico de descontos (IsThereAnyDeal)</string>
     <string name="service_anilist_note">AniList não exige chave própria — a busca de mangás e webtoons já funciona sem configuração.</string>
     <string name="service_test_connection">Testar conexão</string>
+    <string name="credential_field_bearer_token">Bearer Token</string>
+    <string name="credential_field_client_id">Client ID</string>
+    <string name="credential_field_client_secret">Client Secret</string>
+    <string name="credential_field_api_key">Chave de API</string>
+    <string name="credential_field_steam_id_64">SteamID64</string>
 
     <!-- Notificações -->
     <string name="notif_channel_manga">Atualizações de mangás</string>
@@ -528,4 +573,11 @@
     <string name="manga_notification_hiatus">Entrou em hiato — movido para Em Hiato</string>
     <string name="manga_notification_cancelled">Publicação cancelada — movido para Lido</string>
     <string name="manga_notification_resumed">Voltou a ser publicado — movido para Lendo</string>
+    <string name="notif_update_downloading_title">Baixando atualização</string>
+    <string name="notif_update_ready_title">Atualização pronta</string>
+    <string name="notif_update_ready_text">Toque para instalar</string>
+    <string name="notif_update_error_title">Falha ao baixar atualização</string>
+    <string name="notif_update_error_text">Toque para tentar de novo pela tela Sobre</string>
+    <string name="notif_update_available_title">Nova versão disponível</string>
+    <string name="notif_update_available_text">%1$s — toque para abrir o Oribu e atualizar em Sobre</string>
 </resources>

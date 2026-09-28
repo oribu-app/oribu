@@ -40,6 +40,7 @@ import app.oribu.model.*
 import app.oribu.service.ApiServices
 import app.oribu.service.MediaCacheService
 import app.oribu.ui.components.MediaGridCard
+import app.oribu.ui.components.localizedApiErrorMessage
 import app.oribu.ui.navigation.Routes
 import coil.compose.AsyncImage
 import kotlinx.coroutines.Dispatchers
@@ -84,7 +85,7 @@ class SearchViewModel : ViewModel() {
     var apiResults by mutableStateOf<List<ApiSearchResult>>(emptyList())
     var loading by mutableStateOf(false)
     var apiSearched by mutableStateOf(false)
-    var searchError by mutableStateOf<String?>(null)
+    var searchError by mutableStateOf<Throwable?>(null)
         private set
 
     fun setQuery(q: String) {
@@ -106,9 +107,7 @@ class SearchViewModel : ViewModel() {
             searchError = null
 
             // Fail fast if the required API key isn't configured
-            val configError = ApiServices.serviceUnavailableReason(selectedType)
-            if (configError != null) {
-                searchError = configError
+            if (ApiServices.serviceUnavailableReason(selectedType) != null) {
                 apiResults = emptyList()
                 loading = false
                 return@launch
@@ -150,7 +149,7 @@ class SearchViewModel : ViewModel() {
                 }.fold(
                     onSuccess = { it },
                     onFailure = { e ->
-                        searchError = e.message
+                        searchError = e
                         emptyList()
                     },
                 )
@@ -467,7 +466,7 @@ private fun ApiSearchContent(
         }
 
         // API banner — shows config warning or service label
-        val serviceWarning = ApiServices.serviceUnavailableReason(vm.selectedType)
+        val serviceWarning = ApiServices.serviceUnavailableReason(vm.selectedType)?.let { stringResource(it.messageRes) }
         val bannerColor =
             if (serviceWarning != null) {
                 MaterialTheme.colorScheme.errorContainer
@@ -505,10 +504,9 @@ private fun ApiSearchContent(
         }
 
         if (vm.loading) {
-            LinearProgressIndicator(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                color = typeColor,
-            )
+            Box(Modifier.fillMaxWidth().padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = typeColor)
+            }
         }
 
         when {
@@ -553,7 +551,11 @@ private fun ApiSearchContent(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.padding(24.dp),
                     ) {
-                        if (vm.searchError != null) {
+                        val configReason = ApiServices.serviceUnavailableReason(vm.selectedType)
+                        val errorMessage =
+                            configReason?.let { stringResource(it.messageRes) }
+                                ?: vm.searchError?.let { localizedApiErrorMessage(it) }
+                        if (errorMessage != null) {
                             Icon(
                                 Icons.Outlined.Warning,
                                 null,
@@ -566,7 +568,7 @@ private fun ApiSearchContent(
                                 color = MaterialTheme.colorScheme.error,
                             )
                             Text(
-                                vm.searchError!!,
+                                errorMessage,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,

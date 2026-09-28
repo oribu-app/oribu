@@ -2,12 +2,14 @@ package app.oribu.ui.screens.manga
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -29,6 +31,7 @@ import app.oribu.service.ApiServices
 import app.oribu.service.MediaCacheService
 import app.oribu.ui.components.MediaGridCard
 import app.oribu.ui.components.StatusOptionTile
+import app.oribu.ui.components.localizedApiErrorMessage
 import app.oribu.ui.theme.ColorManga
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,22 +43,41 @@ import java.util.Date
 class AddMangaViewModel : ViewModel() {
     private val _results = MutableStateFlow<List<ApiSearchResult>>(emptyList())
     val results = _results.asStateFlow()
+    private val _searchError = MutableStateFlow<Throwable?>(null)
+    val searchError = _searchError.asStateFlow()
+    private val _existingIds = MutableStateFlow<Set<String>>(emptySet())
+    val existingIds = _existingIds.asStateFlow()
     var loading by mutableStateOf(false)
+
+    init {
+        viewModelScope.launch {
+            val items = DB.repo.getByType(MediaType.MANGA)
+            _existingIds.value = items.mapNotNull { it.externalId }.toSet()
+        }
+    }
 
     fun search(q: String) {
         if (q.isBlank()) return
         viewModelScope.launch {
             loading = true
+            _searchError.value = null
             _results.value =
                 runCatching {
                     withContext(Dispatchers.IO) { ApiServices.mangaSearch.search(q) }
-                }.getOrElse { emptyList() }
+                }.fold(
+                    onSuccess = { it },
+                    onFailure = { e ->
+                        _searchError.value = e
+                        emptyList()
+                    },
+                )
             loading = false
         }
     }
 
     fun clear() {
         _results.value = emptyList()
+        _searchError.value = null
     }
 
     fun add(
@@ -76,6 +98,7 @@ class AddMangaViewModel : ViewModel() {
                     totalProgress = result.chapters,
                 )
             val newId = DB.repo.save(item)
+            _existingIds.value = _existingIds.value + setOfNotNull(result.externalId.ifBlank { null })
             onDone()
             MediaCacheService.fetchAndPersist(item.copy(id = newId))
         }
@@ -89,6 +112,8 @@ fun AddMangaScreen(
     vm: AddMangaViewModel = viewModel(),
 ) {
     val results by vm.results.collectAsStateWithLifecycle()
+    val searchError by vm.searchError.collectAsStateWithLifecycle()
+    val existingIds by vm.existingIds.collectAsStateWithLifecycle()
     var query by remember { mutableStateOf("") }
     var showSheet by remember { mutableStateOf<ApiSearchResult?>(null) }
 
@@ -120,14 +145,40 @@ fun AddMangaScreen(
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth().padding(16.dp),
             )
-            if (vm.loading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            if (vm.loading) {
+                Box(Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+            if (searchError != null) {
+                Surface(
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                    shape = RoundedCornerShape(4.dp),
+                ) {
+                    Text(
+                        localizedApiErrorMessage(searchError!!),
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(12.dp),
+                    )
+                }
+            }
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
                 contentPadding = PaddingValues(8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                items(results) { r -> MediaGridCard(title = r.title, coverUrl = r.coverUrl, onAddClick = { showSheet = r }) }
+                items(results) { r ->
+                    val inLibrary = r.externalId in existingIds
+                    MediaGridCard(
+                        title = r.title,
+                        coverUrl = r.coverUrl,
+                        inLibrary = inLibrary,
+                        onAddClick = if (inLibrary) null else ({ showSheet = r }),
+                    )
+                }
             }
         }
     }

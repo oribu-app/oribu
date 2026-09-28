@@ -1,38 +1,42 @@
 ﻿package app.oribu.model
 
+import androidx.annotation.StringRes
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import app.oribu.R
 
 enum class MediaStatus(
-    val label: String,
+    @StringRes val labelRes: Int,
     val dbValue: String,
 ) {
     // Games
-    COMPLETED("Completed", "completado"),
-    FINISHED("Finished", "finalizado"),
-    PLAYING("Playing", "jogando"),
-    REPLAYING("Replaying", "rejogando"),
-    PLATINUM("Platinum", "platinado"),
+    COMPLETED(R.string.status_completed, "completado"),
+    FINISHED(R.string.status_finished, "finalizado"),
+    PLAYING(R.string.status_playing, "jogando"),
+    REPLAYING(R.string.status_replaying, "rejogando"),
+    PLATINUM(R.string.status_platinum, "platinado"),
 
     // Movies
-    WATCHED("Watched", "assistido"),
-    WATCHING("Watching", "assistindo"),
-    REWATCHING("Rewatching", "reassistindo"),
+    WATCHED(R.string.status_watched, "assistido"),
+    WATCHING(R.string.status_watching, "assistindo"),
+    REWATCHING(R.string.status_rewatching, "reassistindo"),
 
     // Series
-    CONCLUDED("Concluded", "concluida"),
-    HISTORY("History", "historico"),
-    WAITING_EPISODES("Waiting Episodes", "aguardandoEpisodios"),
+    CONCLUDED(R.string.status_concluded, "concluida"),
+    HISTORY(R.string.status_history, "historico"),
+    WAITING_EPISODES(R.string.status_waiting_episodes, "aguardandoEpisodios"),
 
     // Manga / Books
-    READ("Read", "lido"),
-    READING("Reading", "lendo"),
-    REREADING("Rereading", "relendo"),
-    ON_HOLD("On Hold", "pausado"),
+    READ(R.string.status_read, "lido"),
+    READING(R.string.status_reading, "lendo"),
+    REREADING(R.string.status_rereading, "relendo"),
+    ON_HOLD(R.string.status_on_hold, "pausado"),
 
     // All
-    QUEUED("Queued", "naFila"),
-    DROPPED("Dropped", "abandonado"),
-    WAITING_RELEASE("Waiting Release", "aguardandoLancamento"),
+    QUEUED(R.string.status_queued, "naFila"),
+    DROPPED(R.string.status_dropped, "abandonado"),
+    WAITING_RELEASE(R.string.status_waiting_release, "aguardandoLancamento"),
     ;
 
     val color: Color get() =
@@ -72,3 +76,6 @@ enum class MediaStatus(
         fun forBookAdd() = listOf(READING, REREADING, QUEUED)
     }
 }
+
+val MediaStatus.label: String
+    @Composable get() = stringResource(labelRes)

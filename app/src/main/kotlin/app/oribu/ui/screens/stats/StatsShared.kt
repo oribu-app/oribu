@@ -51,13 +51,14 @@ fun ratingStarColor(star: Int): Color = ratingColor.copy(alpha = 0.4f + 0.12f * 
 fun groupItems(
     items: List<MediaItem>,
     dimension: StatDimension,
+    statusLabels: Map<MediaStatus, String>,
 ): List<StatGroup> =
     when (dimension) {
         StatDimension.STATUS -> {
             MediaStatus.entries
                 .mapNotNull { status ->
                     val inGroup = items.filter { it.status == status }
-                    if (inGroup.isEmpty()) null else StatGroup(status.dbValue, status.label, status.color, inGroup)
+                    if (inGroup.isEmpty()) null else StatGroup(status.dbValue, statusLabels.getValue(status), status.color, inGroup)
                 }.sortedByDescending { it.count }
         }
 

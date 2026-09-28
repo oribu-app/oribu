@@ -1,31 +1,25 @@
 ﻿package app.oribu.model
 
+import androidx.annotation.StringRes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import app.oribu.R
 import app.oribu.ui.theme.AppThemeController
 
 enum class MediaType(
-    val label: String,
+    @StringRes val labelRes: Int,
+    @StringRes val labelPluralRes: Int,
     val dbValue: String,
 ) {
-    GAME("Game", "jogo"),
-    MANGA("Manga", "manga"),
-    WEBTOON("Webtoon", "webtoon"),
-    SERIES("Series", "serie"),
-    MOVIE("Movie", "filme"),
-    BOOK("Book", "livro"),
+    GAME(R.string.media_type_game, R.string.games_title, "jogo"),
+    MANGA(R.string.media_type_manga, R.string.manga_title, "manga"),
+    WEBTOON(R.string.media_type_webtoon, R.string.media_type_webtoon_plural, "webtoon"),
+    SERIES(R.string.media_type_series, R.string.series_title, "serie"),
+    MOVIE(R.string.media_type_movie, R.string.films_title, "filme"),
+    BOOK(R.string.media_type_book, R.string.books_title, "livro"),
     ;
-
-    val labelPlural: String get() =
-        when (this) {
-            GAME -> "Games"
-            MANGA -> "Manga"
-            WEBTOON -> "Webtoons"
-            SERIES -> "Series"
-            MOVIE -> "Movies"
-            BOOK -> "Books"
-        }
 
     private val fixedColor: Color get() =
         when (this) {
@@ -44,3 +38,9 @@ enum class MediaType(
         fun fromDb(value: String) = entries.firstOrNull { it.dbValue == value } ?: GAME
     }
 }
+
+val MediaType.label: String
+    @Composable get() = stringResource(labelRes)
+
+val MediaType.labelPlural: String
+    @Composable get() = stringResource(labelPluralRes)

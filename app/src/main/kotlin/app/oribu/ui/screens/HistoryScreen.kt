@@ -30,6 +30,7 @@ import app.oribu.data.db.DB
 import app.oribu.model.MediaItem
 import app.oribu.model.MediaStatus
 import app.oribu.model.MediaType
+import app.oribu.model.label
 import app.oribu.ui.locale.formatDate
 import app.oribu.ui.navigation.Routes
 import coil.compose.AsyncImage

@@ -71,6 +71,7 @@ import androidx.compose.ui.window.DialogWindowProvider
 import androidx.navigation.NavController
 import app.oribu.R
 import app.oribu.model.MediaStatus
+import app.oribu.model.label
 import app.oribu.ui.navigation.Routes
 import coil.compose.AsyncImage
 

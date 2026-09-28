@@ -73,7 +73,7 @@ object NotificationHelper {
     ): Notification =
         Notification
             .Builder(context.applicationContext, UPDATE_CHANNEL_ID)
-            .setContentTitle("Baixando atualização")
+            .setContentTitle(context.getString(R.string.notif_update_downloading_title))
             .setSmallIcon(android.R.drawable.stat_sys_download)
             .setProgress(100, percent, false)
             .setOngoing(true)
@@ -105,8 +105,8 @@ object NotificationHelper {
         val notification =
             Notification
                 .Builder(appContext, UPDATE_CHANNEL_ID)
-                .setContentTitle("Atualização pronta")
-                .setContentText("Toque para instalar")
+                .setContentTitle(appContext.getString(R.string.notif_update_ready_title))
+                .setContentText(appContext.getString(R.string.notif_update_ready_text))
                 .setSmallIcon(android.R.drawable.stat_sys_download_done)
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true)
@@ -119,8 +119,8 @@ object NotificationHelper {
         val notification =
             Notification
                 .Builder(appContext, UPDATE_CHANNEL_ID)
-                .setContentTitle("Falha ao baixar atualização")
-                .setContentText("Toque para tentar de novo pela tela Sobre")
+                .setContentTitle(appContext.getString(R.string.notif_update_error_title))
+                .setContentText(appContext.getString(R.string.notif_update_error_text))
                 .setSmallIcon(android.R.drawable.stat_notify_error)
                 .setAutoCancel(true)
                 .build()
@@ -144,8 +144,8 @@ object NotificationHelper {
         val notification =
             Notification
                 .Builder(appContext, UPDATE_CHANNEL_ID)
-                .setContentTitle("Nova versão disponível")
-                .setContentText("${release.tagName} — toque para abrir o Oribu e atualizar em Sobre")
+                .setContentTitle(appContext.getString(R.string.notif_update_available_title))
+                .setContentText(appContext.getString(R.string.notif_update_available_text, release.tagName))
                 .setSmallIcon(android.R.drawable.stat_sys_download_done)
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true)

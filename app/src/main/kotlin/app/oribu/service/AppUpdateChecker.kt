@@ -3,6 +3,7 @@ package app.oribu.service
 import android.content.Context
 import android.os.Build
 import app.oribu.BuildConfig
+import app.oribu.R
 import app.oribu.data.AppUpdatePreferences
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
@@ -80,7 +81,7 @@ object AppUpdateChecker {
                     else -> AppUpdateResult.NoUpdate
                 }
             } catch (e: Exception) {
-                AppUpdateResult.Error(e.message ?: "Erro desconhecido")
+                AppUpdateResult.Error(e.message ?: context.getString(R.string.error_unknown))
             }
         }
 

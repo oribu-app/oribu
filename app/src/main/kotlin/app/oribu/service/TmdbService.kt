@@ -1,6 +1,8 @@
 ﻿package app.oribu.service
 
 import app.oribu.model.ApiSearchResult
+import app.oribu.ui.locale.isPortugueseLocale
+import app.oribu.ui.locale.tmdbLocale
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import okhttp3.OkHttpClient
@@ -13,8 +15,12 @@ class TmdbService(
     private val client = OkHttpClient()
     private val gson = Gson()
     private val base = "https://api.themoviedb.org/3"
-    private val lang = "pt-BR"
-    private val region = "BR"
+
+    // Resolved per request (not cached at construction) so a language change while the app is
+    // running is picked up immediately — this service is a process-scoped singleton in
+    // ApiServices and isn't recreated when the user flips Settings > General > Language.
+    private val lang get() = tmdbLocale().first
+    private val region get() = tmdbLocale().second
 
     private fun get(url: String): Map<String, Any?> {
         val req =
@@ -28,9 +34,9 @@ class TmdbService(
         val code = response.code
         val body = response.use { it.body?.string() ?: "{}" }
         when (code) {
-            401 -> throw Exception("Token TMDB inválido ou expirado (HTTP 401) — verifique tmdb_bearer_token em secrets.json")
-            429 -> throw Exception("Limite de requisições TMDB atingido (HTTP 429) — tente novamente em instantes")
-            !in 200..299 -> throw Exception("Erro TMDB HTTP $code")
+            401 -> throw ApiException("TMDB", ApiErrorReason.UNAUTHORIZED)
+            429 -> throw ApiException("TMDB", ApiErrorReason.RATE_LIMITED)
+            !in 200..299 -> throw ApiException("TMDB", ApiErrorReason.HTTP_ERROR, code)
         }
         val type = object : TypeToken<Map<String, Any?>>() {}.type
         return gson.fromJson(body, type) ?: emptyMap()
@@ -226,8 +232,11 @@ data class TmdbPerson(
                 photoUrl = (j["profile_path"] as? String)?.let { "https://image.tmdb.org/t/p/w185$it" },
             )
 
-        private fun translateRole(job: String) =
-            mapOf(
+        // TMDB's `job`/`department` vocabulary is fixed English regardless of the `language`
+        // query param — translate it ourselves to match the app's language setting.
+        private fun translateRole(job: String): String {
+            if (!isPortugueseLocale()) return job
+            return mapOf(
                 "Director" to "Direção",
                 "Screenplay" to "Roteiro",
                 "Writer" to "Roteiro",
@@ -239,6 +248,7 @@ data class TmdbPerson(
                 "Creator" to "Criação",
                 "Showrunner" to "Showrunner",
             )[job] ?: job
+        }
 
         // Ordem de prioridade dos cargos principais na Equipe Técnica.
         val jobPriority =
@@ -435,8 +445,9 @@ data class TmdbMovieDetails(
                     ?.filter { it["job"] in crewJobs }
                     ?.sortedBy { TmdbPerson.jobPriority.indexOf(it["job"] as? String ?: "").let { i -> if (i < 0) Int.MAX_VALUE else i } }
                     ?: emptyList()
-            val watchBr =
-                (((j["watch/providers"] as? Map<*, *>)?.get("results") as? Map<*, *>)?.get("BR") as? Map<*, *>)?.get("flatrate") as? List<*>
+            val watchRegion =
+                (((j["watch/providers"] as? Map<*, *>)?.get("results") as? Map<*, *>)?.get(tmdbLocale().second) as? Map<*, *>)
+                    ?.get("flatrate") as? List<*>
                     ?: emptyList<Any>()
             val recs =
                 (((j["recommendations"] as? Map<*, *>)?.get("results")) as? List<*>)?.take(10)?.filterIsInstance<Map<String, Any?>>()
@@ -462,7 +473,7 @@ data class TmdbMovieDetails(
                 tmdbStatus = j["status"] as? String,
                 cast = castRaw.map { TmdbPerson.cast(it) },
                 crew = crewRaw.map { TmdbPerson.crew(it) },
-                providers = watchBr.filterIsInstance<Map<String, Any?>>().map { TmdbProvider.fromJson(it) },
+                providers = watchRegion.filterIsInstance<Map<String, Any?>>().map { TmdbProvider.fromJson(it) },
                 related = recs.map { TmdbRelatedMovie.fromJson(it) },
             )
         }
@@ -531,12 +542,13 @@ data class TmdbSeriesDetails(
                     TmdbPerson(
                         id = (it["id"] as? Double)?.toInt() ?: 0,
                         name = it["name"] as? String ?: "",
-                        role = "Criação",
+                        role = if (isPortugueseLocale()) "Criação" else "Creator",
                         photoUrl = (it["profile_path"] as? String)?.let { p -> "https://image.tmdb.org/t/p/w185$p" },
                     )
                 } ?: emptyList()
-            val watchBr =
-                (((j["watch/providers"] as? Map<*, *>)?.get("results") as? Map<*, *>)?.get("BR") as? Map<*, *>)?.get("flatrate") as? List<*>
+            val watchRegion =
+                (((j["watch/providers"] as? Map<*, *>)?.get("results") as? Map<*, *>)?.get(tmdbLocale().second) as? Map<*, *>)
+                    ?.get("flatrate") as? List<*>
                     ?: emptyList<Any>()
             val recs =
                 ((j["recommendations"] as? Map<*, *>)?.get("results") as? List<*>)?.take(10)?.filterIsInstance<Map<String, Any?>>()
@@ -575,7 +587,7 @@ data class TmdbSeriesDetails(
                 seasons = seasons,
                 cast = castRaw.map { TmdbPerson.cast(it) },
                 crew = creators + crewRaw.map { TmdbPerson.crew(it) },
-                providers = watchBr.filterIsInstance<Map<String, Any?>>().map { TmdbProvider.fromJson(it) },
+                providers = watchRegion.filterIsInstance<Map<String, Any?>>().map { TmdbProvider.fromJson(it) },
                 related = recs.map { TmdbRelatedSeries.fromJson(it) },
             )
         }
