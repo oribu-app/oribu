@@ -24,9 +24,9 @@ Native Android app (Kotlin + Jetpack Compose) for personal tracking of games, ma
 ## Folder structure
 
 ```
-app/src/main/kotlin/com/hobbiesvault/
+app/src/main/kotlin/app/oribu/
   MainActivity.kt
-  HobbiesVaultApp.kt
+  OribuApp.kt
 
   data/
     db/
@@ -62,17 +62,24 @@ app/src/main/kotlin/com/hobbiesvault/
     IgdbService.kt          # IGDB — games
     HltbService.kt          # HowLongToBeat — game playtime
     ItadService.kt          # IsThereAnyDeal — game prices
+    SteamGridDbService.kt   # SteamGridDB — fallback game cover + source for the "Change cover" picker (personal API key).
+                            #   An item cover hosted on steamgriddb.com (isSteamGridDbUrl) wins over the cached IGDB one.
+    RetroAchievementsService.kt # RetroAchievements — achievements for retro-console games (username + personal Web API key)
     GameSearchService.kt
     GameCacheService.kt
     GameDatasetImporter.kt
     AniListService.kt       # AniList (GraphQL) — main source for manga/webtoons + progress sync
     MangaDexService.kt      # MangaDex — search/detail fallback and latest chapter count for ongoing series
-    MangaSearchService.kt   # Orchestrates AniList + MangaDex
+    MangaBakaService.kt     # MangaBaka — third manga fallback (no auth)
+    MangaSearchService.kt   # Orchestrates AniList → MangaDex → MangaBaka
     GoogleBooksService.kt   # Google Books — books
     OpenLibraryService.kt   # Open Library — books (fallback)
-    BookSearchService.kt    # Orchestrates Google Books + Open Library
+    HardcoverService.kt     # Hardcover (GraphQL) — optional third book fallback (personal API token)
+    BookSearchService.kt    # Orchestrates Google Books → Open Library → Hardcover
     SteamService.kt         # Steam Web API — library and achievements
-    PsnService.kt           # PSN — trophies (public, no auth)
+    PsnService.kt           # PSN — unfinished/unwired: needs a real account session token and nothing calls
+                            #   ApiServices.setPsnToken(). Intentionally NOT finished (account-login
+                            #   integrations are out of scope — see the website's privacy page).
     MediaCacheService.kt    # Orchestrates the cache: fetch + comparison + persistence
 
   worker/
@@ -99,6 +106,7 @@ app/src/main/kotlin/com/hobbiesvault/
         GamesScreen.kt
         AddGameScreen.kt
         GameDetailScreen.kt
+        CoverPickerScreen.kt    # SteamGridDB cover picker (games/cover), result returned via CoverPickerNav.kt
       films/
         FilmsScreen.kt
         AddFilmScreen.kt
@@ -154,7 +162,7 @@ Tracks watched episodes per series (season, episode, date).
 ### Access via the DB singleton
 
 ```kotlin
-import com.hobbiesvault.data.db.DB
+import app.oribu.data.db.DB
 
 // Reading/writing items — via MediaRepository / DAOs
 mediaRepository.salvar(item)
@@ -254,9 +262,9 @@ If `anilist_username` is set in `secrets.json`, every cache update for a manga/w
 |---|---|---|
 | Movies | TMDB (`TmdbService`) | — |
 | Series | TMDB (`TmdbService`) | — |
-| Games | IGDB (`IgdbService`, requires a Twitch token); HLTB (`HltbService`) and ITAD (`ItadService`) for supplementary data | Prefix search / local dataset (`GameDatasetImporter`) |
-| Manga/Webtoons | AniList (`AniListService`, GraphQL) | MangaDex (`MangaDexService`) — only triggered when AniList returns no results (see `MangaSearchService.kt`); also provides the latest chapter count for ongoing series via the `/aggregate` endpoint |
-| Books | Google Books (`GoogleBooksService`) | Open Library (`OpenLibraryService`) |
+| Games | IGDB (`IgdbService`, requires a Twitch token); HLTB (`HltbService`) and ITAD (`ItadService`) for supplementary data; SteamGridDB (`SteamGridDbService`) for a cover when none is found; Steam / RetroAchievements (`RetroAchievementsService`, retro consoles only) for achievements | Prefix search / local dataset (`GameDatasetImporter`) |
+| Manga/Webtoons | AniList (`AniListService`, GraphQL) | MangaDex (`MangaDexService`) — only triggered when AniList returns no results (see `MangaSearchService.kt`); also provides the latest chapter count for ongoing series via the `/aggregate` endpoint. Then MangaBaka (`MangaBakaService`) when MangaDex also finds nothing |
+| Books | Google Books (`GoogleBooksService`) | Open Library (`OpenLibraryService`), then Hardcover (`HardcoverService`, only when a token is configured) |
 
 ### Availability checked before use
 ```kotlin
@@ -265,7 +273,25 @@ if (!secrets.igdbConfigurado) { /* show error */ }
 if (!secrets.steamConfigurado) { /* show error */ }
 if (!secrets.itadConfigurado) { /* show error */ }
 ```
-Availability flags live in `Secrets` (`app/src/main/kotlin/com/hobbiesvault/service/Secrets.kt`), loaded once (singleton) from `secrets.json`.
+Availability flags live in `Secrets` (`app/src/main/kotlin/app/oribu/service/Secrets.kt`), loaded once (singleton) from `secrets.json`.
+
+### Built-in keys vs. user keys
+
+Same model as Tonkatsu Box: CI (`build_push.yml`, step "Write built-in API keys") writes
+`secrets.json` from GitHub Actions secrets before every build, so search and metadata work out of
+the box in nightly/beta/stable APKs. A key the user types in Settings → Integrations
+(`ApiKeyPreferences`) always overrides the bundled one (`Secrets.merge`).
+
+- **Bundled app keys** (Actions secrets `TMDB_BEARER_TOKEN`, `IGDB_CLIENT_ID`,
+  `IGDB_CLIENT_SECRET`, `GOOGLE_BOOKS_API_KEY`, `STEAM_API_KEY`, `ITAD_API_KEY`,
+  `STEAMGRIDDB_API_KEY`, `RETROACHIEVEMENTS_API_KEY`): anything any user can use to query public
+  data. The Steam and RetroAchievements Web APIs accept any key to read *another* user's public
+  profile, so the user only has to provide their SteamID / RA username.
+- **Never bundled** (per-user, tracking only): `steam_id`, `retroachievements_username`,
+  `anilist_username`, `hardcover_api_token` (a personal token tied to one Hardcover account).
+
+Bundled keys ship inside a public APK and can be extracted — register them on a dedicated project
+account (not a personal one) so they can be rotated without touching anyone's own keys.
 
 ### secrets.json (`app/src/main/assets/secrets.json`, never commit)
 ```json
@@ -278,7 +304,11 @@ Availability flags live in `Secrets` (`app/src/main/kotlin/com/hobbiesvault/serv
   "anilist_username": "your_anilist_username",
   "steam_api_key": "ABCD1234",
   "steam_id": "76561198XXXXXXXXX",
-  "itad_api_key": "..."
+  "itad_api_key": "...",
+  "steamgriddb_api_key": "...",
+  "retroachievements_username": "your_ra_username",
+  "retroachievements_api_key": "...",
+  "hardcover_api_token": "eyJhbGci... (with or without the \"Bearer \" prefix)"
 }
 ```
 
@@ -294,6 +324,7 @@ Defined in `Routes.kt` and wired in `MainNavGraph.kt`.
 | `games` | GamesScreen |
 | `games/add` | AddGameScreen |
 | `games/detail` | GameDetailScreen |
+| `games/cover` | CoverPickerScreen |
 | `films` | FilmsScreen |
 | `films/add` | AddFilmScreen |
 | `films/detail` | FilmDetailScreen |

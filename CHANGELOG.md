@@ -63,8 +63,22 @@ The format is a simplified version of [Keep a Changelog](https://keepachangelog.
   version is found.
 - The "..." menu (Configurações, Status, Histórico, Sobre, Ajuda) is now the same on every hobby
   list screen (Jogos, Filmes, Séries, Mangás, Livros), not just Home.
+- Release builds now ship Oribu's own API keys (TMDB, IGDB, Google Books, ITAD, SteamGridDB, Steam,
+  RetroAchievements), so search and metadata work with no setup. Settings > Integrations is split
+  into "Search and metadata" (built-in key in use; your own key is an optional replacement) and
+  "Your accounts" — for Steam and RetroAchievements only the SteamID / username is needed now.
+- New optional integrations, configured in Settings > Integrations: SteamGridDB (fallback cover
+  for games with no IGDB cover), RetroAchievements (achievement list and progress for games on
+  retro consoles — NES, SNES, N64, GameCube, GBA, DS, PS1, PS2, PSP) and Hardcover (extra book
+  search fallback after Google Books and Open Library). Manga search also falls back to MangaBaka
+  (no key needed) when both AniList and MangaDex find nothing.
+- Game details > "..." > Change cover: pick a community-made cover from SteamGridDB (with a
+  per-match switcher when the title matches several games, and "Restore original" to go back to
+  the IGDB cover). Requires a SteamGridDB key in Settings > Integrations.
 
 ### Changes
+- Game details: the achievements section and its unlocked/total progress bar now also show up
+  for achievements synced from Steam/RetroAchievements, not only for manually entered counts.
 - Removed "Barra de ferramentas expandida" from Settings > Aparência — it was a persisted
   preference no screen ever read, so it did nothing.
 - All Settings screens (hub, Aparência, Geral, Notificações, Plataformas, Dados, Integrações) now

@@ -29,7 +29,7 @@ read and watch — games, manga, webtoons, series, movies and books — in one p
 
 There's no account, no server, no sync with a backend of any kind: every entry is stored locally
 on your device with Room. The app talks directly to public metadata APIs (TMDB, IGDB, AniList,
-MangaDex, Google Books, Steam, PSN...) just to fetch covers, details and progress, never to store
+MangaDex, Google Books, Steam...) just to fetch covers, details and progress, never to store
 or share your data.
 
 The project started as a Flutter app (HobbiesVault) and was later fully rewritten in native
@@ -47,10 +47,15 @@ Kotlin/Compose.
   * [TMDB](https://www.themoviedb.org/) for movies and series
   * [IGDB](https://www.igdb.com/), [HowLongToBeat](https://howlongtobeat.com/) and
     [IsThereAnyDeal](https://isthereanydeal.com/) for games
-  * [AniList](https://anilist.co/) and [MangaDex](https://mangadex.org/) for manga/webtoons
-  * [Google Books](https://books.google.com/) and [Open Library](https://openlibrary.org/) for books
-  * [Steam](https://store.steampowered.com/) and [PSN](https://www.playstation.com/) for
-    library/trophy sync
+  * [SteamGridDB](https://www.steamgriddb.com/) for alternative game covers (optional key)
+  * [AniList](https://anilist.co/), [MangaDex](https://mangadex.org/) and
+    [MangaBaka](https://mangabaka.org/) for manga/webtoons
+  * [Google Books](https://books.google.com/), [Open Library](https://openlibrary.org/) and
+    [Hardcover](https://hardcover.app/) (optional key) for books
+  * [Steam](https://store.steampowered.com/) for library/achievement sync and
+    [RetroAchievements](https://retroachievements.org/) for retro game achievements (optional
+    keys). PlayStation, Xbox, GOG and Epic aren't supported — they have no official API that
+    works without signing in with your real account.
 * Automatic series status tracking (moves to History when a show ends/is cancelled, flags
   "waiting for release" when there's no confirmed next season).
 * Daily background refresh of cached metadata, with change detection so it only writes when
@@ -133,8 +138,9 @@ Thank you to all the people who have contributed!
 ### Disclaimer
 
 The developer(s) of this application are not affiliated with any of the content/metadata
-providers it integrates with (TMDB, IGDB, AniList, MangaDex, Google Books, Open Library, Steam,
-PSN, HowLongToBeat, IsThereAnyDeal), and this application hosts zero content of its own.
+providers it integrates with (TMDB, IGDB, AniList, MangaDex, MangaBaka, Google Books, Open Library,
+Hardcover, Steam, SteamGridDB, RetroAchievements, HowLongToBeat, IsThereAnyDeal), and this
+application hosts zero content of its own.
 
 ### License
 
