@@ -32,6 +32,7 @@ import app.oribu.ui.screens.films.FilmDetailScreen
 import app.oribu.ui.screens.films.FilmsScreen
 import app.oribu.ui.screens.films.MoviePreviewScreen
 import app.oribu.ui.screens.games.AddGameScreen
+import app.oribu.ui.screens.games.CoverPickerScreen
 import app.oribu.ui.screens.games.GameDetailScreen
 import app.oribu.ui.screens.games.GamesScreen
 import app.oribu.ui.screens.manga.AddMangaScreen
@@ -79,7 +80,6 @@ fun MainNavGraph(startDestination: String = Routes.HOME) {
     // On the home route, no item is selected (selectedIndex = null)
     val selectedIndex = bottomNavItems.indexOfFirst { it.route == currentRoute }.takeIf { it >= 0 }
 
-    Scaffold(
     // Swipe entre hobbies só acontece quando a tela atual já esgotou suas próprias abas
     // internas de status (ver *Screen.kt) — cada uma delas consome o gesto primeiro.
     fun onSwipeToNextHobby() {
@@ -92,6 +92,7 @@ fun MainNavGraph(startDestination: String = Routes.HOME) {
         if (prev >= 0) navController.navigateToHobbyTab(bottomNavItems[prev].route)
     }
 
+    Scaffold(
         bottomBar = {
             if (showBottomBar) {
                 NavigationBar(tonalElevation = 0.dp) {
@@ -142,6 +143,7 @@ fun MainNavGraph(startDestination: String = Routes.HOME) {
                 val item = navController.previousBackStackEntry?.savedStateHandle?.get<MediaItem>("item")
                 if (item != null) GameDetailScreen(navController, item)
             }
+            composable(Routes.GAMES_COVER) { CoverPickerScreen(navController) }
 
             composable(Routes.FILMS_ADD) { AddFilmScreen(navController) }
             composable(Routes.FILMS_DETAIL) {

@@ -574,6 +574,11 @@
     <string name="service_section_metadata">Busca e metadados</string>
     <string name="service_section_tracking">Suas contas (sincronização de progresso)</string>
     <string name="service_built_in_key_note">Usando a chave própria do Oribu — adicione a sua só se quiser substituí-la.</string>
+    <string name="cover_picker_title">Trocar capa</string>
+    <string name="cover_picker_restore">Restaurar original</string>
+    <string name="cover_picker_not_configured_title">SteamGridDB não está configurado</string>
+    <string name="cover_picker_not_configured_subtitle">Adicione uma chave gratuita do SteamGridDB em Integrações para ver capas feitas pela comunidade.</string>
+    <string name="cover_picker_empty">Nenhuma capa encontrada para este jogo</string>
 
     <!-- Notificações -->
     <string name="notif_channel_manga">Atualizações de mangás</string>

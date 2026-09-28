@@ -47,11 +47,15 @@ import app.oribu.service.HltbResult
 import app.oribu.service.ItadDeal
 import app.oribu.service.ItadPricePoint
 import app.oribu.service.MediaCacheService
+import app.oribu.service.SteamGridDbService
 import app.oribu.ui.components.AnotacoesSection
 import app.oribu.ui.components.CoverImage
 import app.oribu.ui.locale.formatDate
+import app.oribu.ui.navigation.COVER_PICKER_RESTORE
 import app.oribu.ui.navigation.navigateToAnotacoes
+import app.oribu.ui.navigation.navigateToCoverPicker
 import app.oribu.ui.navigation.rememberAnotacoesResult
+import app.oribu.ui.navigation.rememberCoverPickerResult
 import app.oribu.ui.theme.ColorJogo
 import app.oribu.ui.theme.CoverThemedSurface
 import coil.compose.AsyncImage
@@ -162,6 +166,31 @@ class GameDetailViewModel : ViewModel() {
         viewModelScope.launch { DB.repo.update(updated) }
     }
 
+    /** Applies a cover picked from SteamGridDB — the item's cover then wins over IGDB's cached one. */
+    fun setCover(url: String) {
+        val current = mediaItem ?: return
+        val updated = current.copy(coverUrl = url)
+        mediaItem = updated
+        cache = cache?.plus("coverUrl" to url)
+        viewModelScope.launch { DB.repo.update(updated) }
+    }
+
+    /** Drops the custom cover and re-fetches the original one from IGDB/game_cache. */
+    fun restoreOriginalCover() {
+        val current = mediaItem ?: return
+        val cleared = current.copy(coverUrl = null)
+        mediaItem = cleared
+        viewModelScope.launch {
+            DB.repo.update(cleared)
+            MediaCacheService.fetchAndPersist(cleared)
+            cache = MediaCacheService.load(cleared)
+            val original = (cache?.get("coverUrl") as? String) ?: return@launch
+            val restored = cleared.copy(coverUrl = original)
+            mediaItem = restored
+            DB.repo.update(restored)
+        }
+    }
+
     fun savePlaythrough(playthrough: GamePlaythrough) {
         val id = mediaItem?.id ?: return
         viewModelScope.launch { DB.repo.savePlaythrough(id, playthrough) }
@@ -203,6 +232,21 @@ fun GameDetailScreen(
     val anotacoesResult = rememberAnotacoesResult(navController)
     LaunchedEffect(anotacoesResult) { anotacoesResult?.let { vm.setNotes(it) } }
 
+    val coverPickerResult = rememberCoverPickerResult(navController)
+    LaunchedEffect(coverPickerResult) {
+        when (coverPickerResult) {
+            null -> {}
+
+            COVER_PICKER_RESTORE -> {
+                vm.restoreOriginalCover()
+            }
+
+            else -> {
+                vm.setCover(coverPickerResult)
+            }
+        }
+    }
+
     val mediaItem = vm.mediaItem ?: initialItem
     val cache = vm.cache
     val hltb = vm.hltbResult
@@ -224,7 +268,10 @@ fun GameDetailScreen(
     }.collectAsStateWithLifecycle(initialValue = emptyList())
 
     val artworkUrl = cache?.get("artworkUrl") as? String
-    val coverUrl = cache?.get("coverUrl") as? String ?: mediaItem.coverUrl
+    val coverUrl =
+        mediaItem.coverUrl?.takeIf { SteamGridDbService.isSteamGridDbUrl(it) }
+            ?: cache?.get("coverUrl") as? String
+            ?: mediaItem.coverUrl
     val synopsis = cache?.get("synopsis") as? String
     val genre = cache?.get("genre") as? String ?: mediaItem.genre
     val developer = cache?.get("developer") as? String ?: mediaItem.developer
@@ -501,6 +548,12 @@ fun GameDetailScreen(
                                         navController.navigateToAnotacoes(mediaItem)
                                         showMoreMenu =
                                             false
+                                    })
+                                    DropdownMenuItem(text = {
+                                        Text(stringResource(R.string.cover_picker_title))
+                                    }, leadingIcon = { Icon(Icons.Default.Image, null) }, onClick = {
+                                        navController.navigateToCoverPicker(mediaItem)
+                                        showMoreMenu = false
                                     })
                                     if ((platforms?.size ?: 0) > 1) {
                                         DropdownMenuItem(text = {
@@ -1447,6 +1500,8 @@ private fun HltbRow(
 @Composable
 private fun AchievementsCard(
     item: MediaItem,
+    unlocked: Int?,
+    total: Int?,
     isPS: Boolean,
     color: Color,
 ) {
@@ -1498,8 +1553,6 @@ private fun AchievementsCard(
             }
             if (pct == null && !item.hasTrophies) {
                 Row {
-    unlocked: Int?,
-    total: Int?,
                     Icon(
                         if (isPS) Icons.Default.EmojiEvents else Icons.Default.MilitaryTech,
                         null,

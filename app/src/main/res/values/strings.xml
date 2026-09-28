@@ -574,6 +574,11 @@
     <string name="service_section_metadata">Search and metadata</string>
     <string name="service_section_tracking">Your accounts (progress sync)</string>
     <string name="service_built_in_key_note">Using Oribu\'s built-in key — add your own only if you want to replace it.</string>
+    <string name="cover_picker_title">Change cover</string>
+    <string name="cover_picker_restore">Restore original</string>
+    <string name="cover_picker_not_configured_title">SteamGridDB isn\'t configured</string>
+    <string name="cover_picker_not_configured_subtitle">Add a free SteamGridDB API key in Integrations to browse community-made covers.</string>
+    <string name="cover_picker_empty">No covers found for this game</string>
 
     <!-- Notifications -->
     <string name="notif_channel_manga">Manga updates</string>

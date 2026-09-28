@@ -6,6 +6,7 @@ object Routes {
     const val GAMES = "games"
     const val GAMES_ADD = "games/add"
     const val GAMES_DETAIL = "games/detail"
+    const val GAMES_COVER = "games/cover"
     const val FILMS = "films"
     const val FILMS_ADD = "films/add"
     const val FILMS_DETAIL = "films/detail"
