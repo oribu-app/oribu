@@ -10,11 +10,17 @@ import okhttp3.Request
 import java.util.Date
 
 class TmdbService(
-    private val bearerToken: String,
+    credential: String,
 ) {
     private val client = OkHttpClient()
     private val gson = Gson()
     private val base = "https://api.themoviedb.org/3"
+
+    // TMDB's settings page shows both the long v4 "API Read Access Token" and the short v3
+    // "API Key" — accept either, plus stray whitespace/newlines or a pasted "Bearer " prefix
+    // (a trailing newline alone makes OkHttp reject the Authorization header).
+    private val token = normalizeCredential(credential)
+    private val isV3ApiKey = isV3ApiKey(token)
 
     // Resolved per request (not cached at construction) so a language change while the app is
     // running is picked up immediately — this service is a process-scoped singleton in
@@ -23,13 +29,14 @@ class TmdbService(
     private val region get() = tmdbLocale().second
 
     private fun get(url: String): Map<String, Any?> {
+        val builder = Request.Builder().addHeader("Content-Type", "application/json")
         val req =
-            Request
-                .Builder()
-                .url(url)
-                .addHeader("Authorization", "Bearer $bearerToken")
-                .addHeader("Content-Type", "application/json")
-                .build()
+            if (isV3ApiKey) {
+                val separator = if ('?' in url) '&' else '?'
+                builder.url("$url${separator}api_key=$token").build()
+            } else {
+                builder.url(url).addHeader("Authorization", "Bearer $token").build()
+            }
         val response = client.newCall(req).execute()
         val code = response.code
         val body = response.use { it.body?.string() ?: "{}" }
@@ -204,6 +211,13 @@ class TmdbService(
     }
 
     private fun enc(s: String) = java.net.URLEncoder.encode(s, "UTF-8")
+
+    companion object {
+        internal fun normalizeCredential(raw: String): String = raw.trim().removePrefix("Bearer ").trim()
+
+        /** v3 API keys are 32 hex chars; v4 read access tokens are JWTs (dot-separated). */
+        internal fun isV3ApiKey(token: String): Boolean = token.matches(Regex("^[0-9a-fA-F]{32}$"))
+    }
 }
 
 // ─── TMDB Models ─────────────────────────────────────────────────────────────
