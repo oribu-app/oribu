@@ -6,7 +6,6 @@ import app.oribu.data.OnboardingPreferences
 import app.oribu.data.PlatformPreferences
 import app.oribu.data.StoragePreferences
 import app.oribu.data.db.DB
-import app.oribu.debug.DebugSeeder
 import app.oribu.service.ApiServices
 import app.oribu.service.GameDatasetImporter
 import app.oribu.service.NotificationHelper
@@ -38,9 +37,6 @@ class OribuApp : Application() {
             ApiServices.init(this@OribuApp)
             // Import GiantBomb dataset on first run (no-op if already done)
             GameDatasetImporter.importIfNeeded(this@OribuApp)
-            // Dados fake para testes de usabilidade — só roda em build de debug e só se a
-            // biblioteca estiver vazia.
-            if (BuildConfig.DEBUG) DebugSeeder.seedIfEmpty(DB.repo)
         }
         CacheUpdateWorker.schedule(this)
         AppUpdateCheckWorker.schedule(this)
