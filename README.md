@@ -1,6 +1,6 @@
 <div align="center">
 
-<a href="https://github.com/oribu-app/oribu-app">
+<a href="https://github.com/oribu-app/oribu">
     <img src="./.github/readme-images/app-icon-round.png" alt="Oribu logo" height="200px" width="200px" />
 </a>
 
@@ -12,12 +12,12 @@
 
 A free and open source personal media tracker for games, manga, webtoons, series, movies and books
 
-[![CI](https://github.com/oribu-app/oribu-app/actions/workflows/build_push.yml/badge.svg?labelColor=27303D)](https://github.com/oribu-app/oribu-app/actions/workflows/build_push.yml)
-[![License: Apache-2.0](https://img.shields.io/github/license/oribu-app/oribu-app?labelColor=27303D&color=0877d2)](/LICENSE)
+[![CI](https://github.com/oribu-app/oribu/actions/workflows/build_push.yml/badge.svg?labelColor=27303D)](https://github.com/oribu-app/oribu/actions/workflows/build_push.yml)
+[![License: Apache-2.0](https://img.shields.io/github/license/oribu-app/oribu?labelColor=27303D&color=0877d2)](/LICENSE)
 
 ## Download
 
-[![Oribu Stable](https://img.shields.io/github/v/release/oribu-app/oribu-app?maxAge=3600&label=Stable&labelColor=06599d&color=043b69&filter=v*)](https://github.com/oribu-app/oribu-app/releases)
+[![Oribu Stable](https://img.shields.io/github/v/release/oribu-app/oribu?maxAge=3600&label=Stable&labelColor=06599d&color=043b69&filter=v*)](https://github.com/oribu-app/oribu/releases)
 [![Oribu Nightly](https://img.shields.io/github/v/release/oribu-app/oribu-nightly?maxAge=3600&label=Nightly&labelColor=2c2c47&color=1c1c39&include_prereleases)](https://github.com/oribu-app/oribu-nightly/releases)
 
 *Requires Android 8.0 or higher.*
@@ -32,8 +32,7 @@ on your device with Room. The app talks directly to public metadata APIs (TMDB, 
 MangaDex, Google Books, Steam...) just to fetch covers, details and progress, never to store
 or share your data.
 
-The project started as a Flutter app (HobbiesVault) and was later fully rewritten in native
-Kotlin/Compose.
+The project started as a Flutter app and was later fully rewritten in native Kotlin/Compose.
 
 ## Features
 
@@ -103,7 +102,7 @@ conventions, branch strategy and everything else you need to get set up.
 
 <details><summary>Issues</summary>
 
-**Before reporting a new issue, take a look at the [changelog](https://github.com/oribu-app/oribu-app/releases) and the already opened [issues](https://github.com/oribu-app/oribu-app/issues).**
+**Before reporting a new issue, take a look at the [changelog](https://github.com/oribu-app/oribu/releases) and the already opened [issues](https://github.com/oribu-app/oribu/issues).**
 
 </details>
 
@@ -136,8 +135,8 @@ Service logos in the integration settings come from
 and [Rokku](https://github.com/rokku-app/rokku); the logos themselves are trademarks of their
 respective services.
 
-<a href="https://github.com/oribu-app/oribu-app/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=oribu-app/oribu-app" alt="Oribu contributors" title="Oribu contributors"/>
+<a href="https://github.com/oribu-app/oribu/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=oribu-app/oribu" alt="Oribu contributors" title="Oribu contributors"/>
 </a>
 
 ### Disclaimer

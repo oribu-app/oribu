@@ -1,15 +1,15 @@
 > [!IMPORTANT]
-> Looking to report an issue/bug or make a feature request? Please refer to the [README file](https://github.com/thiago8rocha/hobbies-vault#contributing).
+> Looking to report an issue/bug or make a feature request? Please refer to the [README file](https://github.com/oribu-app/oribu#contributing).
 
 ---
 
-Thanks for your interest in contributing to HobbiesVault!
+Thanks for your interest in contributing to Oribu!
 
 # Code contributions
 
 Pull requests are welcome!
 
-If you're interested in taking on [an open issue](https://github.com/thiago8rocha/hobbies-vault/issues),
+If you're interested in taking on [an open issue](https://github.com/oribu-app/oribu/issues),
 please comment on it so others are aware. You do not need to ask for permission nor an assignment.
 
 ## Prerequisites

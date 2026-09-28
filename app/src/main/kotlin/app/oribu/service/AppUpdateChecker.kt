@@ -54,9 +54,9 @@ object AppUpdateChecker {
     private val isNightly = BuildConfig.BUILD_TYPE == "nightly"
 
     val releasesUrl: String
-        get() = if (isNightly) "https://github.com/oribu-app/oribu-nightly/releases" else "https://github.com/oribu-app/oribu-app/releases"
+        get() = if (isNightly) "https://github.com/oribu-app/oribu-nightly/releases" else "https://github.com/oribu-app/oribu/releases"
 
-    val repoUrl = "https://github.com/oribu-app/oribu-app"
+    val repoUrl = "https://github.com/oribu-app/oribu"
 
     suspend fun checkForUpdate(
         context: Context,
@@ -103,7 +103,7 @@ object AppUpdateChecker {
             // tag_name em vez de confiar na ordem da API.
             releases.maxByOrNull { it.tagName.removePrefix("r").toIntOrNull() ?: -1 }
         } else {
-            val body = get("https://api.github.com/repos/oribu-app/oribu-app/releases/latest")
+            val body = get("https://api.github.com/repos/oribu-app/oribu/releases/latest")
             gson.fromJson(body, GithubRelease::class.java)
         }
 

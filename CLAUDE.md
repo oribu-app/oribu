@@ -1,8 +1,10 @@
-# HobbiesVault — CLAUDE.md
+# Oribu — CLAUDE.md
 
 Native Android app (Kotlin + Jetpack Compose) for personal tracking of games, manga, webtoons, series, movies and books. No server of its own, no account. All data stays locally on the device.
 
-> The project was migrated from Flutter to native Kotlin/Compose. The old Flutter version is archived at `../Hobbies-Backup` (outside this repository) and serves only as historical reference — don't edit it or treat it as a source of truth.
+> The project was migrated from Flutter to native Kotlin/Compose. The old Flutter version is archived at `../assets/flutter-legacy` (outside this repository) and serves only as historical reference — don't edit it or treat it as a source of truth.
+>
+> The project is called **Oribu** everywhere. Its earlier name must not appear in code, docs, commits or release notes — replace any leftover you find.
 
 ---
 
@@ -603,4 +605,4 @@ report the task done with a red gate.
 - Don't fetch from an API directly in detail screens (Composables) — use `MediaCacheService`
 - Don't change the serializers in `MediaCacheService` without reflecting the new fields on the screens
 - Don't forget to call `mediaCacheRepository.deletar(id)` when removing an item from the library
-- Don't treat the Flutter project at `../Hobbies-Backup` as active code — it's only historical reference for the previous version
+- Don't treat the Flutter project at `../assets/flutter-legacy` as active code — it's only historical reference for the previous version

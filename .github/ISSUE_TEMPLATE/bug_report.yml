@@ -1,5 +1,5 @@
 name: 🐞 Bug report
-description: Report an issue or bug in HobbiesVault
+description: Report an issue or bug in Oribu
 labels: [bug]
 body:
 
@@ -13,6 +13,7 @@ body:
         - Games
         - Manga/Webtoons
         - Series
+        - Anime
         - Movies
         - Books
         - Statistics
@@ -70,7 +71,7 @@ body:
   - type: input
     id: app-version
     attributes:
-      label: HobbiesVault version
+      label: Oribu version
       description: You can find this in **Settings → About**.
       placeholder: |
         Example: "1.0.0" or "Nightly r120"
@@ -114,7 +115,7 @@ body:
           required: true
         - label: I have written a short but informative title.
           required: true
-        - label: I have updated the app to the latest [release](https://github.com/thiago8rocha/hobbies-vault/releases/latest) and the issue still happens.
+        - label: I have updated the app to the latest [release](https://github.com/oribu-app/oribu/releases/latest) and the issue still happens.
           required: true
         - label: I have filled out all of the requested information in this form.
           required: true

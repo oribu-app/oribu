@@ -281,7 +281,7 @@ fun AppOverflowMenu(
             icon = Icons.Outlined.Help,
             onClick = {
                 onDismissRequest()
-                uriHandler.openUri("https://github.com/oribu-app/oribu-app/issues")
+                uriHandler.openUri("https://github.com/oribu-app/oribu/issues")
             },
         )
     }

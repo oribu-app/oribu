@@ -1,5 +1,5 @@
 name: 🌟 Feature request
-description: Suggest a feature to improve HobbiesVault
+description: Suggest a feature to improve Oribu
 labels: [enhancement]
 body:
 
@@ -13,6 +13,7 @@ body:
         - Games
         - Manga/Webtoons
         - Series
+        - Anime
         - Movies
         - Books
         - Statistics
@@ -26,7 +27,7 @@ body:
     id: feature-description
     attributes:
       label: Describe your suggested feature
-      description: How can HobbiesVault be improved?
+      description: How can Oribu be improved?
       placeholder: |
         Example:
           "It should work like this..."
