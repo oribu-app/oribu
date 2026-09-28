@@ -83,7 +83,7 @@ class GoogleBooksService(
         val url = "$base/volumes?q=teste$key"
         val error = get(url)["error"] as? Map<*, *>
         if (error != null) {
-            throw Exception(error["message"] as? String ?: "Chave Google Books inválida")
+            throw ApiException("Google Books", ApiErrorReason.UNAUTHORIZED, (error["code"] as? Double)?.toInt())
         }
     }
 

@@ -295,6 +295,16 @@ object MediaCacheService {
             }
         }
 
+        // 3a. A cover the user picked from SteamGridDB always wins over IGDB's; with no cover at
+        // all from IGDB/game_cache, fall back to SteamGridDB community art
+        if (SteamGridDbService.isSteamGridDbUrl(item.coverUrl)) {
+            result["coverUrl"] = item.coverUrl
+        } else if (result["coverUrl"] == null && item.coverUrl.isNullOrBlank() && ApiServices.steamGridDbAvailable) {
+            withContext(Dispatchers.IO) {
+                runCatching { ApiServices.steamGridDb.findCoverByTitle(igdbResult?.title ?: item.title) }.getOrNull()
+            }?.let { result["coverUrl"] = it }
+        }
+
         (result["genre"] as? String)?.let { result["genre"] = translateGameGenres(it) }
 
         // A sinopse da IGDB costuma trazer frases de anúncio ("launching in spring 2026")
@@ -340,6 +350,30 @@ object MediaCacheService {
             }
         }
 
+        // 5. RetroAchievements (retro consoles only — Steam games are covered above)
+        if ((result["achievements"] as? List<*>).isNullOrEmpty() &&
+            ApiServices.retroAchievementsAvailable &&
+            RetroAchievementsService.supports(item.console)
+        ) {
+            withContext(Dispatchers.IO) {
+                runCatching {
+                    ApiServices.retroAchievements.findProgress(igdbResult?.title ?: item.title, item.console)
+                }.getOrNull()
+            }?.takeIf { it.total > 0 }?.let { progress ->
+                result["achievements"] =
+                    progress.achievements.map {
+                        mapOf(
+                            "name" to it.name,
+                            "description" to it.description,
+                            "achieved" to it.achieved,
+                            "icon" to it.badgeUrl,
+                        )
+                    }
+                result["totalAchievements"] = progress.total
+                result["achievementsUnlocked"] = progress.unlocked
+            }
+        }
+
         Log.d(
             "MediaCacheService",
             "fetchGame '${item.title}' synopsis=${(result["synopsis"] as? String)?.take(
@@ -351,10 +385,20 @@ object MediaCacheService {
 
     private suspend fun fetchManga(item: MediaItem): Map<String, Any?>? {
         val externalId = item.externalId ?: return null
-        return if (item.apiSource == "mangadex") {
-            fetchMangaFromMangaDex(externalId)
-        } else {
-            fetchMangaFromAniList(item, externalId)
+        return when (item.apiSource) {
+            "mangadex" -> {
+                fetchMangaFromMangaDex(externalId)
+            }
+
+            "mangabaka" -> {
+                withContext(Dispatchers.IO) {
+                    runCatching { ApiServices.mangabaka.getDetailsById(externalId) }.getOrNull()
+                }
+            }
+
+            else -> {
+                fetchMangaFromAniList(item, externalId)
+            }
         }
     }
 
@@ -493,6 +537,13 @@ object MediaCacheService {
         if (item.apiSource == "open_library") {
             return withContext(Dispatchers.IO) {
                 runCatching { ApiServices.openLibrary.getDetails(externalId) }.getOrNull()
+            }
+        }
+
+        if (item.apiSource == "hardcover") {
+            if (!ApiServices.hardcoverAvailable) return null
+            return withContext(Dispatchers.IO) {
+                runCatching { ApiServices.hardcover.getDetails(externalId) }.getOrNull()
             }
         }
 

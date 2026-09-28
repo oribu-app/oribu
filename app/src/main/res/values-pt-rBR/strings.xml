@@ -529,7 +529,7 @@
     <string name="onboarding_next">Próxima</string>
     <string name="onboarding_welcome">Bem Vindo(a)!</string>
     <string name="onboarding_intro">Vamos definir algumas coisas primeiro. Você sempre pode fazer alterações nas configurações depois também.</string>
-    <string name="onboarding_apikeys_description">Opcional — sem elas o app funciona com dados limitados. Você pode configurar tudo isso depois em Configurações → Integrações.</string>
+    <string name="onboarding_apikeys_description">Opcional — a busca já funciona sem configurar nada. Adicione sua conta da Steam, RetroAchievements ou Hardcover para sincronizar seu próprio progresso. Você pode configurar tudo isso depois em Configurações → Integrações.</string>
     <string name="onboarding_permissions_title">Opcional, mas recomendado</string>
     <string name="onboarding_notif_subtitle">Avisos de novidades e atualizações da biblioteca</string>
     <string name="onboarding_battery_title">Ignorar otimização de bateria</string>
@@ -559,6 +559,9 @@
     <string name="service_google_books_desc">Livros (opcional — a busca já funciona sem chave)</string>
     <string name="service_steam_desc">Biblioteca e conquistas</string>
     <string name="service_itad_desc">Preços e histórico de descontos (IsThereAnyDeal)</string>
+    <string name="service_steamgriddb_desc">Capas alternativas de jogos quando o IGDB não tem</string>
+    <string name="service_retroachievements_desc">Conquistas de jogos retrô jogados em emuladores</string>
+    <string name="service_hardcover_desc">Livros (opcional — fallback extra quando Google Books e Open Library não encontram nada)</string>
     <string name="service_anilist_note">AniList não exige chave própria — a busca de mangás e webtoons já funciona sem configuração.</string>
     <string name="service_test_connection">Testar conexão</string>
     <string name="credential_field_bearer_token">Bearer Token</string>
@@ -566,6 +569,11 @@
     <string name="credential_field_client_secret">Client Secret</string>
     <string name="credential_field_api_key">Chave de API</string>
     <string name="credential_field_steam_id_64">SteamID64</string>
+    <string name="credential_field_username">Nome de usuário</string>
+    <string name="credential_field_api_key_optional">Sua própria chave de API (opcional)</string>
+    <string name="service_section_metadata">Busca e metadados</string>
+    <string name="service_section_tracking">Suas contas (sincronização de progresso)</string>
+    <string name="service_built_in_key_note">Usando a chave própria do Oribu — adicione a sua só se quiser substituí-la.</string>
 
     <!-- Notificações -->
     <string name="notif_channel_manga">Atualizações de mangás</string>

@@ -13,29 +13,33 @@ object ApiServices {
     private var _igdb: IgdbService? = null
     private var _anilist: AniListService? = null
     private var _mangadex: MangaDexService? = null
+    private var _mangabaka: MangaBakaService? = null
     private var _googleBooks: GoogleBooksService? = null
     private var _openLibrary: OpenLibraryService? = null
+    private var _hardcover: HardcoverService? = null
     private var _mangaSearch: MangaSearchService? = null
     private var _bookSearch: BookSearchService? = null
     private var _steam: SteamService? = null
     private var _psn: PsnService? = null
     private var _hltb: HltbService? = null
     private var _itad: ItadService? = null
+    private var _steamGridDb: SteamGridDbService? = null
+    private var _retroAchievements: RetroAchievementsService? = null
     private var igdbToken: IgdbToken? = null
     private var _gameSearch: GameSearchService? = null
     private var _gameCache: GameCacheService? = null
     private var _aniListUsername: String? = null
     private var initialized = false
 
-    // ── Initialization ────────────────────────────────────────────────────────
-
-    suspend fun init(context: Context) {
-        if (initialized) return
     // Set when igdb_client_id/secret ARE present but auth failed (wrong credentials, revoked
     // app, network error) — distinct from "not configured" so the UI doesn't tell a user who
     // filled in real keys that they filled in nothing.
     private var _igdbAuthFailed = false
 
+    // ── Initialization ────────────────────────────────────────────────────────
+
+    suspend fun init(context: Context) {
+        if (initialized) return
         refresh(context, effectiveSecrets(context))
         initialized = true
     }
@@ -80,22 +84,29 @@ object ApiServices {
             } else {
                 igdbToken = null
                 _igdb = null
+                _igdbAuthFailed = false
             }
 
             // Manga
             runCatching {
-                _igdbAuthFailed = false
                 _anilist = AniListService()
                 _mangadex = MangaDexService()
-                _mangaSearch = MangaSearchService(_anilist!!, _mangadex!!)
+                _mangabaka = MangaBakaService()
+                _mangaSearch = MangaSearchService(_anilist!!, _mangadex!!, _mangabaka!!)
             }
             _aniListUsername = secrets.anilistUsername
 
             // Books
+            _hardcover =
+                if (secrets.hardcoverConfigurado) {
+                    runCatching { HardcoverService(apiToken = secrets.hardcoverApiToken!!) }.getOrNull()
+                } else {
+                    null
+                }
             runCatching {
                 _openLibrary = OpenLibraryService()
                 _googleBooks = GoogleBooksService(apiKey = secrets.googleBooksApiKey)
-                _bookSearch = BookSearchService(_googleBooks!!, _openLibrary!!)
+                _bookSearch = BookSearchService(_googleBooks!!, _openLibrary!!, _hardcover)
             }
 
             // Steam
@@ -131,6 +142,27 @@ object ApiServices {
                 } else {
                     null
                 }
+
+            // SteamGridDB
+            _steamGridDb =
+                if (secrets.steamGridDbConfigurado) {
+                    runCatching { SteamGridDbService(apiKey = secrets.steamGridDbApiKey!!) }.getOrNull()
+                } else {
+                    null
+                }
+
+            // RetroAchievements
+            _retroAchievements =
+                if (secrets.retroAchievementsConfigurado) {
+                    runCatching {
+                        RetroAchievementsService(
+                            username = secrets.retroAchievementsUsername!!,
+                            apiKey = secrets.retroAchievementsApiKey!!,
+                        )
+                    }.getOrNull()
+                } else {
+                    null
+                }
         }
     }
 
@@ -138,7 +170,7 @@ object ApiServices {
 
     fun setAniListToken(accessToken: String) {
         _anilist = AniListService(accessToken = accessToken)
-        _mangaSearch = MangaSearchService(_anilist!!, _mangadex!!)
+        _mangaSearch = MangaSearchService(_anilist!!, _mangadex!!, _mangabaka!!)
     }
 
     fun setPsnToken(accessToken: String) {
@@ -151,7 +183,7 @@ object ApiServices {
 
     suspend fun renewIgdbIfNeeded(context: Context) {
         if (igdbToken == null || !igdbToken!!.isExpired) return
-        val secrets = Secrets.load(context)
+        val secrets = effectiveSecrets(context)
         if (!secrets.igdbConfigurado) return
         runCatching {
             igdbToken =
@@ -159,7 +191,14 @@ object ApiServices {
                     IgdbAuthService.getAccessToken(context, secrets.igdbClientId!!, secrets.igdbClientSecret!!)
                 }
             _igdb = IgdbService(clientId = secrets.igdbClientId!!, accessToken = igdbToken!!.accessToken)
-        }
+        }.fold(
+            onSuccess = { _igdbAuthFailed = false },
+            onFailure = {
+                igdbToken = null
+                _igdb = null
+                _igdbAuthFailed = true
+            },
+        )
     }
 
     // ── Getters ───────────────────────────────────────────────────────────────
@@ -168,8 +207,10 @@ object ApiServices {
     val igdb get() = _igdb ?: error("IGDB not configured")
     val anilist get() = _anilist!!
     val mangadex get() = _mangadex!!
+    val mangabaka get() = _mangabaka!!
     val googleBooks get() = _googleBooks!!
     val openLibrary get() = _openLibrary!!
+    val hardcover get() = _hardcover ?: error("Hardcover not configured")
     val mangaSearch get() = _mangaSearch!!
     val bookSearch get() = _bookSearch!!
     val gameSearch get() = _gameSearch!!
@@ -178,14 +219,20 @@ object ApiServices {
     val psn get() = _psn
     val hltb get() = _hltb!!
     val itad get() = _itad
+    val steamGridDb get() = _steamGridDb ?: error("SteamGridDB not configured")
+    val retroAchievements get() = _retroAchievements ?: error("RetroAchievements not configured")
     val aniListUsername get() = _aniListUsername
 
     val tmdbAvailable get() = _tmdb != null
     val igdbAvailable get() = _igdb != null
+    val igdbAuthFailed get() = _igdbAuthFailed
     val steamAvailable get() = _steam != null
     val psnAvailable get() = _psn != null
     val hltbAvailable get() = _hltb != null
     val itadAvailable get() = _itad != null
+    val steamGridDbAvailable get() = _steamGridDb != null
+    val retroAchievementsAvailable get() = _retroAchievements != null
+    val hardcoverAvailable get() = _hardcover != null
     val gameSearchAvailable get() = _gameSearch != null
 
     // ── Config validation ─────────────────────────────────────────────────────
@@ -207,16 +254,8 @@ object ApiServices {
             MediaType.MANGA, MediaType.WEBTOON, MediaType.BOOK -> {
                 null
             }
-        }.fold(
-            onSuccess = { _igdbAuthFailed = false },
-            onFailure = {
-                igdbToken = null
-                _igdb = null
-                _igdbAuthFailed = true
-            },
-        )
+        }
 }
-    val igdbAuthFailed get() = _igdbAuthFailed
 
 enum class ServiceUnavailableReason(
     @StringRes val messageRes: Int,

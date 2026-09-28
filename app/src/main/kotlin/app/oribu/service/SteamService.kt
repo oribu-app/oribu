@@ -29,7 +29,7 @@ class SteamService(
         val url = "$baseUrl/ISteamUser/GetPlayerSummaries/v0002/?key=$apiKey&steamids=$steamId"
         val players = (get(url)["response"] as? Map<*, *>)?.get("players") as? List<*>
         if (players.isNullOrEmpty()) {
-            throw Exception("Steam API key ou SteamID inválidos")
+            throw ApiException("Steam", ApiErrorReason.UNAUTHORIZED)
         }
     }
 

@@ -21,6 +21,10 @@ data class ApiKeyOverrides(
     val steamApiKey: String? = null,
     val steamId: String? = null,
     val itadApiKey: String? = null,
+    val steamGridDbApiKey: String? = null,
+    val retroAchievementsUsername: String? = null,
+    val retroAchievementsApiKey: String? = null,
+    val hardcoverApiToken: String? = null,
 )
 
 private val Context.apiKeyDataStore by preferencesDataStore(name = "api_key_prefs")
@@ -37,6 +41,10 @@ object ApiKeyPreferences {
     private val STEAM_API_KEY = stringPreferencesKey("steam_api_key")
     private val STEAM_ID_KEY = stringPreferencesKey("steam_id")
     private val ITAD_KEY = stringPreferencesKey("itad_api_key")
+    private val STEAMGRIDDB_KEY = stringPreferencesKey("steamgriddb_api_key")
+    private val RETROACHIEVEMENTS_USERNAME_KEY = stringPreferencesKey("retroachievements_username")
+    private val RETROACHIEVEMENTS_API_KEY = stringPreferencesKey("retroachievements_api_key")
+    private val HARDCOVER_KEY = stringPreferencesKey("hardcover_api_token")
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var appContext: Context
@@ -57,6 +65,10 @@ object ApiKeyPreferences {
                         steamApiKey = prefs[STEAM_API_KEY],
                         steamId = prefs[STEAM_ID_KEY],
                         itadApiKey = prefs[ITAD_KEY],
+                        steamGridDbApiKey = prefs[STEAMGRIDDB_KEY],
+                        retroAchievementsUsername = prefs[RETROACHIEVEMENTS_USERNAME_KEY],
+                        retroAchievementsApiKey = prefs[RETROACHIEVEMENTS_API_KEY],
+                        hardcoverApiToken = prefs[HARDCOVER_KEY],
                     )
             }
         }
@@ -77,6 +89,10 @@ object ApiKeyPreferences {
             steamApiKey = prefs[STEAM_API_KEY],
             steamId = prefs[STEAM_ID_KEY],
             itadApiKey = prefs[ITAD_KEY],
+            steamGridDbApiKey = prefs[STEAMGRIDDB_KEY],
+            retroAchievementsUsername = prefs[RETROACHIEVEMENTS_USERNAME_KEY],
+            retroAchievementsApiKey = prefs[RETROACHIEVEMENTS_API_KEY],
+            hardcoverApiToken = prefs[HARDCOVER_KEY],
         )
     }
 
@@ -93,6 +109,14 @@ object ApiKeyPreferences {
     fun setSteamId(value: String) = setValue(STEAM_ID_KEY, value)
 
     fun setItadApiKey(value: String) = setValue(ITAD_KEY, value)
+
+    fun setSteamGridDbApiKey(value: String) = setValue(STEAMGRIDDB_KEY, value)
+
+    fun setRetroAchievementsUsername(value: String) = setValue(RETROACHIEVEMENTS_USERNAME_KEY, value)
+
+    fun setRetroAchievementsApiKey(value: String) = setValue(RETROACHIEVEMENTS_API_KEY, value)
+
+    fun setHardcoverApiToken(value: String) = setValue(HARDCOVER_KEY, value)
 
     private fun setValue(
         key: Preferences.Key<String>,

@@ -12,7 +12,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-enum class CredentialStatus { NOT_CONFIGURED, CONFIGURED, TESTING, VALID, INVALID }
+enum class CredentialStatus { NOT_CONFIGURED, CONFIGURED, BUILT_IN, TESTING, VALID, INVALID }
 
 /** Indicador colorido de status de credencial (config./testando/válida/inválida), no molde do tonkatsu_box. */
 @Composable
@@ -23,7 +23,7 @@ fun StatusDot(status: CredentialStatus) {
     }
     val color =
         when (status) {
-            CredentialStatus.VALID, CredentialStatus.CONFIGURED -> Color(0xFF4CAF50)
+            CredentialStatus.VALID, CredentialStatus.CONFIGURED, CredentialStatus.BUILT_IN -> Color(0xFF4CAF50)
             CredentialStatus.INVALID -> Color(0xFFE53935)
             CredentialStatus.NOT_CONFIGURED -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
             CredentialStatus.TESTING -> Color.Transparent

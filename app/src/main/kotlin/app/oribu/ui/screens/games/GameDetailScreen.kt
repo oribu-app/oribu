@@ -800,7 +800,10 @@ fun GameDetailScreen(
 
                     // ── Conquistas / Troféus ──────────────────────────────────────
                     val showAchievements =
-                        mediaItem.achievementsUnlocked != null || mediaItem.totalAchievements != null || mediaItem.hasTrophies
+                        mediaItem.achievementsUnlocked != null ||
+                            mediaItem.totalAchievements != null ||
+                            mediaItem.hasTrophies ||
+                            !achievements.isNullOrEmpty()
                     if (showAchievements) {
                         item {
                             Column(contentPad) {
@@ -816,7 +819,15 @@ fun GameDetailScreen(
                                     ),
                                 )
                                 Spacer(Modifier.height(10.dp))
-                                AchievementsCard(mediaItem, console?.isPlayStation == true, platformColor)
+                                AchievementsCard(
+                                    item = mediaItem,
+                                    // Synced counts (Steam/RetroAchievements) only live in the cache —
+                                    // manual values on the item still take priority.
+                                    unlocked = mediaItem.achievementsUnlocked ?: (cache?.get("achievementsUnlocked") as? Number)?.toInt(),
+                                    total = mediaItem.totalAchievements ?: (cache?.get("totalAchievements") as? Number)?.toInt(),
+                                    isPS = console?.isPlayStation == true,
+                                    color = platformColor,
+                                )
                                 if (!achievements.isNullOrEmpty()) {
                                     Spacer(Modifier.height(12.dp))
                                     val sorted =
@@ -1439,8 +1450,6 @@ private fun AchievementsCard(
     isPS: Boolean,
     color: Color,
 ) {
-    val unlocked = item.achievementsUnlocked
-    val total = item.totalAchievements
     val pct = if (unlocked != null && total != null && total > 0) unlocked.toFloat() / total else null
 
     Surface(
@@ -1489,6 +1498,8 @@ private fun AchievementsCard(
             }
             if (pct == null && !item.hasTrophies) {
                 Row {
+    unlocked: Int?,
+    total: Int?,
                     Icon(
                         if (isPS) Icons.Default.EmojiEvents else Icons.Default.MilitaryTech,
                         null,

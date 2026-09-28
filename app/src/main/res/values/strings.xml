@@ -529,7 +529,7 @@
     <string name="onboarding_next">Next</string>
     <string name="onboarding_welcome">Welcome!</string>
     <string name="onboarding_intro">Let\'s set a few things up first. You can always change these settings later too.</string>
-    <string name="onboarding_apikeys_description">Optional — the app works with limited data without them. You can set all of this up later in Settings → Integrations.</string>
+    <string name="onboarding_apikeys_description">Optional — search already works out of the box. Add your Steam, RetroAchievements or Hardcover account to sync your own progress. You can set all of this up later in Settings → Integrations.</string>
     <string name="onboarding_permissions_title">Optional, but recommended</string>
     <string name="onboarding_notif_subtitle">Alerts about news and library updates</string>
     <string name="onboarding_battery_title">Ignore battery optimization</string>
@@ -559,6 +559,9 @@
     <string name="service_google_books_desc">Books (optional — search already works without a key)</string>
     <string name="service_steam_desc">Library and achievements</string>
     <string name="service_itad_desc">Prices and discount history (IsThereAnyDeal)</string>
+    <string name="service_steamgriddb_desc">Alternative game covers when IGDB has none</string>
+    <string name="service_retroachievements_desc">Achievements for retro games played on emulators</string>
+    <string name="service_hardcover_desc">Books (optional — extra fallback when Google Books and Open Library find nothing)</string>
     <string name="service_anilist_note">AniList doesn\'t require its own key — manga and webtoon search already works with no setup.</string>
     <string name="service_test_connection">Test connection</string>
     <string name="credential_field_bearer_token">Bearer Token</string>
@@ -566,6 +569,11 @@
     <string name="credential_field_client_secret">Client Secret</string>
     <string name="credential_field_api_key">API Key</string>
     <string name="credential_field_steam_id_64">SteamID64</string>
+    <string name="credential_field_username">Username</string>
+    <string name="credential_field_api_key_optional">Your own API key (optional)</string>
+    <string name="service_section_metadata">Search and metadata</string>
+    <string name="service_section_tracking">Your accounts (progress sync)</string>
+    <string name="service_built_in_key_note">Using Oribu\'s built-in key — add your own only if you want to replace it.</string>
 
     <!-- Notifications -->
     <string name="notif_channel_manga">Manga updates</string>

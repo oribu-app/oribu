@@ -15,12 +15,20 @@ data class Secrets(
     val steamApiKey: String? = null,
     val steamId: String? = null,
     val itadApiKey: String? = null,
+    val steamGridDbApiKey: String? = null,
+    val retroAchievementsUsername: String? = null,
+    val retroAchievementsApiKey: String? = null,
+    val hardcoverApiToken: String? = null,
 ) {
     val tmdbConfigurado get() = !tmdbBearerToken.isNullOrEmpty()
     val igdbConfigurado get() = !igdbClientId.isNullOrEmpty() && !igdbClientSecret.isNullOrEmpty()
     val googleBooksConfigurado get() = !googleBooksApiKey.isNullOrEmpty()
     val steamConfigurado get() = !steamApiKey.isNullOrEmpty() && !steamId.isNullOrEmpty()
     val itadConfigurado get() = !itadApiKey.isNullOrEmpty()
+    val steamGridDbConfigurado get() = !steamGridDbApiKey.isNullOrEmpty()
+    val retroAchievementsConfigurado get() =
+        !retroAchievementsUsername.isNullOrEmpty() && !retroAchievementsApiKey.isNullOrEmpty()
+    val hardcoverConfigurado get() = !hardcoverApiToken.isNullOrEmpty()
 
     /**
      * Sobrepõe, campo a campo, as chaves cadastradas pelo usuário (Configurações →
@@ -38,6 +46,11 @@ data class Secrets(
             steamApiKey = overrides.steamApiKey?.takeIf { it.isNotBlank() } ?: steamApiKey,
             steamId = overrides.steamId?.takeIf { it.isNotBlank() } ?: steamId,
             itadApiKey = overrides.itadApiKey?.takeIf { it.isNotBlank() } ?: itadApiKey,
+            steamGridDbApiKey = overrides.steamGridDbApiKey?.takeIf { it.isNotBlank() } ?: steamGridDbApiKey,
+            retroAchievementsUsername =
+                overrides.retroAchievementsUsername?.takeIf { it.isNotBlank() } ?: retroAchievementsUsername,
+            retroAchievementsApiKey = overrides.retroAchievementsApiKey?.takeIf { it.isNotBlank() } ?: retroAchievementsApiKey,
+            hardcoverApiToken = overrides.hardcoverApiToken?.takeIf { it.isNotBlank() } ?: hardcoverApiToken,
         )
 
     companion object {
@@ -63,6 +76,10 @@ data class Secrets(
                     steamApiKey = map["steam_api_key"],
                     steamId = map["steam_id"],
                     itadApiKey = map["itad_api_key"],
+                    steamGridDbApiKey = map["steamgriddb_api_key"],
+                    retroAchievementsUsername = map["retroachievements_username"],
+                    retroAchievementsApiKey = map["retroachievements_api_key"],
+                    hardcoverApiToken = map["hardcover_api_token"],
                 ).also { instance = it }
             } catch (_: Exception) {
                 Secrets().also { instance = it }

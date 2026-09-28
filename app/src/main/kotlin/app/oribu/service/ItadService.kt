@@ -69,7 +69,7 @@ class ItadService(
         val url = "$base/games/lookup/v1?key=$apiKey&appid=620"
         val res = get(url)
         if (res.containsKey("error") || !res.containsKey("found")) {
-            throw Exception(res["error"] as? String ?: "Chave ITAD inválida")
+            throw ApiException("ITAD", ApiErrorReason.UNAUTHORIZED)
         }
     }
 
