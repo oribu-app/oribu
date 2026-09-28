@@ -8,10 +8,18 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -41,13 +49,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * Lista de serviços externos com campo de credencial + "Testar conexão" + indicador de status,
- * no molde do tonkatsu_box. Componente puro (sem Scaffold própria) para poder ser embutido tanto
- * na tela de Configurações → Integrações quanto no passo de chaves de API do onboarding.
+ * Lista de serviços externos com campo de credencial, status e "Testar", no molde do
+ * tonkatsu_box. Componente puro (sem Scaffold própria) para poder ser embutido tanto na tela de
+ * Configurações → Integrações quanto no passo de chaves de API do onboarding.
  *
- * Release builds ship app-level keys in `secrets.json` (written by CI), so search/metadata work
- * out of the box — a key typed here only replaces the built-in one. Per-user identifiers
- * (SteamID, RetroAchievements username, Hardcover token) are never bundled.
+ * Same model as Tonkatsu Box: release builds ship app-level keys for search/metadata (written
+ * by CI), which are never shown — the field stays empty with a "built-in key" placeholder, a
+ * key typed here replaces it and the reset button goes back to it. Account integrations
+ * (Steam, RetroAchievements, Hardcover) always use the user's own credentials.
  */
 @Composable
 fun ServiceCredentialsList(modifier: Modifier = Modifier) {
@@ -56,17 +65,12 @@ fun ServiceCredentialsList(modifier: Modifier = Modifier) {
     val builtIn = remember { Secrets.load(context) }
     val scope = rememberCoroutineScope()
 
-    /**
-     * [user] = identifiers only the user can provide, [own] = the user's own key(s),
-     * [bundled] = the built-in key(s) that stand in when [own] is empty.
-     */
+    /** [own] = the user's key(s); [bundled] = the built-in key(s) that stand in when [own] is empty. */
     fun statusFor(
         own: List<String?>,
         bundled: List<String?> = emptyList(),
-        user: List<String?> = emptyList(),
     ): CredentialStatus =
         when {
-            user.any { it.isNullOrBlank() } -> CredentialStatus.NOT_CONFIGURED
             own.none { it.isNullOrBlank() } -> CredentialStatus.CONFIGURED
             bundled.isNotEmpty() && bundled.none { it.isNullOrBlank() } -> CredentialStatus.BUILT_IN
             else -> CredentialStatus.NOT_CONFIGURED
@@ -77,35 +81,26 @@ fun ServiceCredentialsList(modifier: Modifier = Modifier) {
         bundled: String?,
     ): String = own?.takeIf { it.isNotBlank() } ?: bundled.orEmpty()
 
-    var tmdbStatus by remember {
-        mutableStateOf(statusFor(listOf(overrides.tmdbApiKey), listOf(builtIn.tmdbBearerToken)))
-    }
+    val tmdbBundled = listOf(builtIn.tmdbBearerToken)
+    val igdbBundled = listOf(builtIn.igdbClientId, builtIn.igdbClientSecret)
+    val steamGridDbBundled = listOf(builtIn.steamGridDbApiKey)
+    val itadBundled = listOf(builtIn.itadApiKey)
+    val googleBooksBundled = listOf(builtIn.googleBooksApiKey)
+
+    var tmdbStatus by remember { mutableStateOf(statusFor(listOf(overrides.tmdbApiKey), tmdbBundled)) }
     var igdbStatus by remember {
-        mutableStateOf(
-            statusFor(
-                listOf(overrides.igdbClientId, overrides.igdbClientSecret),
-                listOf(builtIn.igdbClientId, builtIn.igdbClientSecret),
-            ),
-        )
+        mutableStateOf(statusFor(listOf(overrides.igdbClientId, overrides.igdbClientSecret), igdbBundled))
     }
     var steamGridDbStatus by remember {
-        mutableStateOf(statusFor(listOf(overrides.steamGridDbApiKey), listOf(builtIn.steamGridDbApiKey)))
+        mutableStateOf(statusFor(listOf(overrides.steamGridDbApiKey), steamGridDbBundled))
     }
-    var itadStatus by remember { mutableStateOf(statusFor(listOf(overrides.itadApiKey), listOf(builtIn.itadApiKey))) }
+    var itadStatus by remember { mutableStateOf(statusFor(listOf(overrides.itadApiKey), itadBundled)) }
     var googleBooksStatus by remember {
-        mutableStateOf(statusFor(listOf(overrides.googleBooksApiKey), listOf(builtIn.googleBooksApiKey)))
+        mutableStateOf(statusFor(listOf(overrides.googleBooksApiKey), googleBooksBundled))
     }
-    var steamStatus by remember {
-        mutableStateOf(statusFor(listOf(overrides.steamApiKey), listOf(builtIn.steamApiKey), user = listOf(overrides.steamId)))
-    }
+    var steamStatus by remember { mutableStateOf(statusFor(listOf(overrides.steamApiKey, overrides.steamId))) }
     var retroAchievementsStatus by remember {
-        mutableStateOf(
-            statusFor(
-                listOf(overrides.retroAchievementsApiKey),
-                listOf(builtIn.retroAchievementsApiKey),
-                user = listOf(overrides.retroAchievementsUsername),
-            ),
-        )
+        mutableStateOf(statusFor(listOf(overrides.retroAchievementsUsername, overrides.retroAchievementsApiKey)))
     }
     var hardcoverStatus by remember { mutableStateOf(statusFor(listOf(overrides.hardcoverApiToken))) }
 
@@ -122,41 +117,62 @@ fun ServiceCredentialsList(modifier: Modifier = Modifier) {
         }
     }
 
+    fun isBuiltInInUse(
+        own: List<String?>,
+        bundled: List<String?>,
+    ) = own.any { it.isNullOrBlank() } && bundled.none { it.isNullOrBlank() }
+
+    fun canResetToBuiltIn(
+        own: List<String?>,
+        bundled: List<String?>,
+    ) = own.any { !it.isNullOrBlank() } && bundled.none { it.isNullOrBlank() }
+
     Column(modifier) {
         SectionHeader(stringResource(R.string.service_section_metadata))
 
+        val tmdbOwn = listOf(overrides.tmdbApiKey)
         ServiceCredentialCard(
             name = "TMDB",
             description = stringResource(R.string.service_tmdb_desc),
             status = tmdbStatus,
-            usingBuiltIn = overrides.tmdbApiKey.isNullOrBlank() && !builtIn.tmdbBearerToken.isNullOrBlank(),
+            usingBuiltIn = isBuiltInInUse(tmdbOwn, tmdbBundled),
             onTest = {
                 test({ tmdbStatus = it }) {
                     TmdbService(effective(overrides.tmdbApiKey, builtIn.tmdbBearerToken)).testConnection()
                 }
             },
-        ) {
+            onReset =
+                if (canResetToBuiltIn(tmdbOwn, tmdbBundled)) {
+                    {
+                        ApiKeyPreferences.setTmdbApiKey("")
+                        tmdbStatus = CredentialStatus.BUILT_IN
+                        reload()
+                    }
+                } else {
+                    null
+                },
+        ) { usingBuiltIn ->
             InlineKeyField(
                 label = stringResource(R.string.credential_field_bearer_token),
                 value = overrides.tmdbApiKey.orEmpty(),
+                placeholder = builtInPlaceholder(usingBuiltIn),
                 onSave = { value ->
                     ApiKeyPreferences.setTmdbApiKey(value)
-                    tmdbStatus = statusFor(listOf(value), listOf(builtIn.tmdbBearerToken))
+                    tmdbStatus = statusFor(listOf(value), tmdbBundled)
                     reload()
                 },
             )
         }
 
+        val igdbOwn = listOf(overrides.igdbClientId, overrides.igdbClientSecret)
         ServiceCredentialCard(
             name = "IGDB",
             description = stringResource(R.string.service_igdb_desc),
             status = igdbStatus,
-            usingBuiltIn =
-                (overrides.igdbClientId.isNullOrBlank() || overrides.igdbClientSecret.isNullOrBlank()) &&
-                    builtIn.igdbConfigurado,
+            usingBuiltIn = isBuiltInInUse(igdbOwn, igdbBundled),
             onTest = {
                 test({ igdbStatus = it }) {
-                    val ownComplete = !overrides.igdbClientId.isNullOrBlank() && !overrides.igdbClientSecret.isNullOrBlank()
+                    val ownComplete = igdbOwn.none { it.isNullOrBlank() }
                     IgdbAuthService.getAccessToken(
                         context,
                         if (ownComplete) overrides.igdbClientId.orEmpty() else builtIn.igdbClientId.orEmpty(),
@@ -164,14 +180,25 @@ fun ServiceCredentialsList(modifier: Modifier = Modifier) {
                     )
                 }
             },
-        ) {
-            val bundled = listOf(builtIn.igdbClientId, builtIn.igdbClientSecret)
+            onReset =
+                if (canResetToBuiltIn(igdbOwn, igdbBundled)) {
+                    {
+                        ApiKeyPreferences.setIgdbClientId("")
+                        ApiKeyPreferences.setIgdbClientSecret("")
+                        igdbStatus = CredentialStatus.BUILT_IN
+                        reload()
+                    }
+                } else {
+                    null
+                },
+        ) { usingBuiltIn ->
             InlineKeyField(
                 label = stringResource(R.string.credential_field_client_id),
                 value = overrides.igdbClientId.orEmpty(),
+                placeholder = builtInPlaceholder(usingBuiltIn),
                 onSave = { value ->
                     ApiKeyPreferences.setIgdbClientId(value)
-                    igdbStatus = statusFor(listOf(value, overrides.igdbClientSecret), bundled)
+                    igdbStatus = statusFor(listOf(value, overrides.igdbClientSecret), igdbBundled)
                     reload()
                 },
             )
@@ -179,74 +206,113 @@ fun ServiceCredentialsList(modifier: Modifier = Modifier) {
             InlineKeyField(
                 label = stringResource(R.string.credential_field_client_secret),
                 value = overrides.igdbClientSecret.orEmpty(),
+                placeholder = builtInPlaceholder(usingBuiltIn),
                 onSave = { value ->
                     ApiKeyPreferences.setIgdbClientSecret(value)
-                    igdbStatus = statusFor(listOf(overrides.igdbClientId, value), bundled)
+                    igdbStatus = statusFor(listOf(overrides.igdbClientId, value), igdbBundled)
                     reload()
                 },
             )
         }
 
+        val steamGridDbOwn = listOf(overrides.steamGridDbApiKey)
         ServiceCredentialCard(
             name = "SteamGridDB",
             description = stringResource(R.string.service_steamgriddb_desc),
             status = steamGridDbStatus,
-            usingBuiltIn = overrides.steamGridDbApiKey.isNullOrBlank() && !builtIn.steamGridDbApiKey.isNullOrBlank(),
+            usingBuiltIn = isBuiltInInUse(steamGridDbOwn, steamGridDbBundled),
             onTest = {
                 test({ steamGridDbStatus = it }) {
                     SteamGridDbService(effective(overrides.steamGridDbApiKey, builtIn.steamGridDbApiKey)).testConnection()
                 }
             },
-        ) {
+            onReset =
+                if (canResetToBuiltIn(steamGridDbOwn, steamGridDbBundled)) {
+                    {
+                        ApiKeyPreferences.setSteamGridDbApiKey("")
+                        steamGridDbStatus = CredentialStatus.BUILT_IN
+                        reload()
+                    }
+                } else {
+                    null
+                },
+        ) { usingBuiltIn ->
             InlineKeyField(
                 label = stringResource(R.string.credential_field_api_key),
                 value = overrides.steamGridDbApiKey.orEmpty(),
+                placeholder = builtInPlaceholder(usingBuiltIn),
                 onSave = { value ->
                     ApiKeyPreferences.setSteamGridDbApiKey(value)
-                    steamGridDbStatus = statusFor(listOf(value), listOf(builtIn.steamGridDbApiKey))
+                    steamGridDbStatus = statusFor(listOf(value), steamGridDbBundled)
                     reload()
                 },
             )
         }
 
+        val itadOwn = listOf(overrides.itadApiKey)
         ServiceCredentialCard(
             name = "ITAD",
             description = stringResource(R.string.service_itad_desc),
             status = itadStatus,
-            usingBuiltIn = overrides.itadApiKey.isNullOrBlank() && !builtIn.itadApiKey.isNullOrBlank(),
+            usingBuiltIn = isBuiltInInUse(itadOwn, itadBundled),
             onTest = {
                 test({ itadStatus = it }) { ItadService(effective(overrides.itadApiKey, builtIn.itadApiKey)).testConnection() }
             },
-        ) {
+            onReset =
+                if (canResetToBuiltIn(itadOwn, itadBundled)) {
+                    {
+                        ApiKeyPreferences.setItadApiKey("")
+                        itadStatus = CredentialStatus.BUILT_IN
+                        reload()
+                    }
+                } else {
+                    null
+                },
+        ) { usingBuiltIn ->
             InlineKeyField(
                 label = stringResource(R.string.credential_field_api_key),
                 value = overrides.itadApiKey.orEmpty(),
+                placeholder = builtInPlaceholder(usingBuiltIn),
                 onSave = { value ->
                     ApiKeyPreferences.setItadApiKey(value)
-                    itadStatus = statusFor(listOf(value), listOf(builtIn.itadApiKey))
+                    itadStatus = statusFor(listOf(value), itadBundled)
                     reload()
                 },
             )
         }
 
+        val googleBooksOwn = listOf(overrides.googleBooksApiKey)
         ServiceCredentialCard(
             name = "Google Books",
             description = stringResource(R.string.service_google_books_desc),
             status = googleBooksStatus,
-            usingBuiltIn = overrides.googleBooksApiKey.isNullOrBlank() && !builtIn.googleBooksApiKey.isNullOrBlank(),
+            usingBuiltIn = isBuiltInInUse(googleBooksOwn, googleBooksBundled),
+            // Google Books also answers without any key, so the test is always available.
+            testAlwaysAvailable = true,
             onTest = {
                 test({ googleBooksStatus = it }) {
                     GoogleBooksService(effective(overrides.googleBooksApiKey, builtIn.googleBooksApiKey).ifBlank { null })
                         .testConnection()
                 }
             },
-        ) {
+            onReset =
+                if (canResetToBuiltIn(googleBooksOwn, googleBooksBundled)) {
+                    {
+                        ApiKeyPreferences.setGoogleBooksApiKey("")
+                        googleBooksStatus = CredentialStatus.BUILT_IN
+                        reload()
+                    }
+                } else {
+                    null
+                },
+        ) { usingBuiltIn ->
             InlineKeyField(
                 label = stringResource(R.string.credential_field_api_key),
                 value = overrides.googleBooksApiKey.orEmpty(),
+                placeholder = builtInPlaceholder(usingBuiltIn),
                 onSave = { value ->
                     ApiKeyPreferences.setGoogleBooksApiKey(value)
-                    googleBooksStatus = statusFor(listOf(value), listOf(builtIn.googleBooksApiKey))
+                    googleBooksStatus = statusFor(listOf(value), googleBooksBundled)
                     reload()
                 },
             )
@@ -258,29 +324,30 @@ fun ServiceCredentialsList(modifier: Modifier = Modifier) {
             name = "Steam",
             description = stringResource(R.string.service_steam_desc),
             status = steamStatus,
-            usingBuiltIn = overrides.steamApiKey.isNullOrBlank() && !builtIn.steamApiKey.isNullOrBlank(),
+            usingBuiltIn = false,
             onTest = {
                 test({ steamStatus = it }) {
-                    SteamService(effective(overrides.steamApiKey, builtIn.steamApiKey), overrides.steamId.orEmpty()).testConnection()
+                    SteamService(overrides.steamApiKey.orEmpty(), overrides.steamId.orEmpty()).testConnection()
                 }
             },
+            onReset = null,
         ) {
             InlineKeyField(
                 label = stringResource(R.string.credential_field_steam_id_64),
                 value = overrides.steamId.orEmpty(),
                 onSave = { value ->
                     ApiKeyPreferences.setSteamId(value)
-                    steamStatus = statusFor(listOf(overrides.steamApiKey), listOf(builtIn.steamApiKey), user = listOf(value))
+                    steamStatus = statusFor(listOf(overrides.steamApiKey, value))
                     reload()
                 },
             )
             Spacer(Modifier.height(8.dp))
             InlineKeyField(
-                label = ownKeyLabel(hasBuiltIn = !builtIn.steamApiKey.isNullOrBlank()),
+                label = stringResource(R.string.credential_field_api_key),
                 value = overrides.steamApiKey.orEmpty(),
                 onSave = { value ->
                     ApiKeyPreferences.setSteamApiKey(value)
-                    steamStatus = statusFor(listOf(value), listOf(builtIn.steamApiKey), user = listOf(overrides.steamId))
+                    steamStatus = statusFor(listOf(value, overrides.steamId))
                     reload()
                 },
             )
@@ -290,34 +357,33 @@ fun ServiceCredentialsList(modifier: Modifier = Modifier) {
             name = "RetroAchievements",
             description = stringResource(R.string.service_retroachievements_desc),
             status = retroAchievementsStatus,
-            usingBuiltIn = overrides.retroAchievementsApiKey.isNullOrBlank() && !builtIn.retroAchievementsApiKey.isNullOrBlank(),
+            usingBuiltIn = false,
             onTest = {
                 test({ retroAchievementsStatus = it }) {
                     RetroAchievementsService(
                         overrides.retroAchievementsUsername.orEmpty(),
-                        effective(overrides.retroAchievementsApiKey, builtIn.retroAchievementsApiKey),
+                        overrides.retroAchievementsApiKey.orEmpty(),
                     ).testConnection()
                 }
             },
+            onReset = null,
         ) {
-            val bundled = listOf(builtIn.retroAchievementsApiKey)
             InlineKeyField(
                 label = stringResource(R.string.credential_field_username),
                 value = overrides.retroAchievementsUsername.orEmpty(),
                 onSave = { value ->
                     ApiKeyPreferences.setRetroAchievementsUsername(value)
-                    retroAchievementsStatus = statusFor(listOf(overrides.retroAchievementsApiKey), bundled, user = listOf(value))
+                    retroAchievementsStatus = statusFor(listOf(value, overrides.retroAchievementsApiKey))
                     reload()
                 },
             )
             Spacer(Modifier.height(8.dp))
             InlineKeyField(
-                label = ownKeyLabel(hasBuiltIn = !builtIn.retroAchievementsApiKey.isNullOrBlank()),
+                label = stringResource(R.string.credential_field_api_key),
                 value = overrides.retroAchievementsApiKey.orEmpty(),
                 onSave = { value ->
                     ApiKeyPreferences.setRetroAchievementsApiKey(value)
-                    retroAchievementsStatus =
-                        statusFor(listOf(value), bundled, user = listOf(overrides.retroAchievementsUsername))
+                    retroAchievementsStatus = statusFor(listOf(overrides.retroAchievementsUsername, value))
                     reload()
                 },
             )
@@ -331,6 +397,7 @@ fun ServiceCredentialsList(modifier: Modifier = Modifier) {
             onTest = {
                 test({ hardcoverStatus = it }) { HardcoverService(overrides.hardcoverApiToken.orEmpty()).testConnection() }
             },
+            onReset = null,
         ) {
             InlineKeyField(
                 label = stringResource(R.string.credential_field_api_key),
@@ -353,8 +420,8 @@ fun ServiceCredentialsList(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun ownKeyLabel(hasBuiltIn: Boolean): String =
-    stringResource(if (hasBuiltIn) R.string.credential_field_api_key_optional else R.string.credential_field_api_key)
+private fun builtInPlaceholder(usingBuiltIn: Boolean): String? =
+    if (usingBuiltIn) stringResource(R.string.credential_built_in_placeholder) else null
 
 @Composable
 private fun SectionHeader(text: String) {
@@ -373,38 +440,88 @@ private fun ServiceCredentialCard(
     status: CredentialStatus,
     usingBuiltIn: Boolean,
     onTest: () -> Unit,
-    fields: @Composable ColumnScope.() -> Unit,
+    onReset: (() -> Unit)?,
+    testAlwaysAvailable: Boolean = false,
+    fields: @Composable ColumnScope.(usingBuiltIn: Boolean) -> Unit,
 ) {
     Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)) {
         Column(Modifier.padding(16.dp)) {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text(name, style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        description,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    )
-                }
-                StatusDot(status)
-            }
-            if (usingBuiltIn) {
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    stringResource(R.string.service_built_in_key_note),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
+            Text(name, style = MaterialTheme.typography.titleMedium)
+            Text(
+                description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            )
+            Spacer(Modifier.height(12.dp))
+            fields(usingBuiltIn)
+            if (usingBuiltIn) OwnKeyHint()
+            Spacer(Modifier.height(8.dp))
+            CredentialStatusRow(
+                status = status,
+                testEnabled = testAlwaysAvailable || status != CredentialStatus.NOT_CONFIGURED,
+                onTest = onTest,
+                onReset = onReset,
+            )
+        }
+    }
+}
+
+/** "For better rate limits we recommend using your own API key" — same hint as Tonkatsu Box. */
+@Composable
+private fun OwnKeyHint() {
+    Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.Top) {
+        Icon(
+            Icons.Outlined.Info,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+        )
+        Spacer(Modifier.width(6.dp))
+        Text(
+            stringResource(R.string.credential_own_key_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+        )
+    }
+}
+
+@Composable
+private fun CredentialStatusRow(
+    status: CredentialStatus,
+    testEnabled: Boolean,
+    onTest: () -> Unit,
+    onReset: (() -> Unit)?,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        StatusDot(status)
+        Text(
+            stringResource(status.labelRes),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            modifier = Modifier.weight(1f),
+        )
+        if (onReset != null) {
+            IconButton(onClick = onReset, modifier = Modifier.size(32.dp)) {
+                Icon(
+                    Icons.Default.RestartAlt,
+                    contentDescription = stringResource(R.string.credential_reset_to_built_in),
+                    modifier = Modifier.size(18.dp),
                 )
             }
-            Spacer(Modifier.height(12.dp))
-            fields()
-            Spacer(Modifier.height(4.dp))
-            TextButton(onClick = onTest, enabled = status != CredentialStatus.TESTING) {
-                Text(stringResource(R.string.service_test_connection))
+        }
+        IconButton(
+            onClick = onTest,
+            enabled = testEnabled && status != CredentialStatus.TESTING,
+            modifier = Modifier.size(32.dp),
+        ) {
+            if (status == CredentialStatus.TESTING) {
+                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+            } else {
+                Icon(
+                    Icons.Default.Sync,
+                    contentDescription = stringResource(R.string.service_test_connection),
+                    modifier = Modifier.size(20.dp),
+                )
             }
         }
     }

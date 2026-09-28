@@ -36,6 +36,7 @@ fun InlineKeyField(
     value: String,
     onSave: (String) -> Unit,
     modifier: Modifier = Modifier,
+    placeholder: String? = null,
 ) {
     var draft by remember(value) { mutableStateOf(value) }
     var visible by remember { mutableStateOf(false) }
@@ -45,6 +46,7 @@ fun InlineKeyField(
         value = draft,
         onValueChange = { draft = it },
         label = { Text(label) },
+        placeholder = placeholder?.let { { Text(it) } },
         singleLine = true,
         visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),

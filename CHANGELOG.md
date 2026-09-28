@@ -63,10 +63,11 @@ The format is a simplified version of [Keep a Changelog](https://keepachangelog.
   version is found.
 - The "..." menu (Configurações, Status, Histórico, Sobre, Ajuda) is now the same on every hobby
   list screen (Jogos, Filmes, Séries, Mangás, Livros), not just Home.
-- Release builds now ship Oribu's own API keys (TMDB, IGDB, Google Books, ITAD, SteamGridDB, Steam,
-  RetroAchievements), so search and metadata work with no setup. Settings > Integrations is split
-  into "Search and metadata" (built-in key in use; your own key is an optional replacement) and
-  "Your accounts" — for Steam and RetroAchievements only the SteamID / username is needed now.
+- Release builds now ship Oribu's own API keys for search and metadata (TMDB, IGDB, Google Books,
+  ITAD, SteamGridDB), so they work with no setup. Settings > Integrations is split into "Search
+  and metadata" and "Your accounts" (Steam, RetroAchievements, Hardcover — always your own
+  credentials). Each card shows its status in words, a test button, and — when you replaced a
+  built-in key with your own — a button to go back to Oribu's key.
 - New optional integrations, configured in Settings > Integrations: SteamGridDB (fallback cover
   for games with no IGDB cover), RetroAchievements (achievement list and progress for games on
   retro consoles — NES, SNES, N64, GameCube, GBA, DS, PS1, PS2, PSP) and Hardcover (extra book
