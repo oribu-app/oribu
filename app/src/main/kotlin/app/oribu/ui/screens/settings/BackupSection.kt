@@ -5,14 +5,25 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -21,9 +32,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -34,8 +47,11 @@ import app.oribu.data.backup.BackupErrorReason
 import app.oribu.data.backup.BackupException
 import app.oribu.data.backup.BackupFrequency
 import app.oribu.data.backup.BackupKind
+import app.oribu.data.backup.BackupOptions
 import app.oribu.data.backup.BackupPreferences
 import app.oribu.data.backup.BackupService
+import app.oribu.data.backup.BackupSummary
+import app.oribu.data.backup.RestoreResult
 import app.oribu.ui.locale.formatDate
 import kotlinx.coroutines.launch
 
@@ -46,7 +62,7 @@ sealed interface BackupOutcome {
     ) : BackupOutcome
 
     data class Restored(
-        val items: Int,
+        val result: RestoreResult,
     ) : BackupOutcome
 
     data class Failed(
@@ -58,49 +74,64 @@ class BackupViewModel : ViewModel() {
     var busy by mutableStateOf(false)
     var outcome by mutableStateOf<BackupOutcome?>(null)
 
-    fun backupNow(context: Context) =
-        launchAction {
-            BackupOutcome.Saved(BackupService.backupToFolder(context, BackupKind.MANUAL))
-        }
+    /** Backup file picked for restore, with what it holds, waiting for the user's confirmation. */
+    var pendingRestore by mutableStateOf<Pair<Uri, BackupSummary>?>(null)
+
+    fun backupNow(
+        context: Context,
+        options: BackupOptions,
+    ) = launchAction {
+        outcome = BackupOutcome.Saved(BackupService.backupToFolder(context, BackupKind.MANUAL, options))
+    }
+
+    fun inspect(
+        context: Context,
+        uri: Uri,
+    ) = launchAction { pendingRestore = uri to BackupService.inspect(context, uri) }
 
     fun restore(
         context: Context,
         uri: Uri,
-        onRestored: () -> Unit,
+        onLibraryRestored: () -> Unit,
     ) = launchAction {
-        BackupOutcome.Restored(BackupService.restore(context, uri)).also { onRestored() }
+        val result = BackupService.restore(context, uri)
+        outcome = BackupOutcome.Restored(result)
+        if (!result.settingsRestored) onLibraryRestored()
     }
 
-    private fun launchAction(block: suspend () -> BackupOutcome) {
+    private fun launchAction(block: suspend () -> Unit) {
         if (busy) return
         viewModelScope.launch {
             busy = true
-            outcome =
-                try {
-                    block()
-                } catch (e: BackupException) {
-                    BackupOutcome.Failed(e.reason)
-                }
+            try {
+                block()
+            } catch (e: BackupException) {
+                outcome = BackupOutcome.Failed(e.reason)
+            }
             busy = false
         }
     }
 }
 
 /**
- * Settings → Data → Backup: folder, manual backup, automatic schedule and restore. Backups are
- * plain JSON files in the user's own folder — nothing leaves the device.
+ * Settings → Data → Backup, modelled on Rokku's "Backup and restore": pick what goes into a manual
+ * backup, restore from a file (with its contents shown first), and schedule automatic backups
+ * (manual only, daily, every 2 days or weekly — never more than once a day) keeping up to 5.
+ * Backups are plain JSON files in the user's own folder; nothing leaves the device.
  */
 @Composable
 internal fun BackupSection(
-    onRestored: () -> Unit,
+    onLibraryRestored: () -> Unit,
     vm: BackupViewModel = viewModel(),
 ) {
     val context = LocalContext.current
     val folderUri by StoragePreferences.folderUri.collectAsState()
     val frequency by BackupPreferences.frequency.collectAsState()
-    val lastBackupMs by BackupPreferences.lastBackupMs.collectAsState()
+    val maxAutomatic by BackupPreferences.maxAutomatic.collectAsState()
+    val lastAutoBackupMs by BackupPreferences.lastAutoBackupMs.collectAsState()
+    var createDialogOpen by remember { mutableStateOf(false) }
     var frequencyDialogOpen by remember { mutableStateOf(false) }
-    var pendingRestore by remember { mutableStateOf<Uri?>(null) }
+    var maxDialogOpen by remember { mutableStateOf(false) }
 
     val pickFolder =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
@@ -114,7 +145,7 @@ internal fun BackupSection(
         }
     val pickBackupFile =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-            if (uri != null) pendingRestore = uri
+            if (uri != null) vm.inspect(context, uri)
         }
 
     SettingsSectionHeader(stringResource(R.string.backup_section), tinted = true)
@@ -132,12 +163,11 @@ internal fun BackupSection(
             when {
                 vm.busy -> stringResource(R.string.backup_working)
                 outcome is BackupOutcome.Saved -> stringResource(R.string.backup_saved, outcome.fileName)
-                outcome is BackupOutcome.Restored -> stringResource(R.string.backup_restored, outcome.items)
+                outcome is BackupOutcome.Restored -> stringResource(R.string.backup_restored, outcome.result.itemCount)
                 outcome is BackupOutcome.Failed -> backupErrorMessage(outcome.reason)
-                lastBackupMs != null -> stringResource(R.string.backup_last, formatDate(lastBackupMs!!))
-                else -> stringResource(R.string.backup_never)
+                else -> stringResource(R.string.backup_now_subtitle)
             },
-        onClick = { if (folderUri == null) pickFolder.launch(null) else vm.backupNow(context) },
+        onClick = { if (folderUri == null) pickFolder.launch(null) else createDialogOpen = true },
         trailing = {
             if (vm.busy) {
                 CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
@@ -148,18 +178,45 @@ internal fun BackupSection(
     )
 
     SettingsClickRow(
-        title = stringResource(R.string.backup_automatic),
-        subtitle = stringResource(frequency.labelRes),
-        onClick = { frequencyDialogOpen = true },
-    )
-
-    SettingsClickRow(
         title = stringResource(R.string.backup_restore),
         subtitle = stringResource(R.string.backup_restore_subtitle),
         onClick = { pickBackupFile.launch(arrayOf("application/json", "*/*")) },
         trailing = { Icon(Icons.Default.Restore, null) },
     )
 
+    SettingsClickRow(
+        title = stringResource(R.string.backup_automatic),
+        subtitle = stringResource(frequency.labelRes),
+        onClick = { frequencyDialogOpen = true },
+    )
+    if (frequency != BackupFrequency.MANUAL) {
+        SettingsClickRow(
+            title = stringResource(R.string.backup_max_automatic),
+            subtitle = maxAutomatic.toString(),
+            onClick = { maxDialogOpen = true },
+        )
+    }
+
+    Text(
+        stringResource(R.string.backup_info) + "\n\n" +
+            (
+                lastAutoBackupMs?.let { stringResource(R.string.backup_last_automatic, formatDate(it)) }
+                    ?: stringResource(R.string.backup_no_automatic_yet)
+            ),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+    )
+
+    if (createDialogOpen) {
+        CreateBackupDialog(
+            onConfirm = { options ->
+                createDialogOpen = false
+                vm.backupNow(context, options)
+            },
+            onDismiss = { createDialogOpen = false },
+        )
+    }
     if (frequencyDialogOpen) {
         SingleChoiceDialog(
             title = stringResource(R.string.backup_automatic),
@@ -169,22 +226,114 @@ internal fun BackupSection(
             onDismiss = { frequencyDialogOpen = false },
         )
     }
-
-    pendingRestore?.let { uri ->
-        AlertDialog(
-            onDismissRequest = { pendingRestore = null },
-            icon = { Icon(Icons.Default.Restore, null) },
-            title = { Text(stringResource(R.string.backup_restore_confirm_title)) },
-            text = { Text(stringResource(R.string.backup_restore_confirm_message)) },
-            confirmButton = {
-                Button(onClick = {
-                    pendingRestore = null
-                    vm.restore(context, uri, onRestored)
-                }) { Text(stringResource(R.string.backup_restore_confirm_button)) }
-            },
-            dismissButton = { TextButton(onClick = { pendingRestore = null }) { Text(stringResource(R.string.action_cancel)) } },
+    if (maxDialogOpen) {
+        SingleChoiceDialog(
+            title = stringResource(R.string.backup_max_automatic),
+            options = BackupPreferences.MAX_AUTOMATIC_CHOICES.map { it to it.toString() },
+            selected = maxAutomatic,
+            onSelect = { BackupPreferences.setMaxAutomatic(it) },
+            onDismiss = { maxDialogOpen = false },
         )
     }
+
+    vm.pendingRestore?.let { (uri, summary) ->
+        RestoreConfirmDialog(
+            summary = summary,
+            onConfirm = {
+                vm.pendingRestore = null
+                vm.restore(context, uri, onLibraryRestored)
+            },
+            onDismiss = { vm.pendingRestore = null },
+        )
+    }
+
+    if (outcome is BackupOutcome.Restored && outcome.result.settingsRestored) {
+        AlertDialog(
+            onDismissRequest = {},
+            icon = { Icon(Icons.Default.Restore, null) },
+            title = { Text(stringResource(R.string.backup_restart_title)) },
+            text = { Text(stringResource(R.string.backup_restart_message)) },
+            confirmButton = {
+                Button(onClick = { BackupService.restartApp(context) }) { Text(stringResource(R.string.backup_restart_now)) }
+            },
+        )
+    }
+}
+
+/** Rokku's "What do you want to back up?" checklist; entries tied to the library follow it. */
+@Composable
+private fun CreateBackupDialog(
+    onConfirm: (BackupOptions) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var options by remember { mutableStateOf(BackupOptions()) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.backup_create_dialog_title)) },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                BackupOptions.entries.forEach { entry ->
+                    val enabled = entry.enabled(options)
+                    val checked = entry.getter(options) && enabled
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .toggleable(
+                                value = checked,
+                                enabled = enabled,
+                                role = Role.Checkbox,
+                                onValueChange = { options = entry.setter(options, it) },
+                            ).padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Checkbox(checked = checked, onCheckedChange = null, enabled = enabled)
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            stringResource(entry.label),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled) 1f else 0.4f),
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = options.library || options.appSettings || options.sensitive,
+                onClick = { onConfirm(options) },
+            ) { Text(stringResource(R.string.backup_create_confirm)) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
+    )
+}
+
+@Composable
+private fun RestoreConfirmDialog(
+    summary: BackupSummary,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = { Icon(Icons.Default.Restore, null) },
+        title = { Text(stringResource(R.string.backup_restore_confirm_title)) },
+        text = {
+            Column {
+                Text(stringResource(R.string.backup_restore_summary, formatDate(summary.createdAtMs), summary.itemCount))
+                if (summary.includesSettings) {
+                    Spacer(Modifier.padding(top = 8.dp))
+                    Text(stringResource(R.string.backup_restore_summary_settings))
+                }
+                if (summary.includesSensitive) {
+                    Spacer(Modifier.padding(top = 8.dp))
+                    Text(stringResource(R.string.backup_restore_summary_sensitive))
+                }
+                Spacer(Modifier.padding(top = 8.dp))
+                Text(stringResource(R.string.backup_restore_confirm_message))
+            }
+        },
+        confirmButton = { Button(onClick = onConfirm) { Text(stringResource(R.string.backup_restore_confirm_button)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
+    )
 }
 
 @Composable

@@ -1,5 +1,7 @@
 package app.oribu.data.backup
 
+import androidx.annotation.StringRes
+import app.oribu.R
 import com.google.gson.Gson
 import com.google.gson.JsonParseException
 import com.google.gson.reflect.TypeToken
@@ -13,8 +15,61 @@ class BackupException(
 ) : Exception(reason.name, cause)
 
 /**
- * Library backup file: every row of the backed-up tables as column → value maps, plus the Room
- * schema version it was taken from. Kept free of Android types so it can be unit-tested.
+ * What goes into a backup — same idea as Rokku's BackupOptions. Everything but the library itself
+ * hangs off library items, so those entries only apply when [library] is on. Sensitive data (API
+ * keys and account credentials) is opt-in, like Rokku's "Include sensitive settings".
+ */
+data class BackupOptions(
+    val library: Boolean = true,
+    val watchedEpisodes: Boolean = true,
+    val reviewHistory: Boolean = true,
+    val bookQuotes: Boolean = true,
+    val playthroughs: Boolean = true,
+    val movieLists: Boolean = true,
+    val appSettings: Boolean = true,
+    val sensitive: Boolean = false,
+) {
+    data class Entry(
+        @StringRes val label: Int,
+        val getter: (BackupOptions) -> Boolean,
+        val setter: (BackupOptions, Boolean) -> BackupOptions,
+        val enabled: (BackupOptions) -> Boolean = { true },
+    )
+
+    companion object {
+        val entries =
+            listOf(
+                Entry(R.string.backup_option_library, BackupOptions::library, { o, v -> o.copy(library = v) }),
+                Entry(
+                    R.string.backup_option_episodes,
+                    BackupOptions::watchedEpisodes,
+                    { o, v -> o.copy(watchedEpisodes = v) },
+                    { it.library },
+                ),
+                Entry(
+                    R.string.backup_option_review_history,
+                    BackupOptions::reviewHistory,
+                    { o, v -> o.copy(reviewHistory = v) },
+                    { it.library },
+                ),
+                Entry(R.string.backup_option_book_quotes, BackupOptions::bookQuotes, { o, v -> o.copy(bookQuotes = v) }, { it.library }),
+                Entry(
+                    R.string.backup_option_playthroughs,
+                    BackupOptions::playthroughs,
+                    { o, v -> o.copy(playthroughs = v) },
+                    { it.library },
+                ),
+                Entry(R.string.backup_option_movie_lists, BackupOptions::movieLists, { o, v -> o.copy(movieLists = v) }, { it.library }),
+                Entry(R.string.backup_option_app_settings, BackupOptions::appSettings, { o, v -> o.copy(appSettings = v) }),
+                Entry(R.string.backup_option_sensitive, BackupOptions::sensitive, { o, v -> o.copy(sensitive = v) }),
+            )
+    }
+}
+
+/**
+ * Backup file: library table rows as column → value maps, preference stores as base64 file
+ * contents, the app language (kept by AppCompat, not in any store) and the Room schema version the
+ * rows came from. Kept free of Android types so it can be unit-tested.
  */
 data class BackupPayload(
     val app: String = APP_ID,
@@ -22,6 +77,8 @@ data class BackupPayload(
     val schemaVersion: Int,
     val createdAtMs: Long,
     val tables: Map<String, List<Map<String, Any?>>>,
+    val settings: Map<String, String> = emptyMap(),
+    val languageTags: String? = null,
 ) {
     val itemCount: Int get() = tables[MEDIA_ITEMS_TABLE]?.size ?: 0
 
@@ -70,11 +127,19 @@ object BackupCodec {
                             ?.map { row -> row.entries.associate { (col, value) -> col.toString() to normalize(value) } }
                             .orEmpty()
                 } ?: throw BackupException(BackupErrorReason.INVALID_FILE)
+        val settings =
+            (raw["settings"] as? Map<*, *>)
+                ?.entries
+                ?.mapNotNull { (store, data) -> (data as? String)?.let { store.toString() to it } }
+                ?.toMap()
+                .orEmpty()
 
         return BackupPayload(
             schemaVersion = schemaVersion,
             createdAtMs = (raw["createdAtMs"] as? Double)?.toLong() ?: 0L,
             tables = tables,
+            settings = settings,
+            languageTags = raw["languageTags"] as? String,
         )
     }
 

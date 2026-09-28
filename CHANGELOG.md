@@ -15,9 +15,12 @@ The format is a simplified version of [Keep a Changelog](https://keepachangelog.
   each account gets an "Update automatically" switch and a "Sync now" button that backs up the
   library first. Syncs only move things forward — they never lower progress or a status, nor
   overwrite a rating or date you set.
-- Local backups in Settings > Data: back up the whole library to the folder you picked (a plain
-  JSON file that never leaves the device), restore it from a file, and schedule automatic backups
-  (off/daily/weekly, keeping the last 5). Backups from older app versions restore fine.
+- Local backups in Settings > Data, modelled on Rokku's: choose what goes into a backup (library
+  items, watched episodes, previous reviews, book quotes, playthroughs, movie lists, app settings,
+  and — opt-in — API keys and accounts), save it to the folder you picked (a plain JSON file that
+  never leaves the device), and restore it after seeing what the file holds. Automatic backups can
+  be manual only, daily, every 2 days or weekly, keeping 1 to 5 files. Backups from older app
+  versions restore fine; restoring settings restarts the app.
 - Anime as its own media type, backed by AniList (Kitsu as fallback): episode progress, next
   airing episode, and progress sync from your public AniList anime list. The Series tab can show
   series only, anime only or both — asked on its first access and changeable in

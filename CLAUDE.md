@@ -197,16 +197,22 @@ integrations (imports included) must use it too.
 
 ### Local backups (`data/backup/`)
 
-`BackupService` writes the library tables (items, movie lists, watched episodes, manga reviews,
-book quotes, playthroughs) as JSON into the folder chosen in onboarding / Settings → Data
-(`StoragePreferences`), via `DocumentsContract` — no DocumentFile dependency. It reads/writes rows
-through SQLite rather than the DAOs, so a backup from an older schema restores fine (missing
-columns take their defaults); backups from a newer schema are refused (`BackupCodec`). Caches are
-not backed up — a restore clears `media_details_cache` and runs "Update all". Kinds: manual (never
-pruned), scheduled (`BackupWorker`, off/daily/weekly) and pre-sync (taken before an integration
-writes to the library); the automatic kinds keep the last 5 files each.
+Modelled on Rokku's backups. `BackupService` writes JSON files into the folder chosen in
+onboarding / Settings → Data (`StoragePreferences`), via `DocumentsContract` — no DocumentFile
+dependency. What goes in is a `BackupOptions` checklist shown on manual backups (library items,
+watched episodes, previous reviews, book quotes, playthroughs, movie lists, app settings, and
+opt-in sensitive data = `api_key_prefs`); automatic and pre-sync backups use the defaults
+(everything but sensitive data). Library tables are read/written row by row through SQLite rather
+than the DAOs, so older-schema backups restore (missing columns take their defaults) and
+newer-schema ones are refused (`BackupCodec`). Settings are whole DataStore files (base64) plus the
+AppCompat language tag; restoring them requires `BackupService.restartApp`, since DataStore keeps
+loaded stores in memory. Onboarding, backup-folder and update-check stores are never restored.
+Restore replaces only the tables present in the file; caches are never backed up — "Update all"
+rebuilds them. Frequency: manual only, daily, every 2 days or weekly (Rokku's list without its
+6h/12h options), keeping 1–5 automatic files (`BackupPreferences`).
 
-**When adding a table that holds user data, add it to `BackupService.LIBRARY_TABLES`.**
+**When adding a table that holds user data, map it in `BackupService.tablesFor` (and a `BackupOptions` entry if it's
+optional); when adding a DataStore, decide whether it belongs in `SETTINGS_STORES`, `SENSITIVE_STORES` or neither.**
 
 ### ⚠️ Cardinal rule: existing migrations are IMMUTABLE
 

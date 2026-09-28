@@ -38,6 +38,14 @@ class BackupCodecTest {
     }
 
     @Test
+    fun `settings stores and language survive the round trip`() {
+        val withSettings = payload.copy(settings = mapOf("theme_prefs" to "AAEC"), languageTags = "pt-BR")
+        val decoded = BackupCodec.decode(BackupCodec.encode(withSettings), currentSchemaVersion = 16)
+        assertEquals(mapOf("theme_prefs" to "AAEC"), decoded.settings)
+        assertEquals("pt-BR", decoded.languageTags)
+    }
+
+    @Test
     fun `older schema backups restore on a newer app`() {
         val old = BackupCodec.encode(payload.copy(schemaVersion = 12))
         assertEquals(12, BackupCodec.decode(old, currentSchemaVersion = 16).schemaVersion)
