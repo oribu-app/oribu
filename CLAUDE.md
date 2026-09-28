@@ -184,6 +184,19 @@ mediaCacheRepository.salvar(mediaItemId, dadosJson)
 mediaCacheRepository.deletar(mediaItemId)
 ```
 
+### Local backups (`data/backup/`)
+
+`BackupService` writes the library tables (items, movie lists, watched episodes, manga reviews,
+book quotes, playthroughs) as JSON into the folder chosen in onboarding / Settings → Data
+(`StoragePreferences`), via `DocumentsContract` — no DocumentFile dependency. It reads/writes rows
+through SQLite rather than the DAOs, so a backup from an older schema restores fine (missing
+columns take their defaults); backups from a newer schema are refused (`BackupCodec`). Caches are
+not backed up — a restore clears `media_details_cache` and runs "Update all". Kinds: manual (never
+pruned), scheduled (`BackupWorker`, off/daily/weekly) and pre-sync (taken before an integration
+writes to the library); the automatic kinds keep the last 5 files each.
+
+**When adding a table that holds user data, add it to `BackupService.LIBRARY_TABLES`.**
+
 ### ⚠️ Cardinal rule: existing migrations are IMMUTABLE
 
 **Never edit an already-existing migration — only add a new one.** Each

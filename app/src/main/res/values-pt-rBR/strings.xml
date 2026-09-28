@@ -467,6 +467,28 @@
     <string name="settings_platforms_title">Plataformas</string>
     <string name="settings_platforms_subtitle">Filtros de plataforma em Jogos</string>
     <string name="settings_data_title">Dados</string>
+    <string name="backup_section">Backup</string>
+    <string name="backup_folder">Pasta de backup</string>
+    <string name="backup_folder_none">Nenhuma pasta escolhida — toque para escolher</string>
+    <string name="backup_now">Fazer backup agora</string>
+    <string name="backup_working">Processando…</string>
+    <string name="backup_saved">Salvo: %1$s</string>
+    <string name="backup_restored">%1$d itens restaurados — atualizando os detalhes…</string>
+    <string name="backup_last">Último backup: %1$s</string>
+    <string name="backup_never">Nenhum backup ainda</string>
+    <string name="backup_automatic">Backup automático</string>
+    <string name="backup_frequency_off">Desligado</string>
+    <string name="backup_frequency_daily">Diário</string>
+    <string name="backup_frequency_weekly">Semanal</string>
+    <string name="backup_restore">Restaurar backup</string>
+    <string name="backup_restore_subtitle">Substitui sua biblioteca pelo conteúdo de um arquivo de backup</string>
+    <string name="backup_restore_confirm_title">Restaurar este backup?</string>
+    <string name="backup_restore_confirm_message">Sua biblioteca atual será substituída pelo conteúdo do backup. Não dá para desfazer — faça um backup antes se quiser manter o que está aqui agora.</string>
+    <string name="backup_restore_confirm_button">Restaurar</string>
+    <string name="backup_error_invalid_file">Este arquivo não é um backup do Oribu</string>
+    <string name="backup_error_newer_schema">Este backup é de uma versão mais nova do Oribu — atualize o app para restaurá-lo</string>
+    <string name="backup_error_no_folder">Escolha uma pasta de backup primeiro</string>
+    <string name="backup_error_write_failed">Não foi possível gravar na pasta de backup — escolha a pasta de novo</string>
     <string name="settings_data_subtitle">Cache e biblioteca</string>
     <string name="settings_general_title">Geral</string>
     <string name="settings_general_subtitle">Idioma e formato de data</string>
@@ -576,7 +598,7 @@
     <string name="onboarding_battery_title">Ignorar otimização de bateria</string>
     <string name="onboarding_battery_subtitle">Evita que o sistema atrase a atualização diária em segundo plano</string>
     <string name="onboarding_grant">Conceder</string>
-    <string name="onboarding_storage_description">Escolha uma pasta no seu dispositivo para uso futuro em backups. Pode ser configurada ou trocada depois em Configurações — esse passo é opcional.</string>
+    <string name="onboarding_storage_description">Escolha uma pasta onde o Oribu salva os backups da sua biblioteca. Dá para escolher ou trocar depois em Configurações → Dados — este passo é opcional.</string>
     <string name="onboarding_change_folder">Trocar pasta</string>
     <string name="onboarding_select_folder">Selecionar pasta</string>
 

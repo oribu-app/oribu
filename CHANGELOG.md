@@ -11,6 +11,9 @@ The format is a simplified version of [Keep a Changelog](https://keepachangelog.
 ## [Unreleased]
 
 ### Additions
+- Local backups in Settings > Data: back up the whole library to the folder you picked (a plain
+  JSON file that never leaves the device), restore it from a file, and schedule automatic backups
+  (off/daily/weekly, keeping the last 5). Backups from older app versions restore fine.
 - Anime as its own media type, backed by AniList (Kitsu as fallback): episode progress, next
   airing episode, and progress sync from your public AniList anime list. The Series tab can show
   series only, anime only or both — asked on its first access and changeable in

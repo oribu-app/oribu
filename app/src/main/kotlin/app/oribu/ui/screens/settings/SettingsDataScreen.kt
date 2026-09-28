@@ -80,6 +80,9 @@ fun SettingsDataScreen(
                 },
             )
 
+            // A restore wipes the details cache, so refetch it right away.
+            BackupSection(onRestored = { vm.updateAllCache() })
+
             SettingsClickRow(
                 title = stringResource(R.string.settings_data_delete_all),
                 subtitle = stringResource(R.string.settings_data_delete_all_subtitle),

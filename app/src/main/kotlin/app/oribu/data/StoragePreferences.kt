@@ -16,8 +16,8 @@ private val Context.storageDataStore by preferencesDataStore(name = "storage_pre
 
 /**
  * Guarda a URI (com permissão persistente já concedida) da pasta escolhida no passo de
- * armazenamento do onboarding. Só a preferência é salva aqui — nenhuma função de backup usa
- * isso ainda.
+ * armazenamento do onboarding ou em Configurações → Dados — é onde o BackupService grava os
+ * backups da biblioteca.
  */
 object StoragePreferences {
     private val FOLDER_URI_KEY = stringPreferencesKey("folder_uri")

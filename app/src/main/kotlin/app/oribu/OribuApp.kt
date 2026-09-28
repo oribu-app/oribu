@@ -6,6 +6,7 @@ import app.oribu.data.OnboardingPreferences
 import app.oribu.data.PlatformPreferences
 import app.oribu.data.SeriesScopePreferences
 import app.oribu.data.StoragePreferences
+import app.oribu.data.backup.BackupPreferences
 import app.oribu.data.db.DB
 import app.oribu.service.ApiServices
 import app.oribu.service.GameDatasetImporter
@@ -14,6 +15,7 @@ import app.oribu.ui.locale.AppLocaleController
 import app.oribu.ui.theme.AppThemeController
 import app.oribu.ui.theme.CoverThemeController
 import app.oribu.worker.AppUpdateCheckWorker
+import app.oribu.worker.BackupWorker
 import app.oribu.worker.CacheUpdateWorker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +33,7 @@ class OribuApp : Application() {
         OnboardingPreferences.init(this)
         SeriesScopePreferences.init(this)
         StoragePreferences.init(this)
+        BackupPreferences.init(this)
         ApiKeyPreferences.init(this)
         AppThemeController.init(this)
         AppLocaleController.init(this)
@@ -42,5 +45,9 @@ class OribuApp : Application() {
         }
         CacheUpdateWorker.schedule(this)
         AppUpdateCheckWorker.schedule(this)
+        // Re-schedules (or cancels) the automatic backup whenever the chosen frequency changes.
+        appScope.launch {
+            BackupPreferences.frequency.collect { BackupWorker.schedule(this@OribuApp, it) }
+        }
     }
 }

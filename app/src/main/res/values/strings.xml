@@ -467,6 +467,28 @@
     <string name="settings_platforms_title">Platforms</string>
     <string name="settings_platforms_subtitle">Platform filters in Games</string>
     <string name="settings_data_title">Data</string>
+    <string name="backup_section">Backup</string>
+    <string name="backup_folder">Backup folder</string>
+    <string name="backup_folder_none">No folder chosen — tap to choose</string>
+    <string name="backup_now">Back up now</string>
+    <string name="backup_working">Working…</string>
+    <string name="backup_saved">Saved: %1$s</string>
+    <string name="backup_restored">%1$d items restored — refreshing details…</string>
+    <string name="backup_last">Last backup: %1$s</string>
+    <string name="backup_never">No backup yet</string>
+    <string name="backup_automatic">Automatic backup</string>
+    <string name="backup_frequency_off">Off</string>
+    <string name="backup_frequency_daily">Daily</string>
+    <string name="backup_frequency_weekly">Weekly</string>
+    <string name="backup_restore">Restore a backup</string>
+    <string name="backup_restore_subtitle">Replace your library with the contents of a backup file</string>
+    <string name="backup_restore_confirm_title">Restore this backup?</string>
+    <string name="backup_restore_confirm_message">Your current library will be replaced by the backup\'s contents. This can\'t be undone — back up first if you want to keep what\'s here now.</string>
+    <string name="backup_restore_confirm_button">Restore</string>
+    <string name="backup_error_invalid_file">This file isn\'t an Oribu backup</string>
+    <string name="backup_error_newer_schema">This backup is from a newer version of Oribu — update the app to restore it</string>
+    <string name="backup_error_no_folder">Choose a backup folder first</string>
+    <string name="backup_error_write_failed">Couldn\'t write to the backup folder — choose it again</string>
     <string name="settings_data_subtitle">Cache and library</string>
     <string name="settings_general_title">General</string>
     <string name="settings_general_subtitle">Language and date format</string>
@@ -576,7 +598,7 @@
     <string name="onboarding_battery_title">Ignore battery optimization</string>
     <string name="onboarding_battery_subtitle">Prevents the system from delaying the daily background update</string>
     <string name="onboarding_grant">Grant</string>
-    <string name="onboarding_storage_description">Choose a folder on your device for future use in backups. It can be set or changed later in Settings — this step is optional.</string>
+    <string name="onboarding_storage_description">Choose a folder where Oribu saves your library backups. It can be set or changed later in Settings → Data — this step is optional.</string>
     <string name="onboarding_change_folder">Change folder</string>
     <string name="onboarding_select_folder">Select folder</string>
 
