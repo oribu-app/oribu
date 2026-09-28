@@ -282,13 +282,16 @@ Same model as Tonkatsu Box: CI (`build_push.yml`, step "Write built-in API keys"
 the box in nightly/beta/stable APKs. A key the user types in Settings → Integrations
 (`ApiKeyPreferences`) always overrides the bundled one (`Secrets.merge`).
 
-- **Bundled app keys** (Actions secrets `TMDB_BEARER_TOKEN`, `IGDB_CLIENT_ID`,
-  `IGDB_CLIENT_SECRET`, `GOOGLE_BOOKS_API_KEY`, `STEAM_API_KEY`, `ITAD_API_KEY`,
-  `STEAMGRIDDB_API_KEY`, `RETROACHIEVEMENTS_API_KEY`): anything any user can use to query public
-  data. The Steam and RetroAchievements Web APIs accept any key to read *another* user's public
-  profile, so the user only has to provide their SteamID / RA username.
-- **Never bundled** (per-user, tracking only): `steam_id`, `retroachievements_username`,
-  `anilist_username`, `hardcover_api_token` (a personal token tied to one Hardcover account).
+- **Bundled search/metadata keys** (Actions secrets `TMDB_BEARER_TOKEN`, `IGDB_CLIENT_ID`,
+  `IGDB_CLIENT_SECRET`, `GOOGLE_BOOKS_API_KEY`, `ITAD_API_KEY`, `STEAMGRIDDB_API_KEY`). In
+  Settings → Integrations the bundled key is never shown: the field stays empty with a
+  "built-in key" placeholder, the test button still works, and a reset button appears once the
+  user replaces it with their own key.
+- **Never bundled** — account integrations always use the user's own credentials, same as
+  Tonkatsu Box: Steam (`steam_api_key` + `steam_id`), RetroAchievements
+  (`retroachievements_username` + `retroachievements_api_key`), Hardcover
+  (`hardcover_api_token`) and `anilist_username`. `Secrets.merge` still reads them from a local
+  `secrets.json` for dev builds, but CI never writes them.
 
 Bundled keys ship inside a public APK and can be extracted — register them on a dedicated project
 account (not a personal one) so they can be rotated without touching anyone's own keys.

@@ -114,8 +114,9 @@ jobs:
 
       # Built-in app-level API keys (same model as Tonkatsu Box's --dart-define keys): search and
       # metadata work out of the box, and a key the user types in Settings → Integrations always
-      # overrides the bundled one (Secrets.merge). Only app keys belong here — per-user
-      # identifiers (SteamID, RetroAchievements/AniList usernames, Hardcover token) never do.
+      # overrides the bundled one (Secrets.merge). Only search/metadata keys belong here —
+      # account integrations (Steam, RetroAchievements, Hardcover, AniList) always use the
+      # user's own credentials, same as Tonkatsu Box.
       # Missing secrets (e.g. forks) are simply left out and the app degrades gracefully.
       - name: Write built-in API keys
         env:
@@ -123,20 +124,16 @@ jobs:
           IGDB_CLIENT_ID: ${{ secrets.IGDB_CLIENT_ID }}
           IGDB_CLIENT_SECRET: ${{ secrets.IGDB_CLIENT_SECRET }}
           GOOGLE_BOOKS_API_KEY: ${{ secrets.GOOGLE_BOOKS_API_KEY }}
-          STEAM_API_KEY: ${{ secrets.STEAM_API_KEY }}
           ITAD_API_KEY: ${{ secrets.ITAD_API_KEY }}
           STEAMGRIDDB_API_KEY: ${{ secrets.STEAMGRIDDB_API_KEY }}
-          RETROACHIEVEMENTS_API_KEY: ${{ secrets.RETROACHIEVEMENTS_API_KEY }}
         run: |
           jq -n \
             --arg tmdb_bearer_token "$TMDB_BEARER_TOKEN" \
             --arg igdb_client_id "$IGDB_CLIENT_ID" \
             --arg igdb_client_secret "$IGDB_CLIENT_SECRET" \
             --arg google_books_api_key "$GOOGLE_BOOKS_API_KEY" \
-            --arg steam_api_key "$STEAM_API_KEY" \
             --arg itad_api_key "$ITAD_API_KEY" \
             --arg steamgriddb_api_key "$STEAMGRIDDB_API_KEY" \
-            --arg retroachievements_api_key "$RETROACHIEVEMENTS_API_KEY" \
             '$ARGS.named | with_entries(select(.value != ""))' \
             > app/src/main/assets/secrets.json
           echo "Bundled keys: $(jq -r 'keys | join(", ")' app/src/main/assets/secrets.json)"
