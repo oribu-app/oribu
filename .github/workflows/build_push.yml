@@ -54,13 +54,13 @@ jobs:
           distribution: "temurin"
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6
 
       - name: Install compileSdk build-tools
         run: ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager "build-tools;36.1.0" "platforms;android-37.0"
 
       - name: Set up CHANGELOG parser
-        uses: taiki-e/install-action@d7502a2141c21576e69bd0508b4c43788939e556 # parse-changelog
+        uses: taiki-e/install-action@f087664f1bd1489891450d1256cd43a7a0fc1c26 # parse-changelog
 
       - name: Copy CI gradle.properties
         run: |
