@@ -19,7 +19,7 @@ Native Android app (Kotlin + Jetpack Compose) for personal tracking of games, ma
 | Navigation | Compose Navigation (`MainNavGraph.kt`, `Routes.kt`) |
 | Serialization | Gson |
 | Background tasks | WorkManager (`CacheUpdateWorker.kt`) |
-| HTTP | (check the client used in `*Service.kt`, e.g. OkHttp/Retrofit) |
+| HTTP | OkHttp (`libs.okhttp`, `libs.okhttp.logging`), one `OkHttpClient()` per `*Service.kt`; no Retrofit or Ktor |
 
 ---
 
