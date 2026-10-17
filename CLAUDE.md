@@ -486,16 +486,9 @@ source of truth, going forward.
 
 ### Comments
 
-- A comment exists to explain the **why**, never the **what** — names and
-  types already say what the code does. The `commitCount` comment in
-  `app/build.gradle.kts` (explaining the fallback outside a git repo) is a
-  good example; a `// saves the item to the database` above
-  `repository.salvar(item)` would not be.
-- No file header ("what this file is") and no section banners
-  (`// ==== Foo ====`) — the file path and the first declaration already say
-  that.
-- No comment beats a bad comment — if there's nothing non-obvious to explain,
-  don't write one.
+Follow the global comment rules. A good example of a "why" comment in this
+repo: the `commitCount` comment in `app/build.gradle.kts` (explaining the
+fallback outside a git repo).
 
 ### Lists and grids
 Follow the visual pattern from the Flutter version: `LazyVerticalGrid` with 3 columns and a portrait cover ratio (~0.56), unless the current Compose implementation already diverges — check the list `*Screen.kt` files before assuming.
@@ -543,7 +536,7 @@ Checks happen at:
 
 ---
 
-## Quick test APK (for chat delivery)
+## Quick test APK (for chat delivery — overrides the `test-apk` skill defaults)
 
 When asked to build an APK just for the user to test (not a tagged release),
 build the **`nightly`** build type and send the **`armeabi-v7a`** ABI split —
@@ -568,11 +561,8 @@ Why this combination and not another build type/ABI:
   close to the limit), `universal`/`x86`/`x86_64` are all bigger or irrelevant
   for a phone test.
 
-No need to touch the Google Drive copy step from `## Build & Deploy de APKs`
-(global CLAUDE.md) for this — that's for actual release APKs the user asked
-to keep. If the resulting APK still doesn't fit in chat (e.g. after the app
-grows further), fall back to copying it into the project's Drive folder
-instead of trying a different build type/ABI first.
+If the resulting APK still doesn't fit in chat (e.g. after the app grows
+further), report the size and ask before trying another build type or ABI.
 
 ---
 
