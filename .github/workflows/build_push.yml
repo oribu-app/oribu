@@ -48,7 +48,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up JDK 17
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
         with:
           java-version: "25"
           distribution: "temurin"
@@ -60,7 +60,7 @@ jobs:
         run: ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager "build-tools;36.1.0" "platforms;android-37.0"
 
       - name: Set up CHANGELOG parser
-        uses: taiki-e/install-action@2b4452a0b2c36e2f34df503c269fcd6896a98670 # parse-changelog
+        uses: taiki-e/install-action@048ef669e60d971d853653aefcd8c5b9b12ddfa0 # parse-changelog
 
       - name: Copy CI gradle.properties
         run: |
